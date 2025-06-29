@@ -1,0 +1,17 @@
+[package]
+name = "mlb-api"
+version = "0.1.0"
+authors = ["Riley"]
+edition = "2024"
+description = "Endpoints for MLB's public Statcast API."
+documentation = "https://docs.rs/mlb-api"
+readme = "README.md"
+repository = "https://github.com/RealRTTV/mlb-api"
+license = "MIT"
+keywords = ["mlb", "statcast", "api"]
+categories = ["api-bindings", "asynchronous"]
+
+[dependencies]
+
+[features]
+async = []
