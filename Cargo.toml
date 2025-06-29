@@ -1,6 +1,6 @@
 [package]
 name = "mlb-api"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Riley"]
 edition = "2024"
 description = "Endpoints for MLB's public Statcast API."
@@ -12,6 +12,27 @@ keywords = ["mlb", "statcast", "api"]
 categories = ["api-bindings", "asynchronous"]
 
 [dependencies]
+serde = { version = "1.0.219", features = ["serde_derive"] }
+derive_more = { version = "2.0.1", features = ["deref", "display"] }
+chrono = "0.4.41"
+chrono-tz = "0.10.3"
+
+[dependencies.ureq]
+version = "3.0.12"
+features = ["json"]
+optional = true
+
+[dependencies.reqwest]
+version = "0.12.20"
+optional = true
+features = ["json"]
+
+[dev-dependencies.tokio]
+version = "1.45.1"
+features = ["macros", "rt-multi-thread"]
 
 [features]
-async = []
+default = ["reqwest"]
+
+reqwest = ["dep:reqwest"]
+ureq = ["dep:ureq"]
