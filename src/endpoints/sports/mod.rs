@@ -1,6 +1,7 @@
 mod types;
-
 pub use types::*;
+
+pub mod players;
 
 #[cfg(test)]
 mod tests {
@@ -33,7 +34,7 @@ mod tests {
                 Sport::WPF,
             ],
         };
-        let result = SportsResponseUrl::new(None).get().await.unwrap();
+        let result = SportsResponseUrl { id: None }.get().await.unwrap();
         assert_eq!(result, target);
     }
 }

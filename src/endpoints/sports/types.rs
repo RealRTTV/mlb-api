@@ -7,16 +7,7 @@ use crate::endpoints::Url;
 use crate::endpoints::types::Copyright;
 
 pub struct SportsResponseUrl {
-    id: Option<SportId>,
-}
-
-impl SportsResponseUrl {
-    #[must_use]
-    pub fn new(id: Option<SportId>) -> Self {
-        Self {
-            id
-        }
-    }
+    pub id: Option<SportId>,
 }
 
 impl Display for SportsResponseUrl {
@@ -29,18 +20,16 @@ impl Display for SportsResponseUrl {
     }
 }
 
-impl Url<SportsResponse> for SportsResponseUrl {
-    
-}
+impl Url<SportsResponse> for SportsResponseUrl {}
 
-#[derive(Default, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SportsResponse {
     pub copyright: Copyright,
     pub sports: Vec<Sport>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Sport {
     pub id: SportId,
@@ -252,6 +241,7 @@ impl PartialOrd for Sport {
     }
 }
 
+#[repr(transparent)]
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct SportId(u32);
 
