@@ -1,7 +1,22 @@
 mod types;
 pub use types::*;
-
 pub mod players;
+
+use std::fmt::{Display, Formatter};
+use crate::endpoints::Url;
+use crate::gen_params;
+
+pub struct SportsResponseUrl {
+    pub id: Option<SportId>,
+}
+
+impl Display for SportsResponseUrl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "https://statsapi.mlb.com/api/v1/sports{params}", params = gen_params! { "sportId"?: self.id })
+    }
+}
+
+impl Url<SportsResponse> for SportsResponseUrl {}
 
 #[cfg(test)]
 mod tests {

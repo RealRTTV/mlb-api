@@ -20,6 +20,7 @@ impl Default for Copyright {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Position {
     Unknown = 0,
+    
     Pitcher = 1,
     Catcher = 2,
     FirstBaseman = 3,
@@ -29,8 +30,11 @@ pub enum Position {
     Leftfielder = 7,
     Centerfielder = 8,
     Rightfielder = 9,
-    Outfielder = b'0' as _,
+    
+    Outfielder = b'0' as _, // Typically seen as primary position
     DesignatedHitter = 10,
+    PinchHitter = 11,
+    PinchRunner = 12,
     TwoWayPlayer = b'Y' as _,
 }
 
@@ -59,6 +63,8 @@ impl<'de> Deserialize<'de> for Position {
             "RF" => Self::Rightfielder,
             "OF" => Self::Outfielder,
             "DH" => Self::DesignatedHitter,
+            "PH" => Self::PinchHitter,
+            "PR" => Self::PinchRunner,
             "TWP" => Self::TwoWayPlayer,
             pos => return Err(Error::custom(format!("Invalid player position '{pos}' (code = {code})"))),
         })
@@ -148,4 +154,24 @@ impl<'de> Deserialize<'de> for Handedness {
             _ => return Err(Error::custom("Invalid handedness")),
         })
     }
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub enum GameType {
+    #[serde(rename = "R")]
+    RegularSeason,
+    #[serde(rename = "S")]
+    SpringTraining,
+    #[serde(rename = "E")]
+    Exhibition,
+    #[serde(rename = "A")]
+    AllStarGame,
+    #[serde(rename = "D")]
+    DivisionalSeries,
+    #[serde(rename = "F")]
+    WildCardSeries,
+    #[serde(rename = "L")]
+    ChampionshipSeries,
+    #[serde(rename = "W")]
+    WorldSeries,
 }

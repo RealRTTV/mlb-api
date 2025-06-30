@@ -1,14 +1,15 @@
 use chrono::NaiveDate;
-use derive_more::{Deref, Display};
+use derive_more::{Deref, Display, DerefMut};
 use serde::Deserialize;
 use crate::endpoints::types::{Gender, Handedness, HeightMeasurement, Position};
 
-#[derive(Debug, Deref, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Ballplayer {
     #[deref]
+    #[deref_mut]
     #[serde(flatten)]
-    pub inner: DetailedNamedPerson,
+    inner: DetailedNamedPerson,
 
     #[serde(deserialize_with = "crate::endpoints::types::from_str")]
     pub primary_number: u8,
@@ -52,20 +53,26 @@ pub struct StrikeZone {
 
 impl Eq for StrikeZone {}
 
-#[derive(Debug, Deref, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DetailedNamedPerson {
     #[deref]
+    #[deref_mut]
     #[serde(flatten)]
-    pub inner: NamedPerson,
+    inner: NamedPerson,
     
     pub primary_position: Position,
-
+    // '? ? Brown' in 1920 does not have a first name or a middle name, rather than dealing with Option and making everyone hate this API, the better approach is an empty String.
+    #[serde(default)]
     pub first_name: String,
     pub middle_name: Option<String>,
+    #[serde(default)]
     pub last_name: String,
+    #[serde(default)]
     #[serde(rename = "useName")] pub use_first_name: String,
+    #[serde(default)]
     pub use_last_name: String,
+    #[serde(default)]
     pub boxscore_name: String,
     
     pub is_player: bool,

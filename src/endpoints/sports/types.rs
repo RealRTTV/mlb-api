@@ -1,26 +1,9 @@
 use std::borrow::Cow;
 use std::cmp::Ordering;
-use std::fmt::{Display, Formatter};
 use derive_more::{Deref, Display};
 use serde::Deserialize;
-use crate::endpoints::Url;
+use crate::endpoints::sports::SportsResponseUrl;
 use crate::endpoints::types::Copyright;
-
-pub struct SportsResponseUrl {
-    pub id: Option<SportId>,
-}
-
-impl Display for SportsResponseUrl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if let Some(id) = self.id {
-            write!(f, "https://statsapi.mlb.com/api/v1/sports?sportId={id}")
-        } else {
-            write!(f, "https://statsapi.mlb.com/api/v1/sports")
-        }
-    }
-}
-
-impl Url<SportsResponse> for SportsResponseUrl {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -244,6 +227,12 @@ impl PartialOrd for Sport {
 #[repr(transparent)]
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct SportId(u32);
+
+impl Default for SportId {
+    fn default() -> Self {
+        Self::MLB
+    }
+}
 
 impl SportId {
     pub const MLB: Self = Self(1);

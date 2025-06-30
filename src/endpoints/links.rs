@@ -13,3 +13,27 @@ pub trait Url<T: DeserializeOwned>: Display {
         request::get(self)
     }
 }
+
+#[macro_export]
+macro_rules! gen_params {
+    (@ $builder:ident $key:literal: $value:expr $(, $($rest:tt)*)?) => {{
+        let is_empty = $builder.is_empty();
+        let _ = write!(&mut $builder, "{prefix}{key}={value}", key = $key, value = $value, prefix = if is_empty { '?' } else { '&' });
+        gen_params!(@ $builder $($($rest)*)? );
+    }};
+    (@ $builder:ident $key:literal?: $value:expr $(, $($rest:tt)*)?) => {{
+        if let Option::Some(value) = $value {
+            let is_empty = $builder.is_empty();
+            let _ = write!(&mut $builder, "{prefix}{key}={value}", key = $key, prefix = if is_empty { '?' } else { '&' });
+        }
+        gen_params!(@ $builder $($($rest)*)? );
+    }};
+    (@ $builder:ident $(,)?) => {};
+    ($($args:tt)*) => {{
+        use ::core::fmt::Write;
+        
+        let mut builder = String::new();
+        gen_params! { @ builder $($args)* }
+        builder
+    }};
+}
