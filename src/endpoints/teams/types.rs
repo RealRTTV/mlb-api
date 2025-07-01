@@ -1,10 +1,10 @@
 use serde::Deserialize;
-use crate::endpoints::person::HydratedPerson;
+use crate::endpoints::teams::team::RegularTeam;
 use crate::types::Copyright;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SportsPlayersResponse {
+pub struct TeamsResponse {
     pub copyright: Copyright,
-    pub people: Vec<HydratedPerson>,
+    pub teams: Vec<RegularTeam>,
 }

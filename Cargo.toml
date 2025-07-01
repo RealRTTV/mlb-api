@@ -1,6 +1,6 @@
 [package]
 name = "mlb-api"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Riley"]
 edition = "2024"
 description = "Endpoints for MLB's public Statcast API."
@@ -26,7 +26,7 @@ features = ["json"]
 optional = true
 
 [dependencies.reqwest]
-version = "0.12.20"
+version = "0.12.21"
 optional = true
 features = ["json"]
 

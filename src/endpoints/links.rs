@@ -1,8 +1,7 @@
-use std::fmt::Display;
 use serde::de::DeserializeOwned;
 use crate::request;
 
-pub trait Url<T: DeserializeOwned>: Display {
+pub trait Url<T: DeserializeOwned>: ToString {
     #[cfg(feature = "ureq")]
     fn get(&self) -> request::Result<T> where Self: Sized {
         request::get(self)

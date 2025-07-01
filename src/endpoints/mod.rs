@@ -20,10 +20,9 @@ pub mod standings;
 pub mod stats;
 pub mod teams;
 pub mod transactions;
-pub mod venue;
+pub mod venue; // COMPLETE!
 pub mod meta;
 
-mod types;
 mod links;
 
 pub use links::*;

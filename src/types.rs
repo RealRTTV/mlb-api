@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::num::ParseIntError;
 use std::str::FromStr;
-use chrono::{Datelike, Local};
+use chrono::{Datelike, Local, NaiveDate};
 use serde::{Deserialize, Deserializer};
 use serde::de::Error;
 use thiserror::Error;
@@ -17,7 +17,8 @@ impl Default for Copyright {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[serde(try_from = "PositionStruct")]
 pub enum Position {
     Unknown = 0,
     
@@ -38,19 +39,26 @@ pub enum Position {
     TwoWayPlayer = b'Y' as _,
 }
 
-impl<'de> Deserialize<'de> for Position {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>
-    {
-        #[derive(Deserialize)]
-        struct PositionStruct {
-            code: String,
-            abbreviation: String,
-        }
-        
-        let PositionStruct { code, abbreviation } = PositionStruct::deserialize(deserializer)?;
-        Ok(match &*abbreviation {
+#[derive(Deserialize)]
+struct PositionStruct {
+    code: String,
+    abbreviation: String,
+}
+
+#[derive(Debug, Error)]
+pub enum PositionParseError {
+    #[error("Invlaid player position '{abbreviation}' (code = {code})")]
+    InvalidPosition {
+        code: String,
+        abbreviation: String,
+    }
+}
+
+impl TryFrom<PositionStruct> for Position {
+    type Error = PositionParseError;
+
+    fn try_from(value: PositionStruct) -> Result<Self, Self::Error> {
+        Ok(match &*value.code {
             "X" => Self::Unknown,
             "P" => Self::Pitcher,
             "C" => Self::Catcher,
@@ -66,7 +74,7 @@ impl<'de> Deserialize<'de> for Position {
             "PH" => Self::PinchHitter,
             "PR" => Self::PinchRunner,
             "TWP" => Self::TwoWayPlayer,
-            pos => return Err(Error::custom(format!("Invalid player position '{pos}' (code = {code})"))),
+            _ => return Err(PositionParseError::InvalidPosition { code: value.code, abbreviation: value.abbreviation }),
         })
     }
 }
@@ -77,6 +85,19 @@ pub fn try_from_str<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> R
 
 pub fn from_str<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<T, D::Error> where <T as FromStr>::Err: Debug {
     String::deserialize(deserializer)?.parse::<T>().map_err(|e| Error::custom(format!("{e:?}")))
+}
+
+pub fn from_yes_no<'de, D: Deserializer<'de>>(deserializer: D) -> Result<bool, D::Error> {
+    #[derive(Deserialize)]
+    enum Boolean {
+        #[serde(rename = "Y")] Yes,
+        #[serde(rename = "N")] No,
+    }
+    
+    Ok(match Boolean::deserialize(deserializer)? {
+        Boolean::Yes => true,
+        Boolean::No => false,
+    })
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -131,27 +152,32 @@ pub enum Gender {
     Other,
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[serde(try_from = "HandednessStruct")]
 pub enum Handedness {
     Left,
     Right,
 }
 
-impl<'de> Deserialize<'de> for Handedness {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>
-    {
-        #[derive(Deserialize)]
-        struct HandednessStruct {
-            code: String,
-        }
-        
-        let HandednessStruct { code } = HandednessStruct::deserialize(deserializer)?;
-        Ok(match &*code {
+#[derive(Deserialize)]
+struct HandednessStruct {
+    code: String,
+}
+
+#[derive(Debug, Error)]
+pub enum HandednessParseError {
+    #[error("Invalid handedness '{0}'")]
+    InvalidHandedness(String),
+}
+
+impl TryFrom<HandednessStruct> for Handedness {
+    type Error = HandednessParseError;
+
+    fn try_from(value: HandednessStruct) -> Result<Self, Self::Error> {
+        Ok(match &*value.code {
             "L" => Self::Left,
             "R" => Self::Right,
-            _ => return Err(Error::custom("Invalid handedness")),
+            _ => return Err(HandednessParseError::InvalidHandedness(value.code)),
         })
     }
 }
@@ -175,3 +201,5 @@ pub enum GameType {
     #[serde(rename = "W")]
     WorldSeries,
 }
+
+pub type NaiveDateRange = std::ops::RangeInclusive<NaiveDate>;

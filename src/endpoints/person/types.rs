@@ -1,7 +1,8 @@
+use std::ops::{Deref, DerefMut};
 use chrono::NaiveDate;
 use derive_more::{Deref, Display, DerefMut};
 use serde::Deserialize;
-use crate::endpoints::types::{Gender, Handedness, HeightMeasurement, Position};
+use crate::types::{Gender, Handedness, HeightMeasurement, Position};
 
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -9,9 +10,9 @@ pub struct Ballplayer {
     #[deref]
     #[deref_mut]
     #[serde(flatten)]
-    inner: DetailedNamedPerson,
+    inner: HydratedPerson,
 
-    #[serde(deserialize_with = "crate::endpoints::types::from_str")]
+    #[serde(deserialize_with = "crate::types::from_str")]
     pub primary_number: u8,
     pub current_age: u8,
     #[serde(flatten)]
@@ -39,7 +40,7 @@ pub struct BirthData {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BodyMeasurements {
-    #[serde(deserialize_with = "crate::endpoints::types::from_str")]
+    #[serde(deserialize_with = "crate::types::from_str")]
     pub height: HeightMeasurement,
     pub weight: u16,
 }
@@ -55,11 +56,11 @@ impl Eq for StrikeZone {}
 
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct DetailedNamedPerson {
+pub struct HydratedPerson {
     #[deref]
     #[deref_mut]
     #[serde(flatten)]
-    inner: NamedPerson,
+    inner: UnhydratedPerson,
     
     pub primary_position: Position,
     // '? ? Brown' in 1920 does not have a first name or a middle name, rather than dealing with Option and making everyone hate this API, the better approach is an empty String.
@@ -80,7 +81,7 @@ pub struct DetailedNamedPerson {
     pub active: bool,
 }
 
-impl DetailedNamedPerson {
+impl HydratedPerson {
     #[must_use]
     pub fn name_first_last(&self) -> String {
         format!("{0} {1}", self.first_name, self.last_name)
@@ -130,7 +131,7 @@ impl DetailedNamedPerson {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct NamedPerson {
+pub struct UnhydratedPerson {
     pub id: PersonId,
     pub full_name: String,
 }
@@ -143,6 +144,28 @@ pub struct PersonId(u32);
 #[serde(untagged)]
 pub enum Person {
     Ballplayer(Ballplayer),
-    DetailedNamedPerson(DetailedNamedPerson),
-    NamedPerson(NamedPerson),
+    Hydrated(HydratedPerson),
+    Unhydrated(UnhydratedPerson),
+}
+
+impl Deref for Person {
+    type Target = UnhydratedPerson;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Ballplayer(inner) => inner,
+            Self::Hydrated(inner) => inner,
+            Self::Unhydrated(inner) => inner,
+        }
+    }
+}
+
+impl DerefMut for Person {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Self::Ballplayer(inner) => inner,
+            Self::Hydrated(inner) => inner,
+            Self::Unhydrated(inner) => inner,
+        }
+    }
 }
