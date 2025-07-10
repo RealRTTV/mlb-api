@@ -1,6 +1,9 @@
 use serde::de::DeserializeOwned;
 use crate::request;
 
+#[cfg(all(feature = "reqwest", feature = "ureq"))]
+compile_error!("Only one http backend is allowed!");
+
 pub trait Url<T: DeserializeOwned>: ToString {
     #[cfg(feature = "ureq")]
     fn get(&self) -> request::Result<T> where Self: Sized {

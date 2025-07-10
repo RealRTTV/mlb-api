@@ -32,7 +32,8 @@ pub enum Position {
     Centerfielder = 8,
     Rightfielder = 9,
     
-    Outfielder = b'0' as _, // Typically seen as primary position
+    Outfielder = b'O' as _, // Typically seen as primary position
+    Infielder = b'I' as _, // Typically seen as primary position
     DesignatedHitter = 10,
     PinchHitter = 11,
     PinchRunner = 12,
@@ -58,7 +59,7 @@ impl TryFrom<PositionStruct> for Position {
     type Error = PositionParseError;
 
     fn try_from(value: PositionStruct) -> Result<Self, Self::Error> {
-        Ok(match &*value.code {
+        Ok(match &*value.abbreviation {
             "X" => Self::Unknown,
             "P" => Self::Pitcher,
             "C" => Self::Catcher,
@@ -70,6 +71,7 @@ impl TryFrom<PositionStruct> for Position {
             "CF" => Self::Centerfielder,
             "RF" => Self::Rightfielder,
             "OF" => Self::Outfielder,
+            "IF" => Self::Infielder,
             "DH" => Self::DesignatedHitter,
             "PH" => Self::PinchHitter,
             "PR" => Self::PinchRunner,
@@ -157,6 +159,7 @@ pub enum Gender {
 pub enum Handedness {
     Left,
     Right,
+    Switch,
 }
 
 #[derive(Deserialize)]
@@ -177,29 +180,10 @@ impl TryFrom<HandednessStruct> for Handedness {
         Ok(match &*value.code {
             "L" => Self::Left,
             "R" => Self::Right,
+            "S" => Self::Switch,
             _ => return Err(HandednessParseError::InvalidHandedness(value.code)),
         })
     }
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
-pub enum GameType {
-    #[serde(rename = "R")]
-    RegularSeason,
-    #[serde(rename = "S")]
-    SpringTraining,
-    #[serde(rename = "E")]
-    Exhibition,
-    #[serde(rename = "A")]
-    AllStarGame,
-    #[serde(rename = "D")]
-    DivisionalSeries,
-    #[serde(rename = "F")]
-    WildCardSeries,
-    #[serde(rename = "L")]
-    ChampionshipSeries,
-    #[serde(rename = "W")]
-    WorldSeries,
 }
 
 pub type NaiveDateRange = std::ops::RangeInclusive<NaiveDate>;
