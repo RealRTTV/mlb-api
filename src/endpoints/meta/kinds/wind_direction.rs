@@ -4,37 +4,35 @@ use serde::Deserialize;
 use crate::endpoints::meta::MetaKind;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableJobType {
+pub struct IdentifiableWindDirection {
     pub code: String,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct HydratedJobType {
-    pub job: String,
+pub struct HydratedWindDirection {
+    pub description: String,
     
     #[deref]
     #[deref_mut]
     #[serde(flatten)]
-    inenr: IdentifiableJobType,
+    inner: IdentifiableWindDirection,
 }
 
 #[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
-pub enum JobType {
-    Hydrated(HydratedJobType),
-    Identifiable(IdentifiableJobType),
+pub enum WindDirection {
+    Hydrated(HydratedWindDirection),
+    Identifiable(IdentifiableWindDirection),
 }
 
-impl PartialEq for JobType {
+impl PartialEq for WindDirection {
     fn eq(&self, other: &Self) -> bool {
         self.code == other.code
     }
 }
 
-impl Deref for JobType {
-    type Target = IdentifiableJobType;
+impl Deref for WindDirection {
+    type Target = IdentifiableWindDirection;
 
     fn deref(&self) -> &Self::Target {
         match self {
@@ -44,7 +42,7 @@ impl Deref for JobType {
     }
 }
 
-impl DerefMut for JobType {
+impl DerefMut for WindDirection {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
             Self::Hydrated(inner) => inner,
@@ -53,6 +51,6 @@ impl DerefMut for JobType {
     }
 }
 
-impl MetaKind for JobType {
-    const ENDPOINT_NAME: &'static str = "jobTypes";
+impl MetaKind for WindDirection {
+    const ENDPOINT_NAME: &'static str = "windDirection";
 }

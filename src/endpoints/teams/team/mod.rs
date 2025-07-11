@@ -1,4 +1,4 @@
-pub mod alumni; // COMPLETE!
+pub mod alumni;
 pub mod coaches;
 pub mod personnel;
 pub mod leaders;
@@ -10,7 +10,7 @@ use crate::endpoints::divisions::NamedDivision;
 use crate::endpoints::league::NamedLeague;
 use crate::endpoints::sports::NamedSport;
 use crate::endpoints::venue::NamedVenue;
-use derive_more::{Deref, DerefMut, Display};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use serde_with::DefaultOnError;
 use serde_with::serde_as;
@@ -106,11 +106,17 @@ pub struct MLBTeam {
     pub inner: RegularTeam,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
 pub enum Team {
     MLB(MLBTeam),
     Regular(RegularTeam),
+}
+
+impl PartialEq for Team {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 impl Deref for Team {
@@ -192,7 +198,7 @@ pub struct TeamId(u32);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct UnhydratedOrganization {
+pub struct NamedOrganization {
     #[serde(rename = "parentOrgName")]
     pub name: String,
     #[serde(rename = "parentOrgId")]
@@ -203,18 +209,24 @@ pub struct UnhydratedOrganization {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct OrganizationId(u16);
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
 pub enum Organization {
-    Unhydrated(UnhydratedOrganization),
+    NamedOrganization(NamedOrganization),
+}
+
+impl PartialEq for Organization {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 impl Deref for Organization {
-    type Target = UnhydratedOrganization;
+    type Target = NamedOrganization;
 
     fn deref(&self) -> &Self::Target {
         match self {
-            Self::Unhydrated(inner) => inner,
+            Self::NamedOrganization(inner) => inner,
         }
     }
 }
@@ -222,7 +234,7 @@ impl Deref for Organization {
 impl DerefMut for Organization {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
-            Organization::Unhydrated(inner) => inner,
+            Organization::NamedOrganization(inner) => inner,
         }
     }
 }

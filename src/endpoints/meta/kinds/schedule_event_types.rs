@@ -4,37 +4,35 @@ use serde::Deserialize;
 use crate::endpoints::meta::MetaKind;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableJobType {
+pub struct IdentifiableScheduleEventType {
     pub code: String,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct HydratedJobType {
-    pub job: String,
-    
+pub struct HydratedScheduleEventType {
+    pub name: String,
+
     #[deref]
     #[deref_mut]
     #[serde(flatten)]
-    inenr: IdentifiableJobType,
+    inner: IdentifiableScheduleEventType,
 }
 
 #[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
-pub enum JobType {
-    Hydrated(HydratedJobType),
-    Identifiable(IdentifiableJobType),
+pub enum ScheduleEventType {
+    Hydrated(HydratedScheduleEventType),
+    Identifiable(IdentifiableScheduleEventType),
 }
 
-impl PartialEq for JobType {
+impl PartialEq for ScheduleEventType {
     fn eq(&self, other: &Self) -> bool {
         self.code == other.code
     }
 }
 
-impl Deref for JobType {
-    type Target = IdentifiableJobType;
+impl Deref for ScheduleEventType {
+    type Target = IdentifiableScheduleEventType;
 
     fn deref(&self) -> &Self::Target {
         match self {
@@ -44,7 +42,7 @@ impl Deref for JobType {
     }
 }
 
-impl DerefMut for JobType {
+impl DerefMut for ScheduleEventType {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
             Self::Hydrated(inner) => inner,
@@ -53,6 +51,6 @@ impl DerefMut for JobType {
     }
 }
 
-impl MetaKind for JobType {
-    const ENDPOINT_NAME: &'static str = "jobTypes";
+impl MetaKind for ScheduleEventType {
+    const ENDPOINT_NAME: &'static str = "scheduleEventTypes";
 }

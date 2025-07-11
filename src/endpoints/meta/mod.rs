@@ -61,6 +61,15 @@ pub struct MetaEndpointUrl<T: MetaKind> {
     _marker: PhantomData<T>,
 }
 
+impl <T: MetaKind> MetaEndpointUrl<T> {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            _marker: PhantomData,
+        }
+    }
+}
+
 impl<T: MetaKind> Display for MetaEndpointUrl<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/{}", T::ENDPOINT_NAME)

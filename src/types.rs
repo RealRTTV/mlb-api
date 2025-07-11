@@ -17,70 +17,6 @@ impl Default for Copyright {
     }
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
-#[serde(try_from = "PositionStruct")]
-pub enum Position {
-    Unknown = 0,
-    
-    Pitcher = 1,
-    Catcher = 2,
-    FirstBaseman = 3,
-    SecondBaseman = 4,
-    ThirdBaseman = 5,
-    Shortstop = 6,
-    Leftfielder = 7,
-    Centerfielder = 8,
-    Rightfielder = 9,
-    
-    Outfielder = b'O' as _, // Typically seen as primary position
-    Infielder = b'I' as _, // Typically seen as primary position
-    DesignatedHitter = 10,
-    PinchHitter = 11,
-    PinchRunner = 12,
-    TwoWayPlayer = b'Y' as _,
-}
-
-#[derive(Deserialize)]
-struct PositionStruct {
-    code: String,
-    abbreviation: String,
-}
-
-#[derive(Debug, Error)]
-pub enum PositionParseError {
-    #[error("Invlaid player position '{abbreviation}' (code = {code})")]
-    InvalidPosition {
-        code: String,
-        abbreviation: String,
-    }
-}
-
-impl TryFrom<PositionStruct> for Position {
-    type Error = PositionParseError;
-
-    fn try_from(value: PositionStruct) -> Result<Self, Self::Error> {
-        Ok(match &*value.abbreviation {
-            "X" => Self::Unknown,
-            "P" => Self::Pitcher,
-            "C" => Self::Catcher,
-            "1B" => Self::FirstBaseman,
-            "2B" => Self::SecondBaseman,
-            "3B" => Self::ThirdBaseman,
-            "SS" => Self::Shortstop,
-            "LF" => Self::Leftfielder,
-            "CF" => Self::Centerfielder,
-            "RF" => Self::Rightfielder,
-            "OF" => Self::Outfielder,
-            "IF" => Self::Infielder,
-            "DH" => Self::DesignatedHitter,
-            "PH" => Self::PinchHitter,
-            "PR" => Self::PinchRunner,
-            "TWP" => Self::TwoWayPlayer,
-            _ => return Err(PositionParseError::InvalidPosition { code: value.code, abbreviation: value.abbreviation }),
-        })
-    }
-}
-
 pub fn try_from_str<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Option<T>, D::Error> {
     Ok(String::deserialize(deserializer)?.parse::<T>().ok())
 }
@@ -155,7 +91,7 @@ pub enum Gender {
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
-#[serde(try_from = "HandednessStruct")]
+#[serde(try_from = "__HandednessStruct")]
 pub enum Handedness {
     Left,
     Right,
@@ -163,7 +99,7 @@ pub enum Handedness {
 }
 
 #[derive(Deserialize)]
-struct HandednessStruct {
+struct __HandednessStruct {
     code: String,
 }
 
@@ -173,10 +109,10 @@ pub enum HandednessParseError {
     InvalidHandedness(String),
 }
 
-impl TryFrom<HandednessStruct> for Handedness {
+impl TryFrom<__HandednessStruct> for Handedness {
     type Error = HandednessParseError;
 
-    fn try_from(value: HandednessStruct) -> Result<Self, Self::Error> {
+    fn try_from(value: __HandednessStruct) -> Result<Self, Self::Error> {
         Ok(match &*value.code {
             "L" => Self::Left,
             "R" => Self::Right,
@@ -187,3 +123,11 @@ impl TryFrom<HandednessStruct> for Handedness {
 }
 
 pub type NaiveDateRange = std::ops::RangeInclusive<NaiveDate>;
+
+pub fn deserialize_comma_seperated_vec<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Vec<T>, D::Error> where <T as FromStr>::Err: Debug {
+    String::deserialize(deserializer)?
+        .split(", ")
+        .map(|entry| T::from_str(entry))
+        .collect::<Result<Vec<T>, <T as FromStr>::Err>>()
+        .map_err(|e| Error::custom(format!("{e:?}")))
+}

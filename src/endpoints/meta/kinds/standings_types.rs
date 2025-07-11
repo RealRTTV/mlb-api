@@ -1,40 +1,37 @@
 use std::ops::{Deref, DerefMut};
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use crate::endpoints::meta::MetaKind;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableJobType {
-    pub code: String,
+pub struct IdentifiableStandingsType {
+    #[serde(rename = "name")] pub code: String,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct HydratedJobType {
-    pub job: String,
+pub struct HydratedStandingsType {
+    pub description: String,
     
     #[deref]
     #[deref_mut]
     #[serde(flatten)]
-    inenr: IdentifiableJobType,
+    inner: IdentifiableStandingsType,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
-#[serde(untagged)]
-pub enum JobType {
-    Hydrated(HydratedJobType),
-    Identifiable(IdentifiableJobType),
+#[derive(Debug, Deserialize, Eq, Clone)]
+pub enum StandingsType {
+    Hydrated(HydratedStandingsType),
+    Identifiable(IdentifiableStandingsType),
 }
 
-impl PartialEq for JobType {
+impl PartialEq for StandingsType {
     fn eq(&self, other: &Self) -> bool {
         self.code == other.code
     }
 }
 
-impl Deref for JobType {
-    type Target = IdentifiableJobType;
+impl Deref for StandingsType {
+    type Target = IdentifiableStandingsType;
 
     fn deref(&self) -> &Self::Target {
         match self {
@@ -44,7 +41,7 @@ impl Deref for JobType {
     }
 }
 
-impl DerefMut for JobType {
+impl DerefMut for StandingsType {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
             Self::Hydrated(inner) => inner,
@@ -53,6 +50,6 @@ impl DerefMut for JobType {
     }
 }
 
-impl MetaKind for JobType {
-    const ENDPOINT_NAME: &'static str = "jobTypes";
+impl MetaKind for StandingsType {
+    const ENDPOINT_NAME: &'static str = "standingsTypes";
 }

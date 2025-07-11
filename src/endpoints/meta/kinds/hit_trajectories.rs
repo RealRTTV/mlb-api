@@ -3,7 +3,7 @@ use serde::Deserialize;
 use crate::endpoints::meta::kinds::MetaKind;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
-#[serde(try_from = "HitTrajectoryStruct")]
+#[serde(try_from = "__HitTrajectoryStruct")]
 pub enum HitTrajectory {
     #[display("Bunt - Ground Ball")]
     BuntGrounder,
@@ -28,14 +28,14 @@ pub enum HitTrajectory {
 }
 
 #[derive(Deserialize)]
-struct HitTrajectoryStruct {
+struct __HitTrajectoryStruct {
     code: String,
 }
 
-impl TryFrom<HitTrajectoryStruct> for HitTrajectory {
+impl TryFrom<__HitTrajectoryStruct> for HitTrajectory {
     type Error = &'static str;
 
-    fn try_from(value: HitTrajectoryStruct) -> Result<Self, Self::Error> {
+    fn try_from(value: __HitTrajectoryStruct) -> Result<Self, Self::Error> {
         Ok(match &*value.code {
             "bunt_grounder" => HitTrajectory::BuntGrounder,
             "bunt_popup" => HitTrajectory::BuntPopup,

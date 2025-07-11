@@ -4,7 +4,7 @@ use crate::endpoints::Url;
 use crate::gen_params;
 use serde_with::DisplayFromStr;
 use std::ops::{Deref, DerefMut};
-use derive_more::{Deref, DerefMut, Display};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use serde_with::serde_as;
 use crate::types::Copyright;
@@ -68,12 +68,18 @@ pub struct HydratedVenue {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct VenueId(u32);
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
 pub enum Venue {
     Hydrated(HydratedVenue),
     Named(NamedVenue),
     Identifiable(IdentifiableVenue),
+}
+
+impl PartialEq for Venue {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 impl Deref for Venue {

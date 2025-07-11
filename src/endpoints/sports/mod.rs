@@ -1,6 +1,7 @@
 pub mod players;
 
-use derive_more::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut, From};
 use serde::Deserialize;
 use crate::types::Copyright;
 
@@ -61,18 +62,6 @@ pub struct IdentifiableSport {
     pub id: SportId,
 }
 
-impl From<IdentifiableSport> for Sport {
-    fn from(value: IdentifiableSport) -> Self {
-        #[cfg(feature = "static_sport")] {
-            if let Ok(sport) = StaticSport::try_from(value.id) {
-                return Sport::Static(sport)
-            }
-        }
-        
-        Sport::Identifiable(value)
-    }
-}
-
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedSport {
@@ -84,108 +73,22 @@ pub struct NamedSport {
     pub(super) inner: IdentifiableSport,
 }
 
-impl From<NamedSport> for Sport {
-    fn from(value: NamedSport) -> Self {
-        #[cfg(feature = "static_sport")] {
-            if let Ok(sport) = StaticSport::try_from(value.id) {
-                return Sport::Static(sport)
-            }
-        }
-        
-        Sport::Named(value)
-    }
+#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct HydratedSport {
+    pub code: String,
+    pub abbreviation: String,
+    #[serde(rename = "activeStatus")] pub active: bool,
+
+    #[deref]
+    #[deref_mut]
+    #[serde(flatten)]
+    pub(super) inner: NamedSport,
 }
 
-pub use hydrated::*;
-
-mod hydrated {
-    use derive_more::{Deref, DerefMut};
-    use serde::Deserialize;
-    use crate::endpoints::sports::{NamedSport, Sport};
-
-    #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-    #[serde(rename_all = "camelCase")]
-    pub struct HydratedSport {
-        pub code: String,
-        pub abbreviation: String,
-        #[serde(rename = "activeStatus")] pub active: bool,
-
-        #[deref]
-        #[deref_mut]
-        #[serde(flatten)]
-        pub(super) inner: NamedSport,
-    }
-    
-    impl From<HydratedSport> for Sport {
-        fn from(value: HydratedSport) -> Self {
-            Sport::Hydrated(value)
-        }
-    }
-}
-
-#[cfg(feature = "static_sport")]
-pub use r#static::*;
-
-#[cfg(feature = "static_sport")]
-mod r#static {
-    use serde::Deserialize;
-    use mlb_api_proc::HttpCache;
-    use crate::endpoints::sports::{IdentifiableSport, Sport, SportId};
-    use crate::endpoints::StaticParseError;
-
-    macro_rules! generate {
-    ({
-        "id": $id:literal,
-        "code": $code:literal,
-        "link": $_0:literal,
-        "name": $name:literal,
-        "abbreviation": $abbreviation:literal,
-        "sortOrder": $_2:literal,
-        "activeStatus": $activeStatus:literal
-    }) => {
-        StaticSport {
-            id: SportId($id),
-            code: $code,
-            name: $name,
-            abbreviation: $abbreviation,
-            active: $activeStatus,
-        }
-    };
-}
-
-    #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, HttpCache)]
-    #[serde(try_from = "IdentifiableSport")]
-    #[request(type = "GET", url = "http://statsapi.mlb.com/api/v1/sports")]
-    #[parse(macro = generate, variant_name = "abbreviation", type = StaticSport)]
-    #[try_from(type = SportId, field = "id", destruct = true)]
-    pub struct StaticSport {
-        pub id: SportId,
-        pub name: &'static str,
-        pub code: &'static str,
-        pub abbreviation: &'static str,
-        pub active: bool,
-    }
-    
-    impl TryFrom<IdentifiableSport> for StaticSport {
-        type Error = StaticParseError<SportId>;
-
-        fn try_from(value: IdentifiableSport) -> Result<Self, Self::Error> {
-            Self::try_from(value.id).map_err(|_| StaticParseError::InvalidId(value.id))
-        }
-    }
-    
-    impl From<StaticSport> for Sport {
-        fn from(value: StaticSport) -> Self {
-            Sport::Static(value)
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Eq, Clone)]
+#[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
 pub enum Sport {
-    #[cfg(feature = "static_sport")]
-    Static(StaticSport),
     Hydrated(HydratedSport),
     Named(NamedSport),
     Identifiable(IdentifiableSport),
@@ -193,19 +96,28 @@ pub enum Sport {
 
 impl PartialEq for Sport {
     fn eq(&self, other: &Self) -> bool {
-        self.id() == other.id()
+        self.id == other.id
     }
 }
 
-impl Sport {
-    #[must_use]
-    pub fn id(&self) -> SportId {
+impl Deref for Sport {
+    type Target = IdentifiableSport;
+
+    fn deref(&self) -> &Self::Target {
         match self {
-            #[cfg(feature = "static_sport")]
-            Self::Static(inner) => inner.id,
-            Self::Hydrated(inner) => inner.id,
-            Self::Named(inner) => inner.id,
-            Self::Identifiable(inner) => inner.id,
+            Self::Hydrated(inner) => inner,
+            Self::Named(inner) => inner,
+            Self::Identifiable(inner) => inner,
+        }
+    }
+}
+
+impl DerefMut for Sport {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Self::Hydrated(inner) => inner,
+            Self::Named(inner) => inner,
+            Self::Identifiable(inner) => inner,
         }
     }
 }

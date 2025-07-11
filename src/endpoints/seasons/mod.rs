@@ -32,13 +32,15 @@ impl Url<SeasonsResponse> for SeasonsEndpointUrl {}
 mod tests {
     use chrono::{Datelike, Local};
     use crate::endpoints::seasons::SeasonsEndpointUrl;
-    use crate::endpoints::sports::SportId;
+    use crate::endpoints::sports::SportsEndpointUrl;
     use crate::endpoints::Url;
 
     #[tokio::test]
     async fn parses_all_seasons() {
+        let all_sport_ids = SportsEndpointUrl { id: None }.get().await.unwrap().sports.into_iter().map(|sport| sport.id).collect::<Vec<_>>();
+        
         for season in 1871..=Local::now().year() as _ {
-            for id in SportId::IDS {
+            for id in all_sport_ids.iter().copied() {
                 dbg!(season, id);
                 let _response = SeasonsEndpointUrl { sport_id: id, season: Some(season) }.get().await.unwrap();
             }

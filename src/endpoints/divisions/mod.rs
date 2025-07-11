@@ -1,6 +1,6 @@
 use serde_with::DisplayFromStr;
 use std::ops::{Deref, DerefMut};
-use derive_more::{Deref, DerefMut, Display};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use serde_with::serde_as;
 use crate::endpoints::league::IdentifiableLeague;
@@ -50,7 +50,7 @@ pub struct HydratedDivision {
     inner: NamedDivision,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, From)]
 #[serde(untagged)]
 pub enum Division {
     Hydrated(HydratedDivision),

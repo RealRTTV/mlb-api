@@ -2,7 +2,7 @@ use derive_more::Display;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
-#[serde(try_from = "GameTypeStruct")]
+#[serde(try_from = "__GameTypeStruct")]
 pub enum GameType {
     #[display("Spring Training")]
     SpringTraining,
@@ -42,14 +42,14 @@ pub enum GameType {
 }
 
 #[derive(Deserialize)]
-struct GameTypeStruct {
+struct __GameTypeStruct {
     id: String,
 }
 
-impl TryFrom<GameTypeStruct> for GameType {
+impl TryFrom<__GameTypeStruct> for GameType {
     type Error = &'static str;
 
-    fn try_from(value: GameTypeStruct) -> Result<Self, Self::Error> {
+    fn try_from(value: __GameTypeStruct) -> Result<Self, Self::Error> {
         Ok(match &*value.id {
             "S" => GameType::SpringTraining,
             "I" => GameType::Intrasquad,

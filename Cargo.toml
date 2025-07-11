@@ -14,18 +14,15 @@ categories = ["api-bindings", "asynchronous"]
 [dependencies]
 serde = { version = "1.0.219", features = ["serde_derive"] }
 serde_with = "3.14.0"
-derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display"] }
+derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str", "into"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 thiserror = "2.0.12"
+uom = { version = "0.37.0", features = ["serde", "use_serde"] }
 
 [dev-dependencies]
 tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
 serde_path_to_error = "0.1.17"
 serde_json = "1.0.140"
-
-[dependencies.mlb-api-proc]
-path = "proc"
-optional = true
 
 [dependencies.ureq]
 version = "3.0.12"
@@ -38,21 +35,10 @@ features = ["json"]
 optional = true
 
 [features]
-default = ["reqwest", "static_all"]
+default = ["reqwest", "static_stat_types"]
 
 reqwest = ["dep:reqwest"]
 ureq = ["dep:ureq"]
 
-static_lib = ["dep:mlb-api-proc"]
-static_all = ["static_sport", "static_league", "static_awards", "static_baseball_stats", "static_event_types", "static_game_status", "static_hit_trajectory", "static_job_types", "static_languages", "static_league_leader_types"]
-
-static_sport = ["static_lib"]
-static_league = ["static_lib"]
-static_awards = ["static_lib", "static_sport", "static_league"]
-static_baseball_stats = ["static_lib"]
-static_event_types = ["static_lib"]
-static_game_status = ["static_lib"]
-static_hit_trajectory = ["static_lib"]
-static_job_types = ["static_lib"]
-static_languages = ["static_lib"]
-static_league_leader_types = ["static_lib"]
+cache = []
+static_stat_types = []

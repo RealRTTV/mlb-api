@@ -4,37 +4,41 @@ use serde::Deserialize;
 use crate::endpoints::meta::MetaKind;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableJobType {
+pub struct IdentifiableSituationCode {
     pub code: String,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct HydratedJobType {
-    pub job: String,
-    
+pub struct HydratedSituationCode {
+    #[serde(rename = "navigationMenu")] pub navigation_menu_kind: String,
+    pub description: String,
+    #[serde(rename = "team")] pub is_team_active: bool,
+    #[serde(rename = "batting")] pub is_batting_active: bool,
+    #[serde(rename = "fielding")] pub is_fielding_active: bool,
+    #[serde(rename = "pitching")] pub is_pitching_active: bool,
+
+
     #[deref]
     #[deref_mut]
     #[serde(flatten)]
-    inenr: IdentifiableJobType,
+    inner: IdentifiableSituationCode,
 }
 
 #[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
-pub enum JobType {
-    Hydrated(HydratedJobType),
-    Identifiable(IdentifiableJobType),
+pub enum SituationCode {
+    Hydrated(HydratedSituationCode),
+    Identifiable(IdentifiableSituationCode),
 }
 
-impl PartialEq for JobType {
+impl PartialEq for SituationCode {
     fn eq(&self, other: &Self) -> bool {
         self.code == other.code
     }
 }
 
-impl Deref for JobType {
-    type Target = IdentifiableJobType;
+impl Deref for SituationCode {
+    type Target = IdentifiableSituationCode;
 
     fn deref(&self) -> &Self::Target {
         match self {
@@ -44,7 +48,7 @@ impl Deref for JobType {
     }
 }
 
-impl DerefMut for JobType {
+impl DerefMut for SituationCode {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
             Self::Hydrated(inner) => inner,
@@ -53,6 +57,6 @@ impl DerefMut for JobType {
     }
 }
 
-impl MetaKind for JobType {
-    const ENDPOINT_NAME: &'static str = "jobTypes";
+impl MetaKind for SituationCode {
+    const ENDPOINT_NAME: &'static str = "situationCodes";
 }

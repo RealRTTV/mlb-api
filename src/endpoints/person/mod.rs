@@ -3,10 +3,11 @@ pub mod stats;
 use serde_with::DisplayFromStr;
 use std::ops::{Deref, DerefMut};
 use chrono::NaiveDate;
-use derive_more::{Deref, Display, DerefMut};
+use derive_more::{Deref, Display, DerefMut, From};
 use serde::Deserialize;
 use serde_with::serde_as;
-use crate::types::{Gender, Handedness, HeightMeasurement, Position};
+use crate::endpoints::meta::positions::Position;
+use crate::types::{Gender, Handedness, HeightMeasurement};
 
 #[serde_as]
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
@@ -27,6 +28,7 @@ pub struct Ballplayer {
     pub pitch_hand: Handedness,
     #[serde(flatten)]
     pub strike_zone: StrikeZone,
+    #[serde(rename = "nickName")] pub nickname: Option<String>,
 
     #[deref]
     #[deref_mut]
@@ -86,7 +88,7 @@ pub struct HydratedPerson {
     #[deref]
     #[deref_mut]
     #[serde(flatten)]
-    inner: UnhydratedPerson,
+    inner: NamedPerson,
 }
 
 impl HydratedPerson {
@@ -137,33 +139,51 @@ impl HydratedPerson {
     }
 }
 
+#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct NamedPerson {
+    pub full_name: String,
+    
+    #[deref]
+    #[deref_mut]
+    #[serde(flatten)]
+    inner: IdentifiablePerson,
+}
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct UnhydratedPerson {
+pub struct IdentifiablePerson {
     pub id: PersonId,
-    pub full_name: String,
 }
 
 #[repr(transparent)]
 #[derive(Debug, Deref, Display, Deserialize, PartialEq, Eq, Clone)]
 pub struct PersonId(u32);
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
 pub enum Person {
     Ballplayer(Ballplayer),
     Hydrated(HydratedPerson),
-    Unhydrated(UnhydratedPerson),
+    Named(NamedPerson),
+    Identifiable(IdentifiablePerson),
+}
+
+impl PartialEq for Person {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 impl Deref for Person {
-    type Target = UnhydratedPerson;
+    type Target = IdentifiablePerson;
 
     fn deref(&self) -> &Self::Target {
         match self {
             Self::Ballplayer(inner) => inner,
             Self::Hydrated(inner) => inner,
-            Self::Unhydrated(inner) => inner,
+            Self::Named(inner) => inner,
+            Self::Identifiable(inner) => inner,
         }
     }
 }
@@ -173,7 +193,8 @@ impl DerefMut for Person {
         match self {
             Self::Ballplayer(inner) => inner,
             Self::Hydrated(inner) => inner,
-            Self::Unhydrated(inner) => inner,
+            Self::Named(inner) => inner,
+            Self::Identifiable(inner) => inner,
         }
     }
 }
