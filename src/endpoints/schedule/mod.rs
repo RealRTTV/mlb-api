@@ -1,2 +1,2 @@
-pub mod tied;
 pub mod postseason;
+pub mod tied;

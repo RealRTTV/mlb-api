@@ -1,11 +1,11 @@
-pub mod diff;
-pub mod timestamps;
-pub mod changes;
-pub mod context_metrics;
-pub mod win_probability;
 pub mod boxscore;
-pub mod content;
+pub mod changes;
 pub mod color;
+pub mod content;
+pub mod context_metrics;
+pub mod diff;
 pub mod linescore;
 pub mod pbp;
+pub mod timestamps;
 pub mod uniforms;
+pub mod win_probability;

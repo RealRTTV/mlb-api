@@ -1,5 +1,5 @@
-use std::fmt::Debug;
 use serde::Deserialize;
+use std::fmt::Debug;
 
 pub mod awards;
 pub mod baseball_stats;
@@ -27,5 +27,5 @@ pub mod stat_types;
 pub mod wind_direction;
 
 pub trait MetaKind: Debug + for<'de> Deserialize<'de> + Eq + Clone {
-    const ENDPOINT_NAME: &'static str;
+	const ENDPOINT_NAME: &'static str;
 }

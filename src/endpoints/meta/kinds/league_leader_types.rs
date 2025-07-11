@@ -1,43 +1,44 @@
-use std::ops::{Deref, DerefMut};
-use derive_more::{From};
-use serde::Deserialize;
 use crate::endpoints::meta::MetaKind;
+use derive_more::From;
+use serde::Deserialize;
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableLeagueLeaderType {
-    #[serde(rename = "displayName")] pub name: String,
+	#[serde(rename = "displayName")]
+	pub name: String,
 }
 
 #[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
 pub enum LeagueLeaderType {
-    Identifiable(IdentifiableLeagueLeaderType),
+	Identifiable(IdentifiableLeagueLeaderType),
 }
 
 impl PartialEq for LeagueLeaderType {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
+	fn eq(&self, other: &Self) -> bool {
+		self.name == other.name
+	}
 }
 
 impl Deref for LeagueLeaderType {
-    type Target = IdentifiableLeagueLeaderType;
+	type Target = IdentifiableLeagueLeaderType;
 
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Self::Identifiable(inner) => inner,
-        }
-    }
+	fn deref(&self) -> &Self::Target {
+		match self {
+			Self::Identifiable(inner) => inner,
+		}
+	}
 }
 
 impl DerefMut for LeagueLeaderType {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        match self {
-            Self::Identifiable(inner) => inner,
-        }
-    }
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		match self {
+			Self::Identifiable(inner) => inner,
+		}
+	}
 }
 
 impl MetaKind for LeagueLeaderType {
-    const ENDPOINT_NAME: &'static str = "leagueLeaderTypes";
+	const ENDPOINT_NAME: &'static str = "leagueLeaderTypes";
 }

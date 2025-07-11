@@ -26,15 +26,12 @@ skip_macro_invocations = []
 format_strings = false
 hard_tabs = true
 hex_literal_case = "Upper"
-float_literal_trailing_zero = "Always"
 show_parse_errors = true
 imports_indent = "Block"
 imports_layout = "Mixed"
 indent_style = "Block"
 match_arm_blocks = false
 match_arm_leading_pipes = "Never"
-match_arm_indent = true
-match_arm_trailing_comma = true
 
 max_width = 250
 

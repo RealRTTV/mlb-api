@@ -1,19 +1,25 @@
-use serde::de::DeserializeOwned;
 use crate::request;
+use serde::de::DeserializeOwned;
 
 #[cfg(all(feature = "reqwest", feature = "ureq"))]
 compile_error!("Only one http backend is allowed!");
 
 pub trait Url<T: DeserializeOwned>: ToString {
-    #[cfg(feature = "ureq")]
-    fn get(&self) -> request::Result<T> where Self: Sized {
-        request::get(self)
-    }
+	#[cfg(feature = "ureq")]
+	fn get(&self) -> request::Result<T>
+	where
+		Self: Sized,
+	{
+		request::get(self)
+	}
 
-    #[cfg(feature = "reqwest")]
-    fn get(&self) -> impl Future<Output = request::Result<T>> where Self: Sized {
-        request::get(self)
-    }
+	#[cfg(feature = "reqwest")]
+	fn get(&self) -> impl Future<Output = request::Result<T>>
+	where
+		Self: Sized,
+	{
+		request::get(self)
+	}
 }
 
 #[macro_export]
@@ -33,7 +39,7 @@ macro_rules! gen_params {
     (@ $builder:ident $(,)?) => {};
     ($($args:tt)*) => {{
         use ::core::fmt::Write;
-        
+
         let mut builder = String::new();
         gen_params! { @ builder $($args)* }
         builder
