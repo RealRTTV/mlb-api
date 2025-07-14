@@ -20,6 +20,7 @@ pub struct HydratedStandingsType {
 }
 
 #[derive(Debug, Deserialize, Eq, Clone)]
+#[serde(untagged)]
 pub enum StandingsType {
 	Hydrated(HydratedStandingsType),
 	Identifiable(IdentifiableStandingsType),
@@ -53,4 +54,15 @@ impl DerefMut for StandingsType {
 
 impl MetaKind for StandingsType {
 	const ENDPOINT_NAME: &'static str = "standingsTypes";
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::StandingsType>::new().get().await.unwrap();
+	}
 }

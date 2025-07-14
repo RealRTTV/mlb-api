@@ -1,8 +1,9 @@
 use chrono::{Datelike, Local, NaiveDate};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use std::num::ParseIntError;
+use std::ops::Add;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -134,3 +135,41 @@ where
 		.collect::<Result<Vec<T>, <T as FromStr>::Err>>()
 		.map_err(|e| Error::custom(format!("{e:?}")))
 }
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub struct HomeAwaySplits<T> {
+	pub home: T,
+	pub away: T,
+}
+
+impl<T> HomeAwaySplits<T> {
+	#[must_use]
+	pub fn new(home: T, away: T) -> Self {
+		Self {
+			home,
+			away,
+		}
+	}
+}
+
+
+impl<T: Add> HomeAwaySplits<T> {
+	#[must_use]
+	pub fn combined(self) -> <T as Add>::Output {
+		self.home + self.away
+	}
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StatsAPIError {
+	message: String,
+}
+
+impl Display for StatsAPIError {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "An error occured parsing the statsapi http request: {}", self.message)
+	}
+}
+
+impl std::error::Error for StatsAPIError {}
+

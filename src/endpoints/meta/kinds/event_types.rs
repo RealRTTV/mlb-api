@@ -48,3 +48,14 @@ impl EventType {
 impl MetaKind for EventType {
 	const ENDPOINT_NAME: &'static str = "eventTypes";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::EventType>::new().get().await.unwrap();
+	}
+}

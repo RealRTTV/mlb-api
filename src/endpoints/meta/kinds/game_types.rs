@@ -1,7 +1,9 @@
+use std::fmt::{Debug, Formatter};
 use derive_more::Display;
 use serde::Deserialize;
+use crate::endpoints::MetaKind;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
+#[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display)]
 #[serde(try_from = "__GameTypeStruct")]
 pub enum GameType {
 	#[display("Spring Training")]
@@ -16,6 +18,7 @@ pub enum GameType {
 	#[display("Nineteenth Century Series")]
 	NineteenthCenturySeries,
 
+	#[default]
 	#[display("Regular Season")]
 	RegularSeason,
 
@@ -41,6 +44,25 @@ pub enum GameType {
 	Championship,
 }
 
+impl Debug for GameType {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}", match self {
+			Self::SpringTraining => 'S',
+			Self::Intrasquad => 'I',
+			Self::Exhibition => 'E',
+			Self::NineteenthCenturySeries => 'N',
+			Self::RegularSeason => 'R',
+			Self::AllStarGame => 'A',
+			Self::DivisionalSeries => 'D',
+			Self::WildCardSeries => 'F',
+			Self::ChampionshipSeries => 'L',
+			Self::WorldSeries => 'W',
+			Self::Playoffs => 'P',
+			Self::Championship => 'C',
+		})
+	}
+}
+
 #[derive(Deserialize)]
 struct __GameTypeStruct {
 	id: String,
@@ -61,9 +83,24 @@ impl TryFrom<__GameTypeStruct> for GameType {
 			"F" => GameType::WildCardSeries,
 			"L" => GameType::ChampionshipSeries,
 			"W" => GameType::WorldSeries,
-			"C" => GameType::Championship,
 			"P" => GameType::Playoffs,
+			"C" => GameType::Championship,
 			_ => return Err("unknown game type"),
 		})
+	}
+}
+
+impl MetaKind for GameType {
+	const ENDPOINT_NAME: &'static str = "gameTypes";
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::GameType>::new().get().await.unwrap();
 	}
 }

@@ -64,3 +64,14 @@ impl DerefMut for SituationCode {
 impl MetaKind for SituationCode {
 	const ENDPOINT_NAME: &'static str = "situationCodes";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::SituationCode>::new().get().await.unwrap();
+	}
+}

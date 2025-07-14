@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use crate::endpoints::meta::MetaKind;
 
 #[cfg(feature = "static_stat_types")]
@@ -9,6 +10,7 @@ mod r#static {
 	use serde::Deserialize;
 
 	#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr)]
+	#[non_exhaustive]
 	#[serde(try_from = "__StatTypeStruct")]
 	pub enum StatType {
 		Projected,
@@ -92,15 +94,22 @@ pub struct StatType {
 	pub name: String,
 }
 
+impl MetaKind for StatType {
+	const ENDPOINT_NAME: &'static str = "statTypes";
+}
+
 #[cfg(test)]
 mod tests {
 	use crate::endpoints::meta::MetaEndpointUrl;
-	use crate::endpoints::meta::stat_types::r#static::StatType;
-	use serde::Deserialize;
-
+	use crate::endpoints::StatsAPIUrl;
+	
 	#[cfg(feature = "static_stat_types")]
 	#[tokio::test]
 	async fn is_still_up_to_date() {
+		use crate::endpoints::meta::MetaEndpointUrl;
+		use crate::endpoints::meta::stat_types::StatType;
+		use serde::Deserialize;
+
 		#[derive(Deserialize)]
 		#[serde(rename_all = "camelCase")]
 		struct StatTypeStruct {
@@ -118,8 +127,9 @@ mod tests {
 		};
 		assert_eq!(first_kind.len(), second_kind.len());
 	}
-}
 
-impl MetaKind for StatType {
-	const ENDPOINT_NAME: &'static str = "statTypes";
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::StatType>::new().get().await.unwrap();
+	}
 }

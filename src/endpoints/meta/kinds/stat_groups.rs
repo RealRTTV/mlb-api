@@ -1,5 +1,6 @@
 use derive_more::FromStr;
 use serde::Deserialize;
+use crate::endpoints::MetaKind;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr)]
 #[serde(try_from = "__StatGroupStruct")]
@@ -25,5 +26,20 @@ impl TryFrom<__StatGroupStruct> for StatGroup {
 
 	fn try_from(value: __StatGroupStruct) -> Result<Self, Self::Error> {
 		value.display_name.parse::<Self>()
+	}
+}
+
+impl MetaKind for StatGroup {
+	const ENDPOINT_NAME: &'static str = "statGroups";
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::StatGroup>::new().get().await.unwrap();
 	}
 }

@@ -1,13 +1,11 @@
-use crate::endpoints::Url;
+use crate::endpoints::{MetaKind, StatsAPIUrl};
 use derive_more::{Deref, DerefMut};
 use serde::de::{Error, MapAccess, SeqAccess};
 use serde::{Deserialize, Deserializer, de};
 use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 
-mod kinds;
-
-pub use kinds::*;
+pub mod kinds;
 
 #[derive(Debug, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct MetaResponse<T: MetaKind> {
@@ -61,6 +59,12 @@ pub struct MetaEndpointUrl<T: MetaKind> {
 	_marker: PhantomData<T>,
 }
 
+impl<T: MetaKind> Drop for MetaResponse<T> {
+	fn drop(&mut self) {
+		let _ = core::hint::black_box(&self.entries);
+	}
+}
+
 impl<T: MetaKind> MetaEndpointUrl<T> {
 	#[must_use]
 	pub const fn new() -> Self {
@@ -74,4 +78,4 @@ impl<T: MetaKind> Display for MetaEndpointUrl<T> {
 	}
 }
 
-impl<T: MetaKind> Url<MetaResponse<T>> for MetaEndpointUrl<T> {}
+impl<T: MetaKind> StatsAPIUrl<MetaResponse<T>> for MetaEndpointUrl<T> {}

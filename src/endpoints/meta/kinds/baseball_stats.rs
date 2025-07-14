@@ -1,5 +1,5 @@
 use crate::endpoints::meta::MetaKind;
-use crate::endpoints::meta::stat_groups::StatGroup;
+use crate::endpoints::stat_groups::StatGroup;
 use derive_more::{Deref, DerefMut, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
@@ -59,4 +59,15 @@ impl DerefMut for BaseballStat {
 
 impl MetaKind for BaseballStat {
 	const ENDPOINT_NAME: &'static str = "baseballStats";
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::BaseballStat>::new().get().await.unwrap();
+	}
 }

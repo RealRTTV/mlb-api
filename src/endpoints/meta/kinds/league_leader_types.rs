@@ -42,3 +42,14 @@ impl DerefMut for LeagueLeaderType {
 impl MetaKind for LeagueLeaderType {
 	const ENDPOINT_NAME: &'static str = "leagueLeaderTypes";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::LeagueLeaderType>::new().get().await.unwrap();
+	}
+}

@@ -1,9 +1,12 @@
 pub mod players;
 
+use std::fmt::{Display, Formatter};
 use crate::types::Copyright;
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use crate::endpoints::StatsAPIUrl;
+use crate::gen_params;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -12,45 +15,36 @@ pub struct SportsResponse {
 	pub sports: Vec<Sport>,
 }
 
-pub use id::*;
+#[repr(transparent)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+pub struct SportId(pub(super) u32);
 
-mod id {
-	use crate::endpoints::Url;
-	use crate::endpoints::sports::SportsResponse;
-	use crate::gen_params;
-	use derive_more::{Deref, Display};
-	use serde::Deserialize;
-	use std::fmt::{Display, Formatter};
-
-	#[repr(transparent)]
-	#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
-	pub struct SportId(pub(super) u32);
-
-	impl SportId {
-		#[must_use]
-		pub const fn new(id: u32) -> Self {
-			Self(id)
-		}
+impl SportId {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self(id)
 	}
-
-	impl Default for SportId {
-		fn default() -> Self {
-			Self(1)
-		}
-	}
-
-	pub struct SportsEndpointUrl {
-		pub id: Option<SportId>,
-	}
-
-	impl Display for SportsEndpointUrl {
-		fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-			write!(f, "http://statsapi.mlb.com/api/v1/sports{params}", params = gen_params! { "sportId"?: self.id })
-		}
-	}
-
-	impl Url<SportsResponse> for SportsEndpointUrl {}
+	
+	pub const MLB: Self = Self::new(1);
 }
+
+impl Default for SportId {
+	fn default() -> Self {
+		Self(1)
+	}
+}
+
+pub struct SportsEndpointUrl {
+	pub id: Option<SportId>,
+}
+
+impl Display for SportsEndpointUrl {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "http://statsapi.mlb.com/api/v1/sports{params}", params = gen_params! { "sportId"?: self.id })
+	}
+}
+
+impl StatsAPIUrl<SportsResponse> for SportsEndpointUrl {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -122,10 +116,10 @@ impl DerefMut for Sport {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::endpoints::Url;
+	use crate::endpoints::StatsAPIUrl;
 
 	#[tokio::test]
-	async fn check_updated() {
+	async fn parse_all_sports() {
 		let _result = SportsEndpointUrl { id: None }.get().await.unwrap();
 	}
 }

@@ -1,6 +1,6 @@
 pub mod season;
 
-use crate::endpoints::Url;
+use crate::endpoints::StatsAPIUrl;
 use crate::endpoints::seasons::season::Season;
 use crate::endpoints::sports::SportId;
 use crate::gen_params;
@@ -26,24 +26,29 @@ impl Display for SeasonsEndpointUrl {
 	}
 }
 
-impl Url<SeasonsResponse> for SeasonsEndpointUrl {}
+impl StatsAPIUrl<SeasonsResponse> for SeasonsEndpointUrl {}
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::Url;
+	use crate::endpoints::StatsAPIUrl;
 	use crate::endpoints::seasons::SeasonsEndpointUrl;
-	use crate::endpoints::sports::SportsEndpointUrl;
+	use crate::endpoints::sports::{SportId, SportsEndpointUrl};
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
+	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parses_all_seasons() {
 		let all_sport_ids = SportsEndpointUrl { id: None }.get().await.unwrap().sports.into_iter().map(|sport| sport.id).collect::<Vec<_>>();
 
 		for season in 1871..=Local::now().year() as _ {
 			for id in all_sport_ids.iter().copied() {
-				dbg!(season, id);
 				let _response = SeasonsEndpointUrl { sport_id: id, season: Some(season) }.get().await.unwrap();
 			}
 		}
+	}
+	
+	#[tokio::test]
+	async fn parse_this_season_mlb() {
+		let _response = SeasonsEndpointUrl { sport_id: SportId::default(), season: None }.get().await.unwrap();
 	}
 }

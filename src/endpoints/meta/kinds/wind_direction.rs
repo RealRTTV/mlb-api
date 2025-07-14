@@ -54,3 +54,14 @@ impl DerefMut for WindDirection {
 impl MetaKind for WindDirection {
 	const ENDPOINT_NAME: &'static str = "windDirection";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::WindDirection>::new().get().await.unwrap();
+	}
+}

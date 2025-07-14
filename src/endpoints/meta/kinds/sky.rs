@@ -19,6 +19,7 @@ pub struct HydratedSkyDescription {
 }
 
 #[derive(Debug, Deserialize, Eq, Clone, From)]
+#[serde(untagged)]
 pub enum SkyDescription {
 	Hydrated(HydratedSkyDescription),
 	Identifiable(IdentifiableSkyDescription),
@@ -52,4 +53,15 @@ impl DerefMut for SkyDescription {
 
 impl MetaKind for SkyDescription {
 	const ENDPOINT_NAME: &'static str = "sky";
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::SkyDescription>::new().get().await.unwrap();
+	}
 }

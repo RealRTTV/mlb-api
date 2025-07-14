@@ -1,4 +1,4 @@
-use crate::endpoints::Url;
+use crate::endpoints::StatsAPIUrl;
 use crate::endpoints::sports::SportId;
 use crate::gen_params;
 use crate::types::Copyright;
@@ -119,18 +119,23 @@ impl Display for VenuesEndpointUrl {
 	}
 }
 
-impl Url<VenuesResponse> for VenuesEndpointUrl {}
+impl StatsAPIUrl<VenuesResponse> for VenuesEndpointUrl {}
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::Url;
+	use crate::endpoints::StatsAPIUrl;
 	use crate::endpoints::venue::VenuesEndpointUrl;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
-	async fn parse_all_venues() {
+	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
+	async fn parse_all_venues_all_seasons() {
 		for season in 1876..=Local::now().year() as _ {
 			let _response = VenuesEndpointUrl { id: None, season: Some(season) }.get().await.unwrap();
 		}
+	}
+	
+	async fn parse_all_venues() {
+		let _response = VenuesEndpointUrl { id: None, season: None }.get().await.unwrap();
 	}
 }

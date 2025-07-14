@@ -1,7 +1,13 @@
 use serde::de::DeserializeOwned;
-
-pub type Result<T, E = ureq::Error> = std::result::Result<T, E>;
+use crate::types::StatsAPIError;
+use crate::request::{Error, Result};
 
 pub fn get<T: DeserializeOwned>(url: &impl ToString) -> Result<T> {
-	ureq::get(url.to_string()).call()?.into_body().read_json::<T>()
+	let bytes= ureq::get(url.to_string()).call()?.into_body().read_to_vec()?;
+	match serde_json::from_slice::<'_, T>(&bytes) {
+		Ok(t) => return Ok(t),
+		Err(e) if e.is_data() => {}
+		Err(e) => return Err(Error::Serde(e)),
+	}
+	Err(Error::StatsAPI(serde_json::from_slice::<'_, StatsAPIError>(&bytes)?))
 }

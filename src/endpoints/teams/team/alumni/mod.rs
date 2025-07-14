@@ -1,4 +1,4 @@
-use crate::endpoints::Url;
+use crate::endpoints::StatsAPIUrl;
 use crate::endpoints::person::Ballplayer;
 use crate::endpoints::teams::team::TeamId;
 use crate::gen_params;
@@ -24,21 +24,21 @@ impl Display for AlumniEndpointUrl {
 	}
 }
 
-impl Url<AlumniResponse> for AlumniEndpointUrl {}
+impl StatsAPIUrl<AlumniResponse> for AlumniEndpointUrl {}
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::Url;
+	use crate::endpoints::StatsAPIUrl;
 	use crate::endpoints::teams::TeamsEndpointUrl;
 	use crate::endpoints::teams::team::alumni::{AlumniEndpointUrl, AlumniResponse};
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
+	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn test_all_players_this_year_all_teams() {
 		let season = Local::now().year() as _;
 		let teams = TeamsEndpointUrl { sport_id: None, season: Some(season) }.get().await.unwrap();
-		for team in teams.teams.into_iter() {
-			dbg!(&*team.name);
+		for team in teams.teams {
 			let json = reqwest::get(AlumniEndpointUrl { team_id: team.id, season }.to_string()).await.unwrap().bytes().await.unwrap();
 			let mut de = serde_json::Deserializer::from_slice(&json);
 			let result: Result<AlumniResponse, serde_path_to_error::Error<_>> = serde_path_to_error::deserialize(&mut de);

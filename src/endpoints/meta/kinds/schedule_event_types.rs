@@ -54,3 +54,14 @@ impl DerefMut for ScheduleEventType {
 impl MetaKind for ScheduleEventType {
 	const ENDPOINT_NAME: &'static str = "scheduleEventTypes";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::ScheduleEventType>::new().get().await.unwrap();
+	}
+}

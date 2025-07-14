@@ -6,7 +6,7 @@ use std::ops::{Deref, DerefMut};
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentifiableLanguage {
-	id: LanguageId,
+	#[serde(rename = "languageId")] id: LanguageId,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
@@ -86,4 +86,15 @@ impl DerefMut for Language {
 
 impl MetaKind for Language {
 	const ENDPOINT_NAME: &'static str = "languages";
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::Language>::new().get().await.unwrap();
+	}
 }

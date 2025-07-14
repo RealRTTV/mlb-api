@@ -56,3 +56,14 @@ impl DerefMut for RosterType {
 impl MetaKind for RosterType {
 	const ENDPOINT_NAME: &'static str = "rosterTypes";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::RosterType>::new().get().await.unwrap();
+	}
+}

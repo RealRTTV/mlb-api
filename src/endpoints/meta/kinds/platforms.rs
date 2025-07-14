@@ -56,3 +56,14 @@ impl DerefMut for Platform {
 impl MetaKind for Platform {
 	const ENDPOINT_NAME: &'static str = "platforms";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::Platform>::new().get().await.unwrap();
+	}
+}

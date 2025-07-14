@@ -54,3 +54,14 @@ impl DerefMut for PitchType {
 impl MetaKind for PitchType {
 	const ENDPOINT_NAME: &'static str = "pitchTypes";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::PitchType>::new().get().await.unwrap();
+	}
+}

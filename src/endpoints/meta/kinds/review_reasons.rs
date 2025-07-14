@@ -54,3 +54,14 @@ impl DerefMut for ReviewReason {
 impl MetaKind for ReviewReason {
 	const ENDPOINT_NAME: &'static str = "reviewReasons";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::ReviewReason>::new().get().await.unwrap();
+	}
+}

@@ -1,11 +1,14 @@
-use crate::endpoints::league::IdentifiableLeague;
-use crate::endpoints::sports::IdentifiableSport;
+use std::fmt::{Display, Formatter};
+use crate::endpoints::league::{IdentifiableLeague, LeagueId};
+use crate::endpoints::sports::{IdentifiableSport, SportId};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::ops::{Deref, DerefMut};
+use crate::endpoints::StatsAPIUrl;
+use crate::gen_params;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -42,7 +45,7 @@ pub struct HydratedDivision {
 	pub league: IdentifiableLeague,
 	pub sport: IdentifiableSport,
 	pub has_wildcard: bool,
-	pub num_playoff_teams: u8,
+	pub num_playoff_teams: Option<u8>,
 	pub active: bool,
 
 	#[deref]
@@ -84,3 +87,30 @@ impl DerefMut for Division {
 #[repr(transparent)]
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct DivisionId(u32);
+
+#[derive(Default)]
+pub struct DivisionsEndpointUrl {
+	pub division_id: Option<DivisionId>,
+	pub league_id: Option<LeagueId>,
+	pub sport_id: Option<SportId>,
+	pub season: Option<u16>,
+}
+
+impl Display for DivisionsEndpointUrl {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "http://statsapi.mlb.com/api/v1/divisions{params}", params = gen_params! { "divisionId"?: self.division_id, "leagueId"?: self.league_id, "sportId"?: self.sport_id, "season"?: self.season })
+	}
+}
+
+impl StatsAPIUrl<DivisionsResponse> for DivisionsEndpointUrl {}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::divisions::DivisionsEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn all_divisions_this_season() {
+		let _response = DivisionsEndpointUrl::default().get().await.unwrap();
+	}
+}

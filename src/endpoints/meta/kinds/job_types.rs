@@ -56,3 +56,14 @@ impl DerefMut for JobType {
 impl MetaKind for JobType {
 	const ENDPOINT_NAME: &'static str = "jobTypes";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::JobType>::new().get().await.unwrap();
+	}
+}

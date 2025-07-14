@@ -1,4 +1,4 @@
-use crate::endpoints::Url;
+use crate::endpoints::StatsAPIUrl;
 use crate::endpoints::person::HydratedPerson;
 use crate::endpoints::sports::SportId;
 use crate::gen_params;
@@ -25,19 +25,25 @@ impl Display for SportsPlayersEndpointUrl {
 	}
 }
 
-impl Url<SportsPlayersResponse> for SportsPlayersEndpointUrl {}
+impl StatsAPIUrl<SportsPlayersResponse> for SportsPlayersEndpointUrl {}
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::endpoints::Url;
+	use crate::endpoints::StatsAPIUrl;
 	use crate::endpoints::sports::SportId;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
-	async fn parse_all_players_mlb() {
+	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
+	async fn parse_all_players_all_seasons_mlb() {
 		for season in 1876..=Local::now().year() as _ {
 			let _response = SportsPlayersEndpointUrl { id: SportId::default(), season: Some(season) }.get().await.unwrap();
 		}
+	}
+	
+	#[tokio::test]
+	async fn parse_all_players_mlb() {
+		let _response = SportsPlayersEndpointUrl { id: SportId::default(), season: None }.get().await.unwrap();
 	}
 }

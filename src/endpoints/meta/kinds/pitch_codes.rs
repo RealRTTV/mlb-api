@@ -38,18 +38,18 @@ pub struct IdentifiablePitchCode {
 
 #[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
-pub enum PitcherCode {
+pub enum PitchCode {
 	Hydrated(HydratedPitchCode),
 	Identifiable(IdentifiablePitchCode),
 }
 
-impl PartialEq for PitcherCode {
+impl PartialEq for PitchCode {
 	fn eq(&self, other: &Self) -> bool {
 		self.code == other.code
 	}
 }
 
-impl Deref for PitcherCode {
+impl Deref for PitchCode {
 	type Target = IdentifiablePitchCode;
 
 	fn deref(&self) -> &Self::Target {
@@ -60,7 +60,7 @@ impl Deref for PitcherCode {
 	}
 }
 
-impl DerefMut for PitcherCode {
+impl DerefMut for PitchCode {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		match self {
 			Self::Hydrated(inner) => inner,
@@ -69,6 +69,17 @@ impl DerefMut for PitcherCode {
 	}
 }
 
-impl MetaKind for PitcherCode {
+impl MetaKind for PitchCode {
 	const ENDPOINT_NAME: &'static str = "pitchCodes";
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::PitchCode>::new().get().await.unwrap();
+	}
 }

@@ -52,3 +52,14 @@ impl TryFrom<__HitTrajectoryStruct> for HitTrajectory {
 impl MetaKind for HitTrajectory {
 	const ENDPOINT_NAME: &'static str = "hitTrajectories";
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIUrl;
+
+	#[tokio::test]
+	async fn parse_meta() {
+		let _response = MetaEndpointUrl::<super::HitTrajectory>::new().get().await.unwrap();
+	}
+}

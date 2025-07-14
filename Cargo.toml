@@ -1,6 +1,6 @@
 [package]
 name = "mlb-api"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Riley"]
 edition = "2024"
 description = "Endpoints for MLB's public Statcast API."
@@ -14,15 +14,15 @@ categories = ["api-bindings", "asynchronous"]
 [dependencies]
 serde = { version = "1.0.219", features = ["serde_derive"] }
 serde_with = "3.14.0"
-derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str", "into"] }
+derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str", "try_into"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 thiserror = "2.0.12"
 uom = { version = "0.37.0", features = ["serde", "use_serde"] }
+serde_json = "1.0.140"
 
 [dev-dependencies]
 tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
 serde_path_to_error = "0.1.17"
-serde_json = "1.0.140"
 
 [dependencies.ureq]
 version = "3.0.12"
@@ -35,10 +35,12 @@ features = ["json"]
 optional = true
 
 [features]
-default = ["reqwest", "static_stat_types"]
+default = ["reqwest"]
+
+cache = []
+static_stat_types = []
+_heavy_tests = []
 
 reqwest = ["dep:reqwest"]
 ureq = ["dep:ureq"]
 
-cache = []
-static_stat_types = []

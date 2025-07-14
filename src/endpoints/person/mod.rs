@@ -1,6 +1,6 @@
 pub mod stats;
 
-use crate::endpoints::meta::positions::Position;
+use crate::endpoints::positions::Position;
 use crate::types::{Gender, Handedness, HeightMeasurement};
 use chrono::NaiveDate;
 use derive_more::{Deref, DerefMut, Display, From};
