@@ -1,14 +1,14 @@
-use std::fmt::{Display, Formatter};
+use crate::endpoints::StatsAPIUrl;
 use crate::endpoints::league::{IdentifiableLeague, LeagueId};
 use crate::endpoints::sports::{IdentifiableSport, SportId};
+use crate::gen_params;
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
+use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use crate::endpoints::StatsAPIUrl;
-use crate::gen_params;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -98,16 +98,22 @@ pub struct DivisionsEndpointUrl {
 
 impl Display for DivisionsEndpointUrl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/divisions{params}", params = gen_params! { "divisionId"?: self.division_id, "leagueId"?: self.league_id, "sportId"?: self.sport_id, "season"?: self.season })
+		write!(
+			f,
+			"http://statsapi.mlb.com/api/v1/divisions{}",
+			gen_params! { "divisionId"?: self.division_id, "leagueId"?: self.league_id, "sportId"?: self.sport_id, "season"?: self.season }
+		)
 	}
 }
 
-impl StatsAPIUrl<DivisionsResponse> for DivisionsEndpointUrl {}
+impl StatsAPIUrl for DivisionsEndpointUrl {
+	type Response = DivisionsResponse;
+}
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::divisions::DivisionsEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::divisions::DivisionsEndpointUrl;
 
 	#[tokio::test]
 	async fn all_divisions_this_season() {

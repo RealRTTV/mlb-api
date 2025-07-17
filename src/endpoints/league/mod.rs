@@ -7,6 +7,7 @@ use crate::endpoints::sports::NamedSport;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -104,7 +105,7 @@ impl LeagueId {
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum League {
 	Hydrated(HydratedLeague),

@@ -1,12 +1,24 @@
 use crate::endpoints::meta::MetaKind;
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
+
+#[repr(transparent)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone)]
+pub struct JobTypeId(String);
+
+impl JobTypeId {
+	#[must_use]
+	pub const fn new(id: String) -> Self {
+		Self(id)
+	}
+}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentifiableJobType {
-	pub code: String,
+	#[serde(rename = "code")] pub id: JobTypeId,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
@@ -20,7 +32,7 @@ pub struct HydratedJobType {
 	inenr: IdentifiableJobType,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum JobType {
 	Hydrated(HydratedJobType),
@@ -29,7 +41,7 @@ pub enum JobType {
 
 impl PartialEq for JobType {
 	fn eq(&self, other: &Self) -> bool {
-		self.code == other.code
+		self.id == other.id
 	}
 }
 
@@ -59,8 +71,8 @@ impl MetaKind for JobType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

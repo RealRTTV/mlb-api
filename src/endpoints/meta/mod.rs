@@ -59,12 +59,6 @@ pub struct MetaEndpointUrl<T: MetaKind> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: MetaKind> Drop for MetaResponse<T> {
-	fn drop(&mut self) {
-		let _ = core::hint::black_box(&self.entries);
-	}
-}
-
 impl<T: MetaKind> MetaEndpointUrl<T> {
 	#[must_use]
 	pub const fn new() -> Self {
@@ -78,4 +72,6 @@ impl<T: MetaKind> Display for MetaEndpointUrl<T> {
 	}
 }
 
-impl<T: MetaKind> StatsAPIUrl<MetaResponse<T>> for MetaEndpointUrl<T> {}
+impl<T: MetaKind> StatsAPIUrl for MetaEndpointUrl<T> {
+	type Response = MetaResponse<T>;
+}

@@ -1,7 +1,8 @@
 use chrono::{Datelike, Local, NaiveDate};
+use derive_more::Display;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::Debug;
 use std::num::ParseIntError;
 use std::ops::Add;
 use std::str::FromStr;
@@ -125,6 +126,8 @@ impl TryFrom<__HandednessStruct> for Handedness {
 
 pub type NaiveDateRange = std::ops::RangeInclusive<NaiveDate>;
 
+pub(crate) const MLB_API_DATE_FORMAT: &str = "%m/%d/%Y";
+
 pub fn deserialize_comma_seperated_vec<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
 	<T as FromStr>::Err: Debug,
@@ -144,14 +147,10 @@ pub struct HomeAwaySplits<T> {
 
 impl<T> HomeAwaySplits<T> {
 	#[must_use]
-	pub fn new(home: T, away: T) -> Self {
-		Self {
-			home,
-			away,
-		}
+	pub const fn new(home: T, away: T) -> Self {
+		Self { home, away }
 	}
 }
-
 
 impl<T: Add> HomeAwaySplits<T> {
 	#[must_use]
@@ -160,16 +159,10 @@ impl<T: Add> HomeAwaySplits<T> {
 	}
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Display)]
+#[display("An error occurred parsing the statsapi http request: {message}")]
 pub struct StatsAPIError {
 	message: String,
 }
 
-impl Display for StatsAPIError {
-	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "An error occured parsing the statsapi http request: {}", self.message)
-	}
-}
-
 impl std::error::Error for StatsAPIError {}
-

@@ -1,7 +1,7 @@
-use std::fmt::{Debug, Formatter};
+use crate::endpoints::MetaKind;
 use derive_more::Display;
 use serde::Deserialize;
-use crate::endpoints::MetaKind;
+use std::fmt::{Debug, Formatter};
 
 #[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display)]
 #[serde(try_from = "__GameTypeStruct")]
@@ -46,20 +46,24 @@ pub enum GameType {
 
 impl Debug for GameType {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}", match self {
-			Self::SpringTraining => 'S',
-			Self::Intrasquad => 'I',
-			Self::Exhibition => 'E',
-			Self::NineteenthCenturySeries => 'N',
-			Self::RegularSeason => 'R',
-			Self::AllStarGame => 'A',
-			Self::DivisionalSeries => 'D',
-			Self::WildCardSeries => 'F',
-			Self::ChampionshipSeries => 'L',
-			Self::WorldSeries => 'W',
-			Self::Playoffs => 'P',
-			Self::Championship => 'C',
-		})
+		write!(
+			f,
+			"{}",
+			match self {
+				Self::SpringTraining => 'S',
+				Self::Intrasquad => 'I',
+				Self::Exhibition => 'E',
+				Self::NineteenthCenturySeries => 'N',
+				Self::RegularSeason => 'R',
+				Self::AllStarGame => 'A',
+				Self::DivisionalSeries => 'D',
+				Self::WildCardSeries => 'F',
+				Self::ChampionshipSeries => 'L',
+				Self::WorldSeries => 'W',
+				Self::Playoffs => 'P',
+				Self::Championship => 'C',
+			}
+		)
 	}
 }
 
@@ -96,8 +100,8 @@ impl MetaKind for GameType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

@@ -2,13 +2,14 @@ use crate::endpoints::meta::MetaKind;
 use derive_more::From;
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableLogicalEvent {
 	pub code: String,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum LogicalEvent {
 	Identifiable(IdentifiableLogicalEvent),
@@ -44,8 +45,8 @@ impl MetaKind for LogicalEvent {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

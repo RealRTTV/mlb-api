@@ -1,8 +1,8 @@
-pub mod alumni;
-pub mod coaches;
+pub mod alumni; // done
+pub mod coaches; // done
 pub mod leaders;
-pub mod personnel;
-pub mod roster;
+pub mod personnel; // done
+pub mod roster; // done
 pub mod stats;
 pub mod uniforms;
 
@@ -10,11 +10,12 @@ use crate::endpoints::divisions::NamedDivision;
 use crate::endpoints::league::NamedLeague;
 use crate::endpoints::sports::NamedSport;
 use crate::endpoints::venue::NamedVenue;
-use derive_more::{Deref, DerefMut, Display, From, TryInto};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use serde_with::DefaultOnError;
 use serde_with::serde_as;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[serde_as]
 #[derive(Deserialize)]
@@ -58,7 +59,7 @@ pub struct RegularTeam {
 	pub division: Option<NamedDivision>,
 	pub sport: NamedSport,
 	pub parent_organization: Option<Organization>,
-	
+
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
@@ -79,7 +80,7 @@ impl From<RegularTeamRaw> for RegularTeam {
 			division,
 			sport,
 			parent_organization,
-			inner
+			inner,
 		} = value;
 
 		RegularTeam {
@@ -94,7 +95,7 @@ impl From<RegularTeamRaw> for RegularTeam {
 			division,
 			sport,
 			parent_organization,
-			inner
+			inner,
 		}
 	}
 }
@@ -115,7 +116,7 @@ pub struct MLBTeam {
 struct NamedTeamRaw {
 	#[serde(flatten)]
 	name: TeamNameRaw,
-	
+
 	#[serde(flatten)]
 	inner: IdentifiableTeam,
 }
@@ -123,10 +124,7 @@ struct NamedTeamRaw {
 impl From<NamedTeamRaw> for NamedTeam {
 	fn from(value: NamedTeamRaw) -> Self {
 		let NamedTeamRaw { name, inner } = value;
-		Self {
-			name: name.initialize(inner.id),
-			inner,
-		}
+		Self { name: name.initialize(inner.id), inner }
 	}
 }
 
@@ -134,7 +132,7 @@ impl From<NamedTeamRaw> for NamedTeam {
 #[serde(from = "NamedTeamRaw")]
 pub struct NamedTeam {
 	pub name: TeamName,
-	
+
 	#[deref]
 	#[deref_mut]
 	inner: IdentifiableTeam,
@@ -145,13 +143,20 @@ pub struct IdentifiableTeam {
 	pub id: TeamId,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, TryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Team {
 	MLB(MLBTeam),
 	Regular(RegularTeam),
 	Named(NamedTeam),
 	Identifiable(IdentifiableTeam),
+}
+
+impl Team {
+	#[must_use]
+	pub(crate) const fn unknown_team() -> Self {
+		Self::Identifiable(IdentifiableTeam { id: TeamId::new(0) })
+	}
 }
 
 impl PartialEq for Team {
@@ -239,7 +244,7 @@ pub struct HydratedTeamName {
 	#[deref]
 	#[deref_mut]
 	inner: UnhydratedTeamName,
-	
+
 	pub team_code: String,
 	pub file_code: String,
 	pub abbreviation: String,
@@ -261,11 +266,13 @@ impl TeamNameRaw {
 			franchise_name,
 			club_name,
 		} = self;
-		
-		let inner = UnhydratedTeamName {
-			name
-		};
-		if let Some(team_code) = team_code && let Some(abbreviation) = abbreviation && let Some(team_name) = team_name && let Some(short_name) = short_name {
+
+		let inner = UnhydratedTeamName { name };
+		if let Some(team_code) = team_code
+			&& let Some(abbreviation) = abbreviation
+			&& let Some(team_name) = team_name
+			&& let Some(short_name) = short_name
+		{
 			TeamName::Hydrated(HydratedTeamName {
 				file_code: file_code.unwrap_or_else(|| format!("t{id}")),
 				franchise_name: franchise_name.unwrap_or_else(|| short_name.clone()),
@@ -274,7 +281,7 @@ impl TeamNameRaw {
 				abbreviation,
 				team_name,
 				short_name,
-				inner
+				inner,
 			})
 		} else {
 			TeamName::Unhydrated(inner)
@@ -285,6 +292,13 @@ impl TeamNameRaw {
 #[repr(transparent)]
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct TeamId(u32);
+
+impl TeamId {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self(id)
+	}
+}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -299,7 +313,7 @@ pub struct NamedOrganization {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct OrganizationId(u16);
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Organization {
 	NamedOrganization(NamedOrganization),

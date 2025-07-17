@@ -1,6 +1,6 @@
+use crate::endpoints::MetaKind;
 use derive_more::FromStr;
 use serde::Deserialize;
-use crate::endpoints::MetaKind;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr)]
 #[serde(try_from = "__StatGroupStruct")]
@@ -35,8 +35,8 @@ impl MetaKind for StatGroup {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

@@ -2,6 +2,7 @@ use crate::endpoints::meta::MetaKind;
 use derive_more::{Deref, DerefMut, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct HydratedePlatform {
@@ -20,7 +21,7 @@ pub struct IdentifiablePlatform {
 	pub code: String,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Platform {
 	Hydrated(HydratedePlatform),
@@ -59,8 +60,8 @@ impl MetaKind for Platform {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

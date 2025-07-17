@@ -1,17 +1,8 @@
 use crate::endpoints::StatsAPIUrl;
-use crate::endpoints::person::HydratedPerson;
 use crate::endpoints::sports::SportId;
 use crate::gen_params;
-use crate::types::Copyright;
-use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct SportsPlayersResponse {
-	pub copyright: Copyright,
-	pub people: Vec<HydratedPerson>,
-}
+use crate::endpoints::people::PeopleResponse;
 
 #[derive(Default)]
 pub struct SportsPlayersEndpointUrl {
@@ -21,11 +12,13 @@ pub struct SportsPlayersEndpointUrl {
 
 impl Display for SportsPlayersEndpointUrl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/sports/{id}/players{params}", id = self.id, params = gen_params! { "sportId": self.id, "season"?: self.season })
+		write!(f, "http://statsapi.mlb.com/api/v1/sports/{}/players{}", self.id, gen_params! { "sportId": self.id, "season"?: self.season })
 	}
 }
 
-impl StatsAPIUrl<SportsPlayersResponse> for SportsPlayersEndpointUrl {}
+impl StatsAPIUrl for SportsPlayersEndpointUrl {
+	type Response = PeopleResponse;
+}
 
 #[cfg(test)]
 mod tests {
@@ -41,7 +34,7 @@ mod tests {
 			let _response = SportsPlayersEndpointUrl { id: SportId::default(), season: Some(season) }.get().await.unwrap();
 		}
 	}
-	
+
 	#[tokio::test]
 	async fn parse_all_players_mlb() {
 		let _response = SportsPlayersEndpointUrl { id: SportId::default(), season: None }.get().await.unwrap();

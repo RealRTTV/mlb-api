@@ -12,7 +12,7 @@ pub mod draft;
 pub mod game;
 pub mod high_low;
 pub mod home_run_derby;
-pub mod jobs;
+pub mod jobs; // done
 pub mod league; // done
 pub mod meta; // done
 pub mod people;
@@ -23,7 +23,7 @@ pub mod sports; // done
 pub mod standings;
 pub mod stats;
 pub mod teams; // done
-pub mod transactions;
+pub mod transactions; // done
 pub mod venue; // done
 
 pub use meta::kinds::*;

@@ -8,6 +8,7 @@ use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -66,7 +67,7 @@ pub struct HydratedVenue {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct VenueId(u32);
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Venue {
 	Hydrated(HydratedVenue),
@@ -110,16 +111,13 @@ pub struct VenuesEndpointUrl {
 
 impl Display for VenuesEndpointUrl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(
-			f,
-			"http://statsapi.mlb.com/api/v1/venues{id}{params}",
-			id = self.id.map_or(String::new(), |id| format!("/{id}")),
-			params = gen_params! { "season"?: self.season }
-		)
+		write!(f, "http://statsapi.mlb.com/api/v1/venues{}{}", self.id.map_or(String::new(), |id| format!("/{id}")), gen_params! { "season"?: self.season })
 	}
 }
 
-impl StatsAPIUrl<VenuesResponse> for VenuesEndpointUrl {}
+impl StatsAPIUrl for VenuesEndpointUrl {
+	type Response = VenuesResponse;
+}
 
 #[cfg(test)]
 mod tests {
@@ -134,7 +132,7 @@ mod tests {
 			let _response = VenuesEndpointUrl { id: None, season: Some(season) }.get().await.unwrap();
 		}
 	}
-	
+
 	async fn parse_all_venues() {
 		let _response = VenuesEndpointUrl { id: None, season: None }.get().await.unwrap();
 	}

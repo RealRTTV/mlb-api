@@ -2,6 +2,7 @@ use crate::endpoints::meta::MetaKind;
 use derive_more::{Deref, DerefMut, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableSituationCode {
@@ -28,7 +29,7 @@ pub struct HydratedSituationCode {
 	inner: IdentifiableSituationCode,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum SituationCode {
 	Hydrated(HydratedSituationCode),
@@ -67,8 +68,8 @@ impl MetaKind for SituationCode {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

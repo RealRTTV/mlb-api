@@ -1,12 +1,30 @@
 use crate::endpoints::meta::MetaKind;
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
+
+#[repr(transparent)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone)]
+pub struct RosterTypeId(String);
+
+impl RosterTypeId {
+	#[must_use]
+	pub const fn new(id: String) -> Self {
+		Self(id)
+	}
+}
+
+impl Default for RosterTypeId {
+	fn default() -> Self {
+		Self::new("active".to_owned())
+	}
+}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableRosterType {
 	#[serde(rename = "lookupName")]
-	pub name: String,
+	pub id: RosterTypeId,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
@@ -20,7 +38,7 @@ pub struct HydratedRosterType {
 	inner: IdentifiableRosterType,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum RosterType {
 	Hydrated(HydratedRosterType),
@@ -29,7 +47,7 @@ pub enum RosterType {
 
 impl PartialEq for RosterType {
 	fn eq(&self, other: &Self) -> bool {
-		self.name == other.name
+		self.id == other.id
 	}
 }
 
@@ -59,8 +77,8 @@ impl MetaKind for RosterType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

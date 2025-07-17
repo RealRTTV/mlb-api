@@ -3,6 +3,7 @@ use crate::endpoints::stat_groups::StatGroup;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 macro_rules! units {
     ($($name:ident($func:path => $units:ty)),+ $(,)?) => {
@@ -12,7 +13,7 @@ macro_rules! units {
             $($name($units),)+
             Unknown(String),
         }
-		
+
 		impl PartialEq for Unit {
 			fn eq(&self, other: &Self) -> bool {
 				match (self, other) {
@@ -34,7 +35,7 @@ macro_rules! units {
 
             fn try_from(value: __UnitStruct) -> Result<Self, Self::Error> {
                 let __UnitStruct(inner) = value;
-				
+
 				$(
 				for unit in $func() {
 					let abbreviation = unit.abbreviation();
@@ -85,14 +86,15 @@ pub struct NamedMetric {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentifiableMetric {
-	#[serde(rename = "metricId")] pub id: MetricId,
+	#[serde(rename = "metricId")]
+	pub id: MetricId,
 }
 
 #[repr(transparent)]
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct MetricId(u32);
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Metric {
 	Hydrated(HydratedMetric),
@@ -134,8 +136,8 @@ impl MetaKind for Metric {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

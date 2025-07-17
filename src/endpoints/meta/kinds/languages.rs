@@ -2,11 +2,13 @@ use crate::endpoints::meta::kinds::MetaKind;
 use derive_more::{Deref, DerefMut, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentifiableLanguage {
-	#[serde(rename = "languageId")] id: LanguageId,
+	#[serde(rename = "languageId")]
+	id: LanguageId,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
@@ -41,7 +43,7 @@ mod id {
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Language {
 	Hydrated(HydratedLanguage),
@@ -90,8 +92,8 @@ impl MetaKind for Language {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::meta::MetaEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

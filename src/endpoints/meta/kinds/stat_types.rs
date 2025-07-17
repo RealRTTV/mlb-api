@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use crate::endpoints::meta::MetaKind;
+use serde::Deserialize;
 
 #[cfg(feature = "static_stat_types")]
 use r#static::*;
@@ -100,9 +100,9 @@ impl MetaKind for StatType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::StatsAPIUrl;
-	
+	use crate::endpoints::meta::MetaEndpointUrl;
+
 	#[cfg(feature = "static_stat_types")]
 	#[tokio::test]
 	async fn is_still_up_to_date() {

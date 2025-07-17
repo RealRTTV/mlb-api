@@ -1,17 +1,17 @@
-use std::cmp::Ordering;
-use crate::endpoints::{GameType, StatsAPIUrl};
 use crate::endpoints::game::Game;
-use crate::types::{Copyright, HomeAwaySplits};
+use crate::endpoints::league::LeagueId;
+use crate::endpoints::teams::team::TeamId;
+use crate::endpoints::{GameType, StatsAPIUrl};
+use crate::gen_params;
+use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use serde::Deserialize;
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
+use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::iter::Sum;
 use std::ops::Add;
-use crate::endpoints::league::LeagueId;
-use crate::endpoints::teams::team::TeamId;
-use crate::gen_params;
 
 /// Within regards to attendance, the term frequently used is "Opening" over "Game"; this is for reasons including but not limited to: single ticket double headers, and partially cancelled/rescheduled games.
 ///
@@ -42,10 +42,7 @@ struct AttendanceResponseStruct {
 impl From<AttendanceResponseStruct> for AttendanceResponse {
 	fn from(value: AttendanceResponseStruct) -> Self {
 		let AttendanceResponseStruct { copyright, records } = value;
-		Self {
-			copyright,
-			annual_records: records,
-		}
+		Self { copyright, annual_records: records }
 	}
 }
 
@@ -68,13 +65,22 @@ impl Add for AttendanceRecord {
 	/// Since the [`AttendanceRecord::default()`] value has some "worse"-er defaults (high and low attendance records have the epoch start time as their dates), we always take the later values in case of ties.
 	fn add(self, rhs: Self) -> Self::Output {
 		Self {
-			total_openings: HomeAwaySplits { home: self.total_openings.home + rhs.total_openings.home, away: self.total_openings.away + rhs.total_openings.away },
+			total_openings: HomeAwaySplits {
+				home: self.total_openings.home + rhs.total_openings.home,
+				away: self.total_openings.away + rhs.total_openings.away,
+			},
 			total_openings_lost: self.total_openings_lost + rhs.total_openings_lost,
-			total_games: HomeAwaySplits { home: self.total_games.home + rhs.total_games.home, away: self.total_games.away + rhs.total_games.away },
+			total_games: HomeAwaySplits {
+				home: self.total_games.home + rhs.total_games.home,
+				away: self.total_games.away + rhs.total_games.away,
+			},
 			season: rhs.season,
-			attendance_totals: HomeAwaySplits { home: self.attendance_totals.home + rhs.attendance_totals.home, away: self.attendance_totals.away + rhs.attendance_totals.away },
+			attendance_totals: HomeAwaySplits {
+				home: self.attendance_totals.home + rhs.attendance_totals.home,
+				away: self.attendance_totals.away + rhs.attendance_totals.away,
+			},
 			single_opening_high: self.single_opening_high.max(rhs.single_opening_high), // ties go to rhs
-			single_opening_low: self.single_opening_low.min(rhs.single_opening_low), // ties go to rhs
+			single_opening_low: self.single_opening_low.min(rhs.single_opening_low),    // ties go to rhs
 			game_type: rhs.game_type,
 		}
 	}
@@ -96,7 +102,7 @@ impl Default for AttendanceRecord {
 }
 
 impl Sum for AttendanceRecord {
-	fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+	fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
 		iter.fold(Self::default(), |acc, x| acc + x)
 	}
 }
@@ -129,9 +135,9 @@ struct AnnualRecordStruct {
 	attendance_high: u32,
 	attendance_high_date: NaiveDateTime,
 	attendance_high_game: Game,
-    attendance_low: Option<u32>,
-    attendance_low_date: Option<NaiveDateTime>,
-    attendance_low_game: Option<Game>,
+	attendance_low: Option<u32>,
+	attendance_low_date: Option<NaiveDateTime>,
+	attendance_low_game: Option<Game>,
 	// attendance_opening_average: u32,
 	// attendance_total: u32,
 	attendance_total_away: u32,
@@ -167,28 +173,31 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 			game_type,
 			// team,
 		} = value;
-        let high = DatedAttendance {
-            value: attendance_high,
-            date: attendance_high_date.date(),
-            game: attendance_high_game,
-        };
-        Self {
-            total_openings: HomeAwaySplits {
-                home: openings_total_home,
-                away: openings_total_away,
-            },
-            total_openings_lost: openings_total_lost,
-            total_games: HomeAwaySplits {
-                home: games_home_total,
-                away: games_away_total,
-            },
-            season: year,
+		let high = DatedAttendance {
+			value: attendance_high,
+			date: attendance_high_date.date(),
+			game: attendance_high_game,
+		};
+		Self {
+			total_openings: HomeAwaySplits {
+				home: openings_total_home,
+				away: openings_total_away,
+			},
+			total_openings_lost: openings_total_lost,
+			total_games: HomeAwaySplits {
+				home: games_home_total,
+				away: games_away_total,
+			},
+			season: year,
 			attendance_totals: HomeAwaySplits {
 				home: attendance_total_home,
 				away: attendance_total_away,
 			},
-            single_opening_low: {
-                if let Some(attendance_low) = attendance_low && let Some(attendance_low_date) = attendance_low_date && let Some(attendance_low_game) = attendance_low_game {
+			single_opening_low: {
+				if let Some(attendance_low) = attendance_low
+					&& let Some(attendance_low_date) = attendance_low_date
+					&& let Some(attendance_low_game) = attendance_low_game
+				{
 					DatedAttendance {
 						value: attendance_low,
 						date: attendance_low_date.date(),
@@ -197,10 +206,10 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 				} else {
 					high.clone()
 				}
-            },
+			},
 			single_opening_high: high,
-            game_type,
-        }
+			game_type,
+		}
 	}
 }
 
@@ -242,11 +251,15 @@ pub struct AttendanceEndpointUrl {
 
 impl Display for AttendanceEndpointUrl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/attendance{params}", params = gen_params! { "teamId"?: self.id.clone().ok(), "leagueId"?: self.id.clone().err(), "date"?: self.date, "gameType": format!("{:?}", self.game_type) })
+		write!(
+			f,
+			"http://statsapi.mlb.com/api/v1/attendance{}",
+			gen_params! { "teamId"?: self.id.clone().ok(), "leagueId"?: self.id.clone().err(), "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)), "gameType": format!("{:?}", self.game_type) }
+		)
 	}
 }
 
-impl StatsAPIUrl<AttendanceResponse> for AttendanceEndpointUrl {}
+impl StatsAPIUrl for AttendanceEndpointUrl { type Response = AttendanceResponse; }
 
 #[cfg(test)]
 mod tests {
@@ -258,9 +271,24 @@ mod tests {
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_mlb_teams_2025() {
-		let mlb_teams = TeamsEndpointUrl { sport_id: Some(SportId::MLB), season: Some(2025) }.get().await.unwrap().teams;
+		let mlb_teams = TeamsEndpointUrl {
+			sport_id: Some(SportId::MLB),
+			season: Some(2025),
+		}
+		.get()
+		.await
+		.unwrap()
+		.teams;
 		for team in mlb_teams {
-			let _response = AttendanceEndpointUrl { id: Ok(team.id), season: None, date: None, game_type: GameType::RegularSeason }.get().await.unwrap();
+			let _response = AttendanceEndpointUrl {
+				id: Ok(team.id),
+				season: None,
+				date: None,
+				game_type: GameType::RegularSeason,
+			}
+			.get()
+			.await
+			.unwrap();
 		}
 	}
 }

@@ -8,6 +8,7 @@ use serde::Deserialize;
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
 
 #[serde_as]
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
@@ -161,16 +162,30 @@ pub struct IdentifiablePerson {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deref, Display, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
 pub struct PersonId(u32);
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+impl PersonId {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self(id)
+	}
+}
+
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Person {
 	Ballplayer(Ballplayer),
 	Hydrated(HydratedPerson),
 	Named(NamedPerson),
 	Identifiable(IdentifiablePerson),
+}
+
+impl Person {
+	#[must_use]
+	pub(crate) const fn unknown_person() -> Self {
+		Self::Identifiable(IdentifiablePerson { id: PersonId::new(0) })
+	}
 }
 
 impl PartialEq for Person {

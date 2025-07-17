@@ -1,12 +1,13 @@
 pub mod players;
 
-use std::fmt::{Display, Formatter};
+use crate::endpoints::StatsAPIUrl;
+use crate::gen_params;
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
+use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use crate::endpoints::StatsAPIUrl;
-use crate::gen_params;
+use strum::EnumTryAs;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -24,7 +25,7 @@ impl SportId {
 	pub const fn new(id: u32) -> Self {
 		Self(id)
 	}
-	
+
 	pub const MLB: Self = Self::new(1);
 }
 
@@ -40,11 +41,13 @@ pub struct SportsEndpointUrl {
 
 impl Display for SportsEndpointUrl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/sports{params}", params = gen_params! { "sportId"?: self.id })
+		write!(f, "http://statsapi.mlb.com/api/v1/sports{}", gen_params! { "sportId"?: self.id })
 	}
 }
 
-impl StatsAPIUrl<SportsResponse> for SportsEndpointUrl {}
+impl StatsAPIUrl for SportsEndpointUrl {
+	type Response = SportsResponse;
+}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -77,7 +80,7 @@ pub struct HydratedSport {
 	pub(super) inner: NamedSport,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Sport {
 	Hydrated(HydratedSport),

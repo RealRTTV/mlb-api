@@ -11,6 +11,25 @@ use crate::types::Copyright;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 
+/// Hydrations:
+/// * `previousSchedule`
+/// * `nextSchedule`
+/// * `venue`
+/// * `springVenue`
+/// * `social`
+/// * `deviceProperties`
+/// * `game(promotions)`
+/// * `game(atBatPromotions)`
+/// * `game(tickets)`
+/// * `game(atBatTickets)`
+/// * `game(sponsorships)`
+/// * `league`
+/// * `person`
+/// * `sport`
+/// * `standings`
+/// * `division`
+/// * `xrefId`
+/// * `location`
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamsResponse {
@@ -25,11 +44,13 @@ pub struct TeamsEndpointUrl {
 
 impl Display for TeamsEndpointUrl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/teams{params}", params = gen_params! { "sportId"?: self.sport_id, "season"?: self.season })
+		write!(f, "http://statsapi.mlb.com/api/v1/teams{}", gen_params! { "sportId"?: self.sport_id, "season"?: self.season })
 	}
 }
 
-impl StatsAPIUrl<TeamsResponse> for TeamsEndpointUrl {}
+impl StatsAPIUrl for TeamsEndpointUrl {
+	type Response = TeamsResponse;
+}
 
 #[cfg(test)]
 mod tests {
@@ -46,9 +67,15 @@ mod tests {
 			let _response = TeamsEndpointUrl { sport_id: None, season: Some(season) }.get().await.unwrap();
 		}
 	}
-	
+
 	#[tokio::test]
 	async fn parse_all_mlb_teams_this_season() {
-		let _response = TeamsEndpointUrl { sport_id: Some(SportId::default()), season: None }.get().await.unwrap();
+		let _response = TeamsEndpointUrl {
+			sport_id: Some(SportId::default()),
+			season: None,
+		}
+		.get()
+		.await
+		.unwrap();
 	}
 }

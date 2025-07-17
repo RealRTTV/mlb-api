@@ -22,11 +22,13 @@ pub struct SeasonsEndpointUrl {
 
 impl Display for SeasonsEndpointUrl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/seasons{params}", params = gen_params! { "sportId": self.sport_id, "season"?: self.season })
+		write!(f, "http://statsapi.mlb.com/api/v1/seasons{}", gen_params! { "sportId": self.sport_id, "season"?: self.season })
 	}
 }
 
-impl StatsAPIUrl<SeasonsResponse> for SeasonsEndpointUrl {}
+impl StatsAPIUrl for SeasonsEndpointUrl {
+	type Response = SeasonsResponse;
+}
 
 #[cfg(test)]
 mod tests {
@@ -46,7 +48,7 @@ mod tests {
 			}
 		}
 	}
-	
+
 	#[tokio::test]
 	async fn parse_this_season_mlb() {
 		let _response = SeasonsEndpointUrl { sport_id: SportId::default(), season: None }.get().await.unwrap();

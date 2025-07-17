@@ -1,7 +1,6 @@
 use serde::Deserialize;
 use std::fmt::Debug;
 
-
 pub mod baseball_stats;
 pub use baseball_stats::*;
 
