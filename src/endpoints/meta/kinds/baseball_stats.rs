@@ -1,15 +1,22 @@
-use crate::endpoints::meta::MetaKind;
+use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
 use crate::endpoints::stat_groups::StatGroup;
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::StatsAPIUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableBaseballStat {
 	#[serde(rename = "name")]
-	pub id: String,
+	pub id: BaseballStatId,
 }
+
+#[repr(transparent)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
+pub struct BaseballStatId(String);
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -60,6 +67,40 @@ impl DerefMut for BaseballStat {
 
 impl MetaKind for BaseballStat {
 	const ENDPOINT_NAME: &'static str = "baseballStats";
+}
+
+static CACHE: RwLock<HydratedCacheTable<BaseballStat>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for BaseballStat {
+	type HydratedVariant = HydratedBaseballStat;
+	type Identifier = BaseballStatId;
+	type URL = MetaEndpointUrl<Self>;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		MetaEndpointUrl::new()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.entries
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

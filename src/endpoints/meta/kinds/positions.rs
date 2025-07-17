@@ -1,8 +1,11 @@
-use crate::endpoints::meta::MetaKind;
-use derive_more::{Deref, DerefMut, From};
+use crate::endpoints::meta::{MetaEndpointUrl, MetaKind, MetaResponse};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::StatsAPIUrl;
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -28,7 +31,7 @@ pub struct HydratedPosition {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPosition {
-	pub code: String,
+	pub code: PositionCode,
 	#[serde(alias = "displayName")]
 	pub name: String,
 	#[serde(rename = "type")]
@@ -36,6 +39,10 @@ pub struct NamedPosition {
 	#[serde(alias = "abbrev")]
 	pub abbreviation: String,
 }
+
+#[repr(transparent)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
+pub struct PositionCode(String);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
@@ -72,6 +79,40 @@ impl DerefMut for Position {
 
 impl MetaKind for Position {
 	const ENDPOINT_NAME: &'static str = "positions";
+}
+
+static CACHE: RwLock<HydratedCacheTable<Position>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for Position {
+	type HydratedVariant = HydratedPosition;
+	type Identifier = PositionCode;
+	type URL = MetaEndpointUrl<Self>;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.code
+	}
+
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		MetaEndpointUrl::new()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.entries
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

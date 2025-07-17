@@ -1,9 +1,12 @@
-use crate::endpoints::meta::MetaKind;
+use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
 use crate::endpoints::stat_groups::StatGroup;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::StatsAPIUrl;
 
 macro_rules! units {
     ($($name:ident($func:path => $units:ty)),+ $(,)?) => {
@@ -91,7 +94,7 @@ pub struct IdentifiableMetric {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
 pub struct MetricId(u32);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
@@ -132,6 +135,40 @@ impl DerefMut for Metric {
 
 impl MetaKind for Metric {
 	const ENDPOINT_NAME: &'static str = "metrics";
+}
+
+static CACHE: RwLock<HydratedCacheTable<Metric>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for Metric {
+	type HydratedVariant = HydratedMetric;
+	type Identifier = MetricId;
+	type URL = MetaEndpointUrl<Self>;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		MetaEndpointUrl::new()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.entries
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

@@ -1,13 +1,21 @@
-use crate::endpoints::meta::MetaKind;
-use derive_more::{Deref, DerefMut, From};
+use std::ops::{Deref, DerefMut};
+use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use strum::EnumTryAs;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::StatsAPIUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentifiableEventType {
-	pub code: String,
+	#[serde(rename = "code")] pub id: EventTypeId,
 }
+
+#[repr(transparent)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
+pub struct EventTypeId(String);
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -32,22 +40,66 @@ pub enum EventType {
 
 impl PartialEq for EventType {
 	fn eq(&self, other: &Self) -> bool {
-		self.code() == other.code()
+		self.id == other.id
 	}
 }
 
-impl EventType {
-	#[must_use]
-	pub fn code(&self) -> &str {
+impl Deref for EventType {
+	type Target = IdentifiableEventType;
+
+	fn deref(&self) -> &Self::Target {
 		match self {
-			Self::Hydrated(inner) => &inner.code,
-			Self::Identifiable(inner) => &inner.code,
+			Self::Hydrated(inner) => inner,
+			Self::Identifiable(inner) => inner,
+		}
+	}
+}
+
+impl DerefMut for EventType {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		match self {
+			Self::Hydrated(inner) => inner,
+			Self::Identifiable(inner) => inner,
 		}
 	}
 }
 
 impl MetaKind for EventType {
 	const ENDPOINT_NAME: &'static str = "eventTypes";
+}
+
+static CACHE: RwLock<HydratedCacheTable<EventType>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for EventType {
+	type HydratedVariant = HydratedEventType;
+	type Identifier = EventTypeId;
+	type URL = MetaEndpointUrl<Self>;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		MetaEndpointUrl::new()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.entries
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

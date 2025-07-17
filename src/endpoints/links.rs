@@ -6,7 +6,7 @@ compile_error!("Only one http backend is allowed!");
 
 pub trait StatsAPIUrl: ToString {
     type Response: DeserializeOwned;
-    
+
 	#[cfg(feature = "ureq")]
 	fn get(&self) -> request::Result<Self::Response>
 	where

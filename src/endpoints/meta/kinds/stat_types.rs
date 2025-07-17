@@ -1,15 +1,19 @@
-use crate::endpoints::meta::MetaKind;
+use derive_more::Display;
+use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
 use serde::Deserialize;
 
 #[cfg(feature = "static_stat_types")]
 use r#static::*;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::StatsAPIUrl;
 
 #[cfg(feature = "static_stat_types")]
 mod r#static {
-	use derive_more::FromStr;
+	use derive_more::{Display, FromStr};
 	use serde::Deserialize;
 
-	#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr)]
+	#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr, Display, Hash)]
 	#[non_exhaustive]
 	#[serde(try_from = "__StatTypeStruct")]
 	pub enum StatType {
@@ -88,7 +92,8 @@ mod r#static {
 }
 
 #[cfg(not(feature = "static_stat_types"))]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Display, Hash)]
+#[display("{name}")]
 pub struct StatType {
 	#[serde(rename = "displayName")]
 	pub name: String,
@@ -96,6 +101,40 @@ pub struct StatType {
 
 impl MetaKind for StatType {
 	const ENDPOINT_NAME: &'static str = "statTypes";
+}
+
+static CACHE: RwLock<HydratedCacheTable<StatType>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for StatType {
+	type HydratedVariant = StatType;
+	type Identifier = StatType;
+	type URL = MetaEndpointUrl<Self>;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		Some(self)
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		self
+	}
+
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		MetaEndpointUrl::new()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.entries
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

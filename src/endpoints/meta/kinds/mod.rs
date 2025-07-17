@@ -1,6 +1,3 @@
-use serde::Deserialize;
-use std::fmt::Debug;
-
 pub mod baseball_stats;
 pub use baseball_stats::*;
 
@@ -30,7 +27,9 @@ pub use logical_events::*;
 
 pub mod metrics;
 pub use metrics::*;
+
 pub mod pitch_codes;
+pub use pitch_codes::*;
 
 pub mod pitch_types;
 pub use pitch_types::*;
@@ -68,6 +67,8 @@ pub use stat_types::*;
 pub mod wind_direction;
 pub use wind_direction::*;
 
-pub trait MetaKind: Debug + for<'de> Deserialize<'de> + Eq + Clone {
+use crate::cache::EndpointEntryCache;
+
+pub trait MetaKind: EndpointEntryCache {
 	const ENDPOINT_NAME: &'static str;
 }

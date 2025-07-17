@@ -1,5 +1,6 @@
 pub mod stats;
 
+use std::fmt::{Display, Formatter};
 use crate::endpoints::positions::Position;
 use crate::types::{Gender, Handedness, HeightMeasurement};
 use chrono::NaiveDate;
@@ -9,6 +10,10 @@ use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::people::PeopleResponse;
+use crate::endpoints::StatsAPIUrl;
 
 #[serde_as]
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
@@ -162,7 +167,7 @@ pub struct IdentifiablePerson {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
 pub struct PersonId(u32);
 
 impl PersonId {
@@ -215,5 +220,53 @@ impl DerefMut for Person {
 			Self::Named(inner) => inner,
 			Self::Identifiable(inner) => inner,
 		}
+	}
+}
+
+pub struct PersonEndpointUrl {
+	pub id: PersonId,
+}
+
+impl Display for PersonEndpointUrl {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "http://statsapimlb.com/api/v1/people/{}", self.id)
+	}
+}
+
+impl StatsAPIUrl for PersonEndpointUrl {
+	type Response = PeopleResponse;
+}
+
+static CACHE: RwLock<HydratedCacheTable<Person>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for Person {
+	type HydratedVariant = HydratedPerson;
+	type Identifier = PersonId;
+	type URL = PersonEndpointUrl;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		PersonEndpointUrl { id: id.clone() }
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.people
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
 	}
 }

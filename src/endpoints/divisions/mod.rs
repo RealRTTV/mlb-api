@@ -1,7 +1,7 @@
 use crate::endpoints::StatsAPIUrl;
 use crate::endpoints::league::{IdentifiableLeague, LeagueId};
 use crate::endpoints::sports::{IdentifiableSport, SportId};
-use crate::gen_params;
+use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
@@ -9,12 +9,14 @@ use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DivisionsResponse {
 	pub copyright: Copyright,
-	pub divisions: Vec<HydratedDivision>,
+	pub divisions: Vec<Division>,
 }
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -54,12 +56,18 @@ pub struct HydratedDivision {
 	inner: NamedDivision,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, From)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum Division {
 	Hydrated(HydratedDivision),
 	Named(NamedDivision),
 	Identifiable(IdentifiableDivision),
+}
+
+impl PartialEq for Division {
+	fn eq(&self, other: &Self) -> bool {
+		self.id == other.id
+	}
 }
 
 impl Deref for Division {
@@ -85,7 +93,7 @@ impl DerefMut for Division {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
 pub struct DivisionId(u32);
 
 #[derive(Default)]
@@ -108,6 +116,45 @@ impl Display for DivisionsEndpointUrl {
 
 impl StatsAPIUrl for DivisionsEndpointUrl {
 	type Response = DivisionsResponse;
+}
+
+static CACHE: RwLock<HydratedCacheTable<Division>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for Division {
+	type HydratedVariant = HydratedDivision;
+	type Identifier = DivisionId;
+	type URL = DivisionsEndpointUrl;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		DivisionsEndpointUrl {
+			division_id: Some(id.clone()),
+			league_id: None,
+			sport_id: None,
+			season: None,
+		}
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.divisions
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

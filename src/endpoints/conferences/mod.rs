@@ -1,13 +1,15 @@
 use crate::endpoints::StatsAPIUrl;
 use crate::endpoints::league::League;
 use crate::endpoints::sports::Sport;
-use crate::gen_params;
+use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
+use crate::cache::{HydratedCacheTable, EndpointEntryCache};
+use crate::endpoints::awards::Award;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -49,7 +51,7 @@ pub struct IdentifiableConference {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
 pub struct ConferenceId(u32);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
@@ -102,6 +104,43 @@ impl Display for ConferencesEndpointUrl {
 
 impl StatsAPIUrl for ConferencesEndpointUrl {
 	type Response = ConferencesResponse;
+}
+
+static CACHE: RwLock<HydratedCacheTable<Conference>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for Conference {
+	type HydratedVariant = HydratedConference;
+	type Identifier = ConferenceId;
+	type URL = ConferencesEndpointUrl;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		ConferencesEndpointUrl {
+			conference_id: Some(id.clone()),
+			season: None,
+		}
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.conferences
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

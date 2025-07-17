@@ -376,7 +376,7 @@ impl Display for Transaction {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
 pub struct TransactionId(u32);
 
 impl TransactionId {

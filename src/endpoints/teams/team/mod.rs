@@ -4,7 +4,7 @@ pub mod leaders;
 pub mod personnel; // done
 pub mod roster; // done
 pub mod stats;
-pub mod uniforms;
+pub mod uniforms; // done
 
 use crate::endpoints::divisions::NamedDivision;
 use crate::endpoints::league::NamedLeague;
@@ -290,7 +290,7 @@ impl TeamNameRaw {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
 pub struct TeamId(u32);
 
 impl TeamId {
@@ -310,7 +310,7 @@ pub struct NamedOrganization {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
 pub struct OrganizationId(u16);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]

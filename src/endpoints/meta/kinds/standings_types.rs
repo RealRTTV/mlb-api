@@ -1,13 +1,21 @@
-use crate::endpoints::meta::MetaKind;
-use derive_more::{Deref, DerefMut};
+use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
+use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
+use strum::EnumTryAs;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::StatsAPIUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableStandingsType {
 	#[serde(rename = "name")]
-	pub code: String,
+	pub id: StandingsTypeId,
 }
+
+#[repr(transparent)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
+pub struct StandingsTypeId(String);
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct HydratedStandingsType {
@@ -19,7 +27,7 @@ pub struct HydratedStandingsType {
 	inner: IdentifiableStandingsType,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
 #[serde(untagged)]
 pub enum StandingsType {
 	Hydrated(HydratedStandingsType),
@@ -28,7 +36,7 @@ pub enum StandingsType {
 
 impl PartialEq for StandingsType {
 	fn eq(&self, other: &Self) -> bool {
-		self.code == other.code
+		self.id == other.id
 	}
 }
 
@@ -54,6 +62,40 @@ impl DerefMut for StandingsType {
 
 impl MetaKind for StandingsType {
 	const ENDPOINT_NAME: &'static str = "standingsTypes";
+}
+
+static CACHE: RwLock<HydratedCacheTable<StandingsType>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for StandingsType {
+	type HydratedVariant = HydratedStandingsType;
+	type Identifier = StandingsTypeId;
+	type URL = MetaEndpointUrl<Self>;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		self.try_as_hydrated()
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		MetaEndpointUrl::new()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.entries
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]

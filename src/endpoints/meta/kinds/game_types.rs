@@ -1,9 +1,12 @@
-use crate::endpoints::MetaKind;
+use crate::endpoints::{MetaKind, StatsAPIUrl};
 use derive_more::Display;
 use serde::Deserialize;
 use std::fmt::{Debug, Formatter};
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::{rwlock_const_new, RwLock};
+use crate::endpoints::meta::MetaEndpointUrl;
 
-#[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display)]
+#[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__GameTypeStruct")]
 pub enum GameType {
 	#[display("Spring Training")]
@@ -96,6 +99,40 @@ impl TryFrom<__GameTypeStruct> for GameType {
 
 impl MetaKind for GameType {
 	const ENDPOINT_NAME: &'static str = "gameTypes";
+}
+
+static CACHE: RwLock<HydratedCacheTable<GameType>> = rwlock_const_new(HydratedCacheTable::new());
+
+impl EndpointEntryCache for GameType {
+	type HydratedVariant = GameType;
+	type Identifier = GameType;
+	type URL = MetaEndpointUrl<Self>;
+
+	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+		Some(self)
+	}
+
+	fn id(&self) -> &Self::Identifier {
+		self
+	}
+
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		MetaEndpointUrl::new()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.entries
+	}
+
+	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
 }
 
 #[cfg(test)]
