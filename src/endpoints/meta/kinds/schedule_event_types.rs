@@ -70,7 +70,7 @@ impl EndpointEntryCache for ScheduleEventType {
 	type Identifier = ScheduleEventTypeId;
 	type URL = MetaEndpointUrl<Self>;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

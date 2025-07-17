@@ -71,7 +71,7 @@ impl EndpointEntryCache for Platform {
 	type Identifier = PlatformId;
 	type URL = MetaEndpointUrl<Self>;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

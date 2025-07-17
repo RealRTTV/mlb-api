@@ -76,7 +76,7 @@ impl EndpointEntryCache for BaseballStat {
 	type Identifier = BaseballStatId;
 	type URL = MetaEndpointUrl<Self>;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

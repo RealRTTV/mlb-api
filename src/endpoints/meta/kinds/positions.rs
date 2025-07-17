@@ -1,4 +1,4 @@
-use crate::endpoints::meta::{MetaEndpointUrl, MetaKind, MetaResponse};
+use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
@@ -88,7 +88,7 @@ impl EndpointEntryCache for Position {
 	type Identifier = PositionCode;
 	type URL = MetaEndpointUrl<Self>;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

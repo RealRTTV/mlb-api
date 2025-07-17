@@ -5,7 +5,7 @@ use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::{PitchType, StatsAPIUrl};
+use crate::endpoints::StatsAPIUrl;
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -88,7 +88,7 @@ impl EndpointEntryCache for PitchCode {
 	type Identifier = PitchCodeId;
 	type URL = MetaEndpointUrl<Self>;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

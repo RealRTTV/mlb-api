@@ -108,7 +108,7 @@ impl EndpointEntryCache for GameType {
 	type Identifier = GameType;
 	type URL = MetaEndpointUrl<Self>;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		Some(self)
 	}
 

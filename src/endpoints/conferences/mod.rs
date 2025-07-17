@@ -9,7 +9,6 @@ use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
 use crate::cache::{HydratedCacheTable, EndpointEntryCache};
-use crate::endpoints::awards::Award;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -113,7 +112,7 @@ impl EndpointEntryCache for Conference {
 	type Identifier = ConferenceId;
 	type URL = ConferencesEndpointUrl;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

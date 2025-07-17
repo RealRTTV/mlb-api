@@ -124,7 +124,7 @@ impl EndpointEntryCache for Sport {
 	type Identifier = SportId;
 	type URL = SportsEndpointUrl;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

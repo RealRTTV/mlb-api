@@ -13,7 +13,7 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
     type Identifier: Clone + Eq + Hash + Display;
     type URL: StatsAPIUrl;
     
-    fn into_hydrated_entry(self) -> Option<Self::HydratedVariant>;
+    fn into_hydrated_variant(self) -> Option<Self::HydratedVariant>;
     
     fn id(&self) -> &Self::Identifier;
 
@@ -24,7 +24,7 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
     fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>> where Self: Sized;
 
     #[cfg(feature = "reqwest")]
-    async fn as_hydrated_or_request(&self) -> Result<Arc<Self::HydratedVariant>, Error<Self>> {
+    fn as_hydrated_or_request(&self) -> impl Future<Output = Result<Arc<Self::HydratedVariant>, Error<Self>>> { async {
         let cache_lock = Self::get_hydrated_cache_table();
         let id = self.id();
         let cache = cache_lock.read().await;
@@ -35,7 +35,7 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
         let mut cache = cache_lock.write().await;
         cache.request_and_add(id).await?;
         cache.get(id).cloned().ok_or_else(|| Error::NoMatchingVariant(id.clone()))
-    }
+    } }
 
     #[cfg(feature = "ureq")]
     fn as_hydrated_or_request(&self) -> Result<Arc<Self::HydratedVariant>, Error<Self>> {
@@ -89,7 +89,7 @@ impl<T: EndpointEntryCache> HydratedCacheTable<T> {
     pub fn try_add_entries(&mut self, entries: impl IntoIterator<Item = T>) {
         for (id, entry) in entries.into_iter().filter_map(|entry| {
             let id = entry.id().clone();
-            entry.into_hydrated_entry().map(|entry| (id, entry))
+            entry.into_hydrated_variant().map(|entry| (id, entry))
         }) {
             self.insert(id, entry);
         }

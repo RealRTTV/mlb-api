@@ -92,7 +92,7 @@ impl EndpointEntryCache for Award {
 	type Identifier = AwardId;
 	type URL = AwardEndpointUrl;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

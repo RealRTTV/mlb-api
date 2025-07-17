@@ -8,6 +8,7 @@ use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
+use itertools::Itertools;
 use strum::EnumTryAs;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 
@@ -128,7 +129,7 @@ impl EndpointEntryCache for Venue {
 	type Identifier = VenueId;
 	type URL = VenuesEndpointUrl;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
 	}
 

@@ -110,7 +110,7 @@ impl EndpointEntryCache for StatType {
 	type Identifier = StatType;
 	type URL = MetaEndpointUrl<Self>;
 
-	fn into_hydrated_entry(self) -> Option<Self::HydratedVariant> {
+	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		Some(self)
 	}
 
