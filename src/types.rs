@@ -159,6 +159,62 @@ impl<T: Add> HomeAwaySplits<T> {
 	}
 }
 
+#[derive(Copy, Clone, Display)]
+pub enum SortOrder {
+	#[display("ASC")]
+	Ascending,
+	#[display("DESC")]
+	Descending,
+}
+
+#[derive(Clone)]
+pub struct Sort {
+	order: SortOrder,
+	by: String,
+}
+
+impl Sort {
+	#[must_use]
+	pub fn new(order: SortOrder, by: String) -> Self {
+		Self {
+			order,
+			by,
+		}
+	}
+
+	#[must_use]
+	pub fn order(&self) -> SortOrder {
+		self.order
+	}
+
+	#[must_use]
+	pub fn by(&self) -> &str {
+		&self.by
+	}
+}
+
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Location {
+	pub address_line_1: Option<String>,
+	pub address_line_2: Option<String>,
+	pub address_line_3: Option<String>,
+	pub address_line_4: Option<String>,
+	pub attention: Option<String>,
+	pub phone_number: Option<String>,
+	pub city: Option<String>,
+	pub state: Option<String>,
+	pub country: Option<String>,
+	#[serde(rename = "stateAbbrev")] pub state_abbreviation: Option<String>,
+	pub postal_code: Option<String>,
+	pub latitude: Option<f64>,
+	pub longitude: Option<f64>,
+	pub azimuth_angle: Option<f64>,
+	pub elevation: Option<u32>,
+}
+
+impl Eq for Location {}
+
 #[derive(Debug, Deserialize, Display)]
 #[display("An error occurred parsing the statsapi http request: {message}")]
 pub struct StatsAPIError {
