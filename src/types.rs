@@ -2,22 +2,49 @@ use chrono::{Datelike, Local, NaiveDate};
 use derive_more::Display;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use std::num::ParseIntError;
 use std::ops::Add;
 use std::str::FromStr;
+use compact_str::CompactString;
 use thiserror::Error;
 
 /// Shared types across multiple endpoints
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct Copyright(pub String);
+#[serde(from = "__CopyrightStruct")]
+pub enum Copyright {
+	Typical {
+		year: u32,
+	},
+	UnknownSpec(CompactString),
+}
+
+#[derive(Deserialize)]
+struct __CopyrightStruct(String);
+
+impl From<__CopyrightStruct> for Copyright {
+	fn from(value: __CopyrightStruct) -> Self {
+		let __CopyrightStruct(value) = value;
+		if let Some(value) = value.strip_prefix("Copyright ") && let Some(value) = value.strip_suffix(" MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt") && let Ok(year) = value.parse::<u32>() {
+			Self::Typical { year }
+		} else {
+			Self::UnknownSpec(CompactString::from(value))
+		}
+	}
+}
+
+impl Display for Copyright {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Self::Typical { year } => write!(f, "Copyright {year} MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt"),
+			Self::UnknownSpec(copyright) => write!(f, "{copyright}"),
+		}
+	}
+}
 
 impl Default for Copyright {
 	fn default() -> Self {
-		let year = Local::now().year();
-		Self(format!(
-			"Copyright {year} MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt"
-		))
+		Self::Typical { year: Local::now().year() as _ }
 	}
 }
 
@@ -156,40 +183,6 @@ impl<T: Add> HomeAwaySplits<T> {
 	#[must_use]
 	pub fn combined(self) -> <T as Add>::Output {
 		self.home + self.away
-	}
-}
-
-#[derive(Copy, Clone, Display)]
-pub enum SortOrder {
-	#[display("ASC")]
-	Ascending,
-	#[display("DESC")]
-	Descending,
-}
-
-#[derive(Clone)]
-pub struct Sort {
-	order: SortOrder,
-	by: String,
-}
-
-impl Sort {
-	#[must_use]
-	pub fn new(order: SortOrder, by: String) -> Self {
-		Self {
-			order,
-			by,
-		}
-	}
-
-	#[must_use]
-	pub fn order(&self) -> SortOrder {
-		self.order
-	}
-
-	#[must_use]
-	pub fn by(&self) -> &str {
-		&self.by
 	}
 }
 

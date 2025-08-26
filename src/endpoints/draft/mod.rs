@@ -2,7 +2,7 @@ use crate::endpoints::person::{Person, PersonId};
 use crate::endpoints::teams::team::{Team, TeamId};
 use crate::endpoints::{Position, StatsAPIUrl};
 use crate::gen_params;
-use crate::types::{Copyright, Location, Sort};
+use crate::types::{Copyright, Location};
 use derive_more::{Deref, Display};
 use serde::Deserialize;
 use serde_with::DisplayFromStr;
@@ -115,13 +115,21 @@ pub struct School {
 pub enum DraftType {
 	#[display("June Amateur Draft")]
 	JR,
+	/// Never appears
 	JS,
+	/// Never appears
 	NS,
+	/// Never appears
 	NR,
+	/// Never appears
 	AL,
+	/// Never appears
 	RA,
+	/// Never appears
 	RT,
+	/// Never appears
 	JD,
+	/// Never appears
 	AD,
 }
 
@@ -173,8 +181,6 @@ pub struct DraftEndpointUrlData {
 	pub offset: Option<u32>,
 	/// Draft round.
 	pub round: Option<u32>,
-	/// Order to sort all returned matches.
-	pub sort: Option<Sort>,
 
 	/// Include only successfully drafted players
 	pub drafted_only: Option<bool>,
@@ -200,7 +206,6 @@ impl Display for DraftEndpointUrl {
 				                              limit,
 				                              offset,
 				                              round,
-				                              sort,
 				                              drafted_only,
 				                              last_name,
 				                              school,
@@ -216,8 +221,6 @@ impl Display for DraftEndpointUrl {
 					"limit"?: limit,
 					"offset"?: offset,
 					"round"?: round,
-					"sortOrder"?: sort.as_ref().map(|sort| sort.order()),
-					"sortBy"?: sort.as_ref().map(|sort| sort.by()),
 					"drafted"?: drafted_only,
 					"name"?: last_name,
 					"school"?: school,
@@ -250,7 +253,6 @@ impl Display for DraftProspectsEndpointUrl {
 			limit,
 			offset,
 			round,
-			sort,
 			drafted_only,
 			last_name,
 			school,
@@ -267,8 +269,6 @@ impl Display for DraftProspectsEndpointUrl {
 						"limit"?: limit,
 						"offset"?: offset,
 						"round"?: round,
-						"sortOrder"?: sort.as_ref().map(|sort| sort.order()),
-						"sortBy"?: sort.as_ref().map(|sort| sort.by()),
 						"drafted"?: drafted_only,
 						"name"?: last_name,
 						"school"?: school,
@@ -299,7 +299,6 @@ mod tests {
 				limit: None,
 				offset: None,
 				round: None,
-				sort: None,
 				drafted_only: None,
 				last_name: None,
 				school: None,
@@ -319,7 +318,6 @@ mod tests {
 				limit: None,
 				offset: None,
 				round: None,
-				sort: None,
 				drafted_only: None,
 				last_name: None,
 				school: None,
@@ -345,7 +343,6 @@ mod tests {
 						limit: None,
 						offset: None,
 						round: None,
-						sort: None,
 						drafted_only: None,
 						last_name: None,
 						school: None,
@@ -377,7 +374,6 @@ mod tests {
 						limit: None,
 						offset: None,
 						round: None,
-						sort: None,
 						drafted_only: None,
 						last_name: None,
 						school: None,
