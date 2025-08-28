@@ -17,10 +17,10 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub enum Error {
 	#[cfg(feature = "ureq")]
 	#[error(transparent)]
-	Ureq(#[from] ::ureq::Error),
+	Network(#[from] ::ureq::Error),
 	#[cfg(feature = "reqwest")]
 	#[error(transparent)]
-	Reqwest(#[from] ::reqwest::Error),
+	Network(#[from] ::reqwest::Error),
 	#[error(transparent)]
 	Serde(#[from] serde_json::Error),
 	#[error(transparent)]

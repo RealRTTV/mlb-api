@@ -18,6 +18,13 @@ pub struct IdentifiableBaseballStat {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
 pub struct BaseballStatId(String);
 
+impl BaseballStatId {
+	#[must_use]
+	pub const fn new(id: String) -> Self {
+		Self(id)
+	}
+}
+
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HydratedBaseballStat {

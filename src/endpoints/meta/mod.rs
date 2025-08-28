@@ -17,9 +17,9 @@ impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
 	where
 		D: Deserializer<'de>,
 	{
-		struct Visitior<T>(PhantomData<T>);
+		struct Visitor<T>(PhantomData<T>);
 
-		impl<'de, T: MetaKind> de::Visitor<'de> for Visitior<T> {
+		impl<'de, T: MetaKind> de::Visitor<'de> for Visitor<T> {
 			type Value = MetaResponse<T>;
 
 			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
@@ -51,7 +51,7 @@ impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
 			}
 		}
 
-		deserializer.deserialize_any(Visitior(PhantomData))
+		deserializer.deserialize_any(Visitor(PhantomData))
 	}
 }
 

@@ -27,6 +27,7 @@ impl SportId {
 		Self(id)
 	}
 
+	/// This is here because we can rest assured that it won't ever go away.
 	pub const MLB: Self = Self::new(1);
 }
 

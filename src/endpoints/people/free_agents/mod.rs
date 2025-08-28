@@ -58,7 +58,7 @@ impl From<__FreeAgentStruct> for FreeAgent {
 }
 
 pub struct FreeAgentsEndpointUrl {
-	pub season: u32,
+	pub season: u16,
 }
 
 impl Display for FreeAgentsEndpointUrl {
@@ -84,7 +84,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_all_seasons() {
-		for season in 2001..Local::now().year() as _ {
+		for season in 2001..=Local::now().year() as _ {
 			let _response = FreeAgentsEndpointUrl { season }.get().await.unwrap();
 		}
 	}

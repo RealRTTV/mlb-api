@@ -109,6 +109,29 @@ pub enum HeightMeasurementParseError {
 	UnknownSpec(String),
 }
 
+#[derive(Debug, Display, PartialEq, Eq, Copy, Clone, Default)]
+pub enum PlayerPool {
+	#[default]
+	#[display("ALL")]
+	All,
+	#[display("QUALIFIED")]
+	Qualified,
+	#[display("ROOKIES")]
+	Rookies,
+	#[display("QUALIFIED_ROOKIES")]
+	QualifiedAndRookies,
+	#[display("ORGANIZATION")]
+	Organization,
+	#[display("ORGANIZATION_NO_MLB")]
+	OrganizationNotMlb,
+	#[display("CURRENT")]
+	Current,
+	#[display("ALL_CURRENT")]
+	AllCurrent,
+	#[display("QUALIFIED_CURRENT")]
+	QualifiedAndCurrent,
+}
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum Gender {
 	#[serde(rename = "M")]
@@ -207,6 +230,78 @@ pub struct Location {
 }
 
 impl Eq for Location {}
+
+#[derive(Debug, Copy, Clone)]
+pub enum IntegerOrFloat {
+	Integer(i64),
+	Float(f64),
+}
+
+impl PartialEq for IntegerOrFloat {
+	fn eq(&self, other: &Self) -> bool {
+		match (*self, *other) {
+			(Self::Integer(lhs), Self::Integer(rhs)) => lhs == rhs,
+			(Self::Float(lhs), Self::Float(rhs)) => lhs == rhs,
+
+			(Self::Integer(int), Self::Float(float)) | (Self::Float(float), Self::Integer(int)) => {
+				// fast way to check if the float is representable perfectly as an integer and if it's within range of `i64`
+				if float.floor() == float && (i64::MIN as f64..=i64::MAX as f64).contains(&float) {
+					float as i64 == int
+				} else {
+					false
+				}
+			},
+		}
+	}
+}
+
+impl Eq for IntegerOrFloat {}
+
+impl<'de> Deserialize<'de> for IntegerOrFloat {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		struct Visitor;
+		
+		impl<'de> serde::de::Visitor<'de> for Visitor {
+			type Value = IntegerOrFloat;
+
+			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+				formatter.write_str("integer or float, or string that can be parsed to either")
+			}
+
+			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				if let Ok(i) = v.parse::<i64>() {
+					Ok(IntegerOrFloat::Integer(i))
+				} else if let Ok(f) = v.parse::<f64>() {
+					Ok(IntegerOrFloat::Float(f))
+				} else {
+					Err(E::invalid_value(serde::de::Unexpected::Str(v), &self))
+				}
+			}
+
+			fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				Ok(IntegerOrFloat::Integer(v))
+			}
+			
+			fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				Ok(IntegerOrFloat::Float(v))
+			}
+		}
+		
+		deserializer.deserialize_any(Visitor)
+	}
+}
 
 #[derive(Debug, Deserialize, Display)]
 #[display("An error occurred parsing the statsapi http request: {message}")]
