@@ -1,80 +1,20 @@
-use crate::endpoints::league::League;
-use crate::endpoints::person::Person;
-use crate::endpoints::sports::Sport;
-use crate::endpoints::teams::team::{Team, TeamId};
-use crate::endpoints::{BaseballStat, BaseballStatId, GameType, IdentifiableBaseballStat, StatGroup, StatsAPIUrl};
+use crate::endpoints::stats::leaders::StatLeaders;
+use crate::endpoints::teams::team::TeamId;
+use crate::endpoints::{BaseballStat, GameType, StatsAPIUrl};
 use crate::gen_params;
-use crate::types::{Copyright, IntegerOrFloat, PlayerPool};
+use crate::types::{Copyright, PlayerPool};
 use itertools::Itertools;
 use serde::Deserialize;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamStatLeadersResponse {
 	pub copyright: Copyright,
-	pub team_leaders: Vec<TeamStatLeaders>,
+	pub team_leaders: Vec<StatLeaders>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(try_from = "__TeamStatLeadersStruct")]
-pub struct TeamStatLeaders {
-	pub category: BaseballStat,
-	pub season: u16,
-	pub game_type: GameType,
-	pub leaders: Vec<TeamStatLeader>,
-	pub stat_group: StatGroup,
-	pub total_splits: u32,
-}
-
-#[serde_as]
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct __TeamStatLeadersStruct {
-	leader_category: String,
-	#[serde_as(as = "DisplayFromStr")]
-	season: u16,
-	game_type: GameType,
-	leaders: Vec<TeamStatLeader>,
-	stat_group: String,
-	total_splits: u32,
-}
-
-impl TryFrom<__TeamStatLeadersStruct> for TeamStatLeaders {
-	type Error = <StatGroup as FromStr>::Err;
-
-	fn try_from(value: __TeamStatLeadersStruct) -> Result<Self, Self::Error> {
-		Ok(TeamStatLeaders {
-			category: BaseballStat::Identifiable(IdentifiableBaseballStat {
-				id: BaseballStatId::new(value.leader_category),
-			}),
-			season: value.season,
-			game_type: value.game_type,
-			leaders: value.leaders,
-			stat_group: StatGroup::from_str(&value.stat_group)?,
-			total_splits: value.total_splits,
-		})
-	}
-}
-
-#[serde_as]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct TeamStatLeader {
-	pub rank: u32,
-	pub value: IntegerOrFloat,
-	pub team: Team,
-	pub league: League,
-	pub person: Person,
-	pub sport: Sport,
-	#[serde_as(as = "DisplayFromStr")]
-	pub season: u16,
-}
-
-/// Represents the stat leaders per team
+/// Stat leaders per team
 pub struct TeamStatLeadersEndpointUrl {
 	pub team_id: TeamId,
 	pub stats: Vec<BaseballStat>,
@@ -107,11 +47,11 @@ impl StatsAPIUrl for TeamStatLeadersEndpointUrl {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::{BaseballStat, StatsAPIUrl};
 	use crate::endpoints::meta::MetaEndpointUrl;
 	use crate::endpoints::sports::SportId;
-	use crate::endpoints::teams::TeamsEndpointUrl;
 	use crate::endpoints::teams::team::leaders::TeamStatLeadersEndpointUrl;
+	use crate::endpoints::teams::TeamsEndpointUrl;
+	use crate::endpoints::{BaseballStat, StatsAPIUrl};
 
 	#[tokio::test]
 	async fn test_all_mlb_teams_all_stats() {

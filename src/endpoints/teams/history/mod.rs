@@ -4,7 +4,7 @@ use crate::endpoints::teams::team::TeamId;
 use crate::endpoints::teams::TeamsResponse;
 use crate::gen_params;
 
-/// Represents the history of a [`TeamId`].
+/// History of a [`TeamId`] throughout the years.
 /// For example, the team history of the Los Angeles Dodgers would include those of the Brooklyn Dodgers.
 pub struct TeamHistoryEndpointUrl {
 	pub team_id: TeamId,

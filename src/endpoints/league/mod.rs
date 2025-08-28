@@ -118,6 +118,13 @@ pub enum League {
 	Identifiable(IdentifiableLeague),
 }
 
+impl League {
+	#[must_use]
+	pub(crate) const fn unknown_league() -> Self {
+		Self::Identifiable(IdentifiableLeague { id: LeagueId::new(0) })
+	}
+}
+
 impl PartialEq for League {
 	fn eq(&self, other: &Self) -> bool {
 		self.id == other.id

@@ -232,12 +232,12 @@ pub struct Location {
 impl Eq for Location {}
 
 #[derive(Debug, Copy, Clone)]
-pub enum IntegerOrFloat {
+pub enum IntegerOrFloatStat {
 	Integer(i64),
 	Float(f64),
 }
 
-impl PartialEq for IntegerOrFloat {
+impl PartialEq for IntegerOrFloatStat {
 	fn eq(&self, other: &Self) -> bool {
 		match (*self, *other) {
 			(Self::Integer(lhs), Self::Integer(rhs)) => lhs == rhs,
@@ -255,30 +255,32 @@ impl PartialEq for IntegerOrFloat {
 	}
 }
 
-impl Eq for IntegerOrFloat {}
+impl Eq for IntegerOrFloatStat {}
 
-impl<'de> Deserialize<'de> for IntegerOrFloat {
+impl<'de> Deserialize<'de> for IntegerOrFloatStat {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 	where
 		D: Deserializer<'de>
 	{
 		struct Visitor;
-		
+
 		impl<'de> serde::de::Visitor<'de> for Visitor {
-			type Value = IntegerOrFloat;
+			type Value = IntegerOrFloatStat;
 
 			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-				formatter.write_str("integer or float, or string that can be parsed to either")
+				formatter.write_str("integer, float, or string that can be parsed to either")
 			}
 
 			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
 			where
 				E: Error,
 			{
-				if let Ok(i) = v.parse::<i64>() {
-					Ok(IntegerOrFloat::Integer(i))
+				if v == "-.--" || v == ".---" {
+					Ok(IntegerOrFloatStat::Float(0.0))
+				} else if let Ok(i) = v.parse::<i64>() {
+					Ok(IntegerOrFloatStat::Integer(i))
 				} else if let Ok(f) = v.parse::<f64>() {
-					Ok(IntegerOrFloat::Float(f))
+					Ok(IntegerOrFloatStat::Float(f))
 				} else {
 					Err(E::invalid_value(serde::de::Unexpected::Str(v), &self))
 				}
@@ -288,17 +290,17 @@ impl<'de> Deserialize<'de> for IntegerOrFloat {
 			where
 				E: Error,
 			{
-				Ok(IntegerOrFloat::Integer(v))
+				Ok(IntegerOrFloatStat::Integer(v))
 			}
-			
+
 			fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
 			where
 				E: Error,
 			{
-				Ok(IntegerOrFloat::Float(v))
+				Ok(IntegerOrFloatStat::Float(v))
 			}
 		}
-		
+
 		deserializer.deserialize_any(Visitor)
 	}
 }
