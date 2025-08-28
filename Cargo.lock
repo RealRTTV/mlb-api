@@ -888,7 +888,7 @@ dependencies = [
 
 [[package]]
 name = "mlb-api"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "chrono",
  "compact_str",
