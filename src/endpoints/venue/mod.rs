@@ -77,6 +77,13 @@ pub enum Venue {
 	Identifiable(IdentifiableVenue),
 }
 
+impl Venue {
+	#[must_use]
+	pub fn unknown_venue() -> Self {
+		Self::Named(NamedVenue::default())
+	}
+}
+
 impl PartialEq for Venue {
 	fn eq(&self, other: &Self) -> bool {
 		self.id == other.id

@@ -33,7 +33,7 @@ impl SportId {
 
 impl Default for SportId {
 	fn default() -> Self {
-		Self(1)
+		Self::MLB
 	}
 }
 

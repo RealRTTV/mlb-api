@@ -2,6 +2,7 @@ use crate::endpoints::{MetaKind, StatsAPIUrl};
 use derive_more::Display;
 use serde::Deserialize;
 use std::fmt::{Debug, Formatter};
+use std::ops::Deref;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
 use crate::endpoints::meta::MetaEndpointUrl;
@@ -71,15 +72,28 @@ impl Debug for GameType {
 }
 
 #[derive(Deserialize)]
-struct __GameTypeStruct {
-	id: String,
+#[serde(untagged)]
+enum __GameTypeStruct {
+	Named { id: String },
+	Inline(String),
+}
+
+impl Deref for __GameTypeStruct {
+	type Target = str;
+
+	fn deref(&self) -> &Self::Target {
+		match self {
+			Self::Named { id } => id,
+			Self::Inline(id) => id,
+		}
+	}
 }
 
 impl TryFrom<__GameTypeStruct> for GameType {
 	type Error = &'static str;
 
 	fn try_from(value: __GameTypeStruct) -> Result<Self, Self::Error> {
-		Ok(match &*value.id {
+		Ok(match &*value {
 			"S" => GameType::SpringTraining,
 			"I" => GameType::Intrasquad,
 			"E" => GameType::Exhibition,

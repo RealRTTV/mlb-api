@@ -74,3 +74,24 @@ impl PartialEq for Game {
 		self.id == other.id
 	}
 }
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub enum DoubleHeaderKind {
+	#[serde(rename = "N")]
+	/// Not a doubleheader
+	Not,
+
+	#[serde(rename = "Y")]
+	/// First game in a double-header
+	FirstGame,
+
+	#[serde(rename = "S")]
+	/// Second game in a double-header.
+	SecondGame,
+}
+
+impl DoubleHeaderKind {
+	pub const fn is_double_header(self) -> bool {
+		matches!(self, Self::FirstGame | Self::SecondGame)
+	}
+}

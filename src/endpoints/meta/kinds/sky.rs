@@ -7,6 +7,17 @@ use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
 use crate::endpoints::StatsAPIUrl;
 
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub enum Sky {
+	/// Day Game.
+	#[serde(rename = "day")]
+	Day,
+	
+	/// Night Game.
+	#[serde(rename = "night")]
+	Night,
+}
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableSkyDescription {
 	pub id: SkyDescriptionId,

@@ -4,7 +4,7 @@ use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::num::ParseIntError;
-use std::ops::Add;
+use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
 use compact_str::CompactString;
 use thiserror::Error;
@@ -174,7 +174,7 @@ impl TryFrom<__HandednessStruct> for Handedness {
 	}
 }
 
-pub type NaiveDateRange = std::ops::RangeInclusive<NaiveDate>;
+pub type NaiveDateRange = RangeInclusive<NaiveDate>;
 
 pub(crate) const MLB_API_DATE_FORMAT: &str = "%m/%d/%Y";
 

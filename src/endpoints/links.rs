@@ -43,7 +43,7 @@ macro_rules! gen_params {
         let _ = write!(&mut $builder, "{prefix}{value}", value = $value, prefix = if is_empty { '?' } else { '&' });
         gen_params!(@ $builder $($($rest)*)?);
     };
-    (@ $builder:ident $(,)?) => {};
+    (@ $($args:tt)*) => {};
     ($($args:tt)*) => {{
         use ::core::fmt::Write;
 
