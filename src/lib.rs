@@ -1,3 +1,4 @@
+// todo: refactor all endpoints to be at `crate::*` depth
 pub mod endpoints;
 pub mod request;
 pub mod types;
