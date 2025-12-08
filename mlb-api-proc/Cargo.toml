@@ -1,7 +1,15 @@
 [package]
 name = "mlb-api-proc"
 version = "0.1.0"
+authors = ["Riley"]
 edition = "2024"
+description = "A private crate meant for internal use by mlb-api only."
+documentation = "https://docs.rs/mlb-api-proc"
+readme = "README.md"
+repository = "https://github.com/RealRTTV/mlb-api"
+license = "MIT"
+keywords = []
+categories = []
 
 [lib]
 proc-macro = true
