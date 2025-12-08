@@ -444,7 +444,7 @@ mod tests {
 	#[tokio::test]
 	async fn parse_2025() {
 		let _ = crate::serde_path_to_error_parse(TransactionsEndpoint {
-			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
+			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
 			sport_id: Some(SportId::MLB),
 		}).await;
 	}
@@ -463,13 +463,13 @@ mod tests {
 		.filter_map(Team::try_as_named)
 		.find(|team| team.name.as_str() == "Toronto Blue Jays")
 		.unwrap();
-		let bo_bichette = SportsPlayersEndpoint { id: SportId::MLB, season: Some(2025) }
+		let bo_bichette = SportsPlayersEndpoint { id: SportId::MLB, season: Some(2024) }
 			.get()
 			.await
 			.unwrap()
 			.people
 			.into_iter()
-			.filter_map(Person::try_as_named)
+			.filter_map(Person::try_into_named)
 			.find(|person| person.full_name == "Bo Bichette")
 			.unwrap();
 

@@ -66,7 +66,6 @@ pub struct StatLeader {
 	pub value: IntegerOrFloatStat,
 	#[serde(default = "Team::unknown_team")]
 	pub team: Team,
-	pub num_teams: u32,
 	#[serde(default = "League::unknown_league")]
 	pub league: League,
 	pub person: Person,

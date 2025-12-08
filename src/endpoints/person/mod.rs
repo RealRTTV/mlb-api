@@ -10,7 +10,6 @@ use serde::Deserialize;
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
 use crate::endpoints::draft::School;
@@ -192,7 +191,7 @@ impl PersonId {
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From)]
 #[serde(untagged)]
 #[serde(bound = "H: PersonHydrations")]
 pub enum Person<H: PersonHydrations = ()> {
@@ -200,6 +199,83 @@ pub enum Person<H: PersonHydrations = ()> {
 	Hydrated(HydratedPerson<H>),
 	Named(NamedPerson<H>),
 	Identifiable(IdentifiablePerson<H>),
+}
+
+impl<H: PersonHydrations> Person<H> {
+	#[must_use]
+	pub fn try_into_identifiable(self) -> Option<IdentifiablePerson<H>> {
+		Some(match self {
+			Self::Ballplayer(x) => x.inner.inner.inner,
+			Self::Hydrated(x) => x.inner.inner,
+			Self::Named(x) => x.inner,
+			Self::Identifiable(x) => x,
+		})
+	}
+
+	#[must_use]
+	pub fn try_into_named(self) -> Option<NamedPerson<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x.inner.inner),
+			Self::Hydrated(x) => Some(x.inner),
+			Self::Named(x) => Some(x),
+			Self::Identifiable(_) => None,
+		}
+	}
+
+	#[must_use]
+	pub fn try_into_hydrated(self) -> Option<HydratedPerson<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x.inner),
+			Self::Hydrated(x) => Some(x),
+			Self::Named(_) => None,
+			Self::Identifiable(_) => None,
+		}
+	}
+
+	#[must_use]
+	pub fn try_into_ballplayer(self) -> Option<Ballplayer<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x),
+			Self::Hydrated(_) => None,
+			Self::Named(_) => None,
+			Self::Identifiable(_) => None,
+		}
+	}
+
+	#[must_use]
+	pub fn try_as_identifiable(&self) -> Option<&IdentifiablePerson<H>> {
+		Some(self)
+	}
+
+	#[must_use]
+	pub fn try_as_named(&self) -> Option<&NamedPerson<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x),
+			Self::Hydrated(x) => Some(x),
+			Self::Named(x) => Some(x),
+			Self::Identifiable(_) => None,
+		}
+	}
+
+	#[must_use]
+	pub fn try_as_hydrated(&self) -> Option<&HydratedPerson<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x),
+			Self::Hydrated(x) => Some(x),
+			Self::Named(_) => None,
+			Self::Identifiable(_) => None,
+		}
+	}
+
+	#[must_use]
+	pub fn try_as_ballplayer(&self) -> Option<&Ballplayer<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x),
+			Self::Hydrated(_) => None,
+			Self::Named(_) => None,
+			Self::Identifiable(_) => None,
+		}
+	}
 }
 
 impl Person<()> {
@@ -443,7 +519,7 @@ impl EndpointEntryCache for Person<()> {
 	type URL = PersonEndpoint<()>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {
