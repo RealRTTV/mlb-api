@@ -1,7 +1,7 @@
 use serde_with::DefaultOnError;
 use crate::endpoints::person::Person;
 use crate::endpoints::teams::team::Team;
-use crate::endpoints::{Position, StatsAPIUrl};
+use crate::endpoints::{Position, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::Copyright;
 use chrono::NaiveDate;
@@ -19,6 +19,7 @@ pub struct FreeAgentsResponse {
 #[serde_as]
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[doc(hidden)]
 struct __FreeAgentStruct {
 	player: Person,
 	#[serde_as(deserialize_as = "DefaultOnError")]
@@ -57,35 +58,35 @@ impl From<__FreeAgentStruct> for FreeAgent {
 	}
 }
 
-pub struct FreeAgentsEndpointUrl {
+pub struct FreeAgentsEndpoint {
 	pub season: u16,
 }
 
-impl Display for FreeAgentsEndpointUrl {
+impl Display for FreeAgentsEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "http://statsapi.mlb.com/api/v1/people/freeAgents{}", gen_params! { "season": self.season })
 	}
 }
 
-impl StatsAPIUrl for FreeAgentsEndpointUrl {
+impl StatsAPIEndpointUrl for FreeAgentsEndpoint {
 	type Response = FreeAgentsResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::people::free_agents::FreeAgentsEndpointUrl;
-	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::people::free_agents::FreeAgentsEndpoint;
+	use crate::endpoints::StatsAPIEndpointUrl;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	async fn test_2025() {
-		let _response = FreeAgentsEndpointUrl { season: 2025 }.get().await.unwrap();
+		let _response = FreeAgentsEndpoint { season: 2025 }.get().await.unwrap();
 	}
 
 	#[tokio::test]
 	async fn test_all_seasons() {
 		for season in 2001..=Local::now().year() as _ {
-			let _response = FreeAgentsEndpointUrl { season }.get().await.unwrap();
+			let _response = FreeAgentsEndpoint { season }.get().await.unwrap();
 		}
 	}
 }

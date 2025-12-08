@@ -5,13 +5,13 @@ use std::sync::Arc;
 use fxhash::FxBuildHasher;
 use serde::de::DeserializeOwned;
 use thiserror::Error;
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::RwLock;
 
 pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
     type HydratedVariant;
     type Identifier: Clone + Eq + Hash + Display;
-    type URL: StatsAPIUrl;
+    type URL: StatsAPIEndpointUrl;
     
     fn into_hydrated_variant(self) -> Option<Self::HydratedVariant>;
     
@@ -19,7 +19,7 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
 
     fn url_for_id(id: &Self::Identifier) -> Self::URL;
 
-    fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
+    fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
 
     fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>> where Self: Sized;
 

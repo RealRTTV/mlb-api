@@ -14,7 +14,7 @@ categories = ["api-bindings", "asynchronous"]
 [dependencies]
 serde = { version = "1.0.219", features = ["serde_derive"] }
 serde_with = "3.14.0"
-derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str"] }
+derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str", "add", "add_assign", "as_ref", "try_from"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 thiserror = "2.0.12"
 uom = { version = "0.37.0", features = ["serde", "use_serde", "i32"] }
@@ -23,8 +23,9 @@ itertools = "0.14.0"
 strum = { version = "0.27.1", features = ["derive"] }
 fxhash = "0.2.1"
 compact_str = "0.9.0"
+mlb-api-proc = { path = "mlb-api-proc" }
 uuid = { version = "1.18.1", features = ["serde"] }
-derive_builder = "0.20.2" # todo <- use this for endpoints
+bon = "3.8.1"
 
 [dependencies.tokio]
 version = "1.46.1"

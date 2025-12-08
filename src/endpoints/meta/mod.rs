@@ -1,4 +1,4 @@
-use crate::endpoints::{MetaKind, StatsAPIUrl};
+use crate::endpoints::{MetaKind, StatsAPIEndpointUrl};
 use derive_more::{Deref, DerefMut};
 use serde::de::{Error, MapAccess, SeqAccess};
 use serde::{Deserialize, Deserializer, de};
@@ -55,23 +55,23 @@ impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
 	}
 }
 
-pub struct MetaEndpointUrl<T: MetaKind> {
+pub struct MetaEndpoint<T: MetaKind> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: MetaKind> MetaEndpointUrl<T> {
+impl<T: MetaKind> MetaEndpoint<T> {
 	#[must_use]
 	pub const fn new() -> Self {
 		Self { _marker: PhantomData }
 	}
 }
 
-impl<T: MetaKind> Display for MetaEndpointUrl<T> {
+impl<T: MetaKind> Display for MetaEndpoint<T> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "http://statsapi.mlb.com/api/v1/{}", T::ENDPOINT_NAME)
 	}
 }
 
-impl<T: MetaKind> StatsAPIUrl for MetaEndpointUrl<T> {
+impl<T: MetaKind> StatsAPIEndpointUrl for MetaEndpoint<T> {
 	type Response = MetaResponse<T>;
 }

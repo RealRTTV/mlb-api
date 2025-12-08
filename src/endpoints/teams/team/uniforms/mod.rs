@@ -4,7 +4,7 @@ use derive_more::{Deref, DerefMut, Display, From};
 use itertools::Itertools;
 use serde::Deserialize;
 use strum::EnumTryAs;
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::endpoints::teams::team::TeamId;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
@@ -31,7 +31,7 @@ pub enum UniformAsset {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct UniformAssetId(u32);
 
 impl UniformAssetId {
@@ -67,7 +67,7 @@ pub struct UniformAssetCategory {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct UniformAssetCategoryId(u32);
 
 impl UniformAssetCategoryId {
@@ -103,18 +103,18 @@ impl DerefMut for UniformAsset {
     }
 }
 
-pub struct UniformsEndpointUrl {
+pub struct UniformsEndpoint {
     pub teams: Vec<TeamId>,
     pub season: Option<u16>,
 }
 
-impl Display for UniformsEndpointUrl {
+impl Display for UniformsEndpoint {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/uniforms/team{}", gen_params! { "teamIds": self.teams.iter().copied().join(","), "season"?: self.season })
     }
 }
 
-impl StatsAPIUrl for UniformsEndpointUrl {
+impl StatsAPIEndpointUrl for UniformsEndpoint {
     type Response = UniformsResponse;
 }
 
@@ -123,7 +123,7 @@ static CACHE: RwLock<HydratedCacheTable<UniformAsset>> = rwlock_const_new(Hydrat
 impl EndpointEntryCache for UniformAsset {
     type HydratedVariant = HydratedUniformAsset;
     type Identifier = String;
-    type URL = UniformsEndpointUrl;
+    type URL = UniformsEndpoint;
 
     fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
         self.try_as_hydrated()
@@ -134,13 +134,13 @@ impl EndpointEntryCache for UniformAsset {
     }
 
     fn url_for_id(id: &Self::Identifier) -> Self::URL {
-        UniformsEndpointUrl {
+        UniformsEndpoint {
             teams: vec![TeamId::new(id.split_once('_').and_then(|(num, _)| num.parse().ok()).unwrap_or(0))],
             season: None,
         }
     }
 
-    fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+    fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
     where
         Self: Sized
     {
@@ -158,14 +158,14 @@ impl EndpointEntryCache for UniformAsset {
 #[cfg(test)]
 mod tests {
     use crate::endpoints::sports::SportId;
-    use crate::endpoints::StatsAPIUrl;
-    use crate::endpoints::teams::team::uniforms::UniformsEndpointUrl;
-    use crate::endpoints::teams::TeamsEndpointUrl;
+    use crate::endpoints::StatsAPIEndpointUrl;
+    use crate::endpoints::teams::team::uniforms::UniformsEndpoint;
+    use crate::endpoints::teams::TeamsEndpoint;
 
     #[tokio::test]
     async fn parse_all_mlb_teams_this_season() {
-        let mlb_teams = TeamsEndpointUrl { sport_id: Some(SportId::MLB), season: None }.get().await.unwrap();
+        let mlb_teams = TeamsEndpoint { sport_id: Some(SportId::MLB), season: None }.get().await.unwrap();
         let team_ids = mlb_teams.teams.into_iter().map(|team| team.id).collect::<Vec<_>>();
-        for _ in (UniformsEndpointUrl { teams: team_ids, season: None }.get().await.unwrap().teams.into_iter().flat_map(|x| x.uniform_assets).map(|x| x.try_as_hydrated().unwrap())) {}
+        for _ in (UniformsEndpoint { teams: team_ids, season: None }.get().await.unwrap().teams.into_iter().flat_map(|x| x.uniform_assets).map(|x| x.try_as_hydrated().unwrap())) {}
     }
 }

@@ -1,5 +1,5 @@
 use crate::endpoints::jobs::JobsResponse;
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use std::fmt::{Display, Formatter};
 
 pub struct JobsOfficialScorersEndpoint {}
@@ -10,6 +10,6 @@ impl Display for JobsOfficialScorersEndpoint {
     }
 }
 
-impl StatsAPIUrl for JobsOfficialScorersEndpoint {
+impl StatsAPIEndpointUrl for JobsOfficialScorersEndpoint {
 	type Response = JobsResponse;
 }

@@ -1,6 +1,6 @@
 
-use crate::endpoints::{Position, RosterTypeId, StatsAPIUrl};
-use crate::endpoints::teams::team::TeamId;
+use crate::endpoints::{Position, RosterTypeId, StatsAPIEndpointUrl};
+use crate::endpoints::teams::team::{Team, TeamId};
 use crate::gen_params;
 use std::fmt::{Display, Formatter};
 use chrono::NaiveDate;
@@ -45,9 +45,11 @@ pub enum RosterStatus {
     DesignatedForAssignment,
     FreeAgent,
     RestrictedList,
+    AssignedToNewTeam,
 }
 
 #[derive(Deserialize)]
+#[doc(hidden)]
 struct __RosterStatusStruct {
     code: String,
     description: String,
@@ -71,53 +73,60 @@ impl TryFrom<__RosterStatusStruct> for RosterStatus {
             "DES" => RosterStatus::DesignatedForAssignment,
             "FA" => RosterStatus::FreeAgent,
             "RST" => RosterStatus::RestrictedList,
+            "ASG" => RosterStatus::AssignedToNewTeam,
             code => return Err(format!("Invalid code '{code}' (desc: {})", value.description)),
         })
     }
 }
 
-pub struct RosterEndpointUrl {
+pub struct RosterEndpoint {
     team_id: TeamId,
     season: Option<u16>,
     date: Option<NaiveDate>,
     roster_type: RosterTypeId,
 }
 
-impl Display for RosterEndpointUrl {
+impl Display for RosterEndpoint {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/teams/{}/roster{}", self.team_id, gen_params! { "season"?: self.season, "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)), "rosterType": &self.roster_type })
     }
 }
 
-impl StatsAPIUrl for RosterEndpointUrl {
+impl StatsAPIEndpointUrl for RosterEndpoint {
     type Response = RosterResponse;
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RosterEntry {
+    pub position: Position,
+    pub status: RosterStatus,
+    pub team: Team,
+    pub is_active: bool,
+    pub is_active_forty_man: bool,
+    pub start_date: NaiveDate,
+    pub end_date: NaiveDate,
+    pub status_date: NaiveDate,
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::{RosterType, StatsAPIUrl};
-    use crate::endpoints::teams::TeamsEndpointUrl;
-    use crate::endpoints::teams::team::roster::RosterEndpointUrl;
+    use crate::endpoints::{RosterType, StatsAPIEndpointUrl};
+    use crate::endpoints::teams::TeamsEndpoint;
+    use crate::endpoints::teams::team::roster::RosterEndpoint;
     use chrono::{Datelike, Local};
-    use crate::endpoints::meta::MetaEndpointUrl;
+    use crate::endpoints::meta::MetaEndpoint;
     use crate::endpoints::sports::SportId;
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_this_year_all_mlb_teams_all_roster_types() {
         let season = Local::now().year() as _;
-        let teams = TeamsEndpointUrl { sport_id: Some(SportId::MLB), season: Some(season) }.get().await.unwrap().teams;
-        let roster_types = MetaEndpointUrl::<RosterType>::new().get().await.unwrap().entries;
+        let teams = TeamsEndpoint { sport_id: Some(SportId::MLB), season: Some(season) }.get().await.unwrap().teams;
+        let roster_types = MetaEndpoint::<RosterType>::new().get().await.unwrap().entries;
         for team in teams {
             for roster_type in &roster_types {
-                let json = reqwest::get(RosterEndpointUrl { team_id: team.id, season: Some(season), date: None, roster_type: roster_type.id.clone() }.to_string()).await.unwrap().bytes().await.unwrap();
-                let mut de = serde_json::Deserializer::from_slice(&json);
-                let result: Result<<RosterEndpointUrl as StatsAPIUrl>::Response, serde_path_to_error::Error<serde_json::Error>> = serde_path_to_error::deserialize(&mut de);
-                match result {
-                    Ok(_) => {}
-                    Err(e) if format!("{:?}", e.inner()).contains("missing field `copyright`") => {}
-                    Err(e) => panic!("Err: {:?}", e),
-                }
+                let _ = crate::serde_path_to_error_parse(RosterEndpoint { team_id: team.id, season: Some(season), date: None, roster_type: roster_type.id.clone() }).await;
             }
         }
     }

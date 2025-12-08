@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 #[cfg(all(feature = "reqwest", feature = "ureq"))]
 compile_error!("Only one http backend is allowed!");
 
-pub trait StatsAPIUrl: ToString {
+pub trait StatsAPIEndpointUrl: ToString {
     type Response: DeserializeOwned;
 
 	#[cfg(feature = "ureq")]

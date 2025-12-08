@@ -1,4 +1,4 @@
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::endpoints::league::League;
 use crate::endpoints::sports::Sport;
 use crate::{gen_params, rwlock_const_new, RwLock};
@@ -50,7 +50,7 @@ pub struct IdentifiableConference {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct ConferenceId(u32);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
@@ -90,18 +90,18 @@ impl PartialEq for Conference {
 }
 
 #[derive(Default)]
-pub struct ConferencesEndpointUrl {
+pub struct ConferencesEndpoint {
 	pub conference_id: Option<ConferenceId>,
 	pub season: Option<u16>,
 }
 
-impl Display for ConferencesEndpointUrl {
+impl Display for ConferencesEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "http://statsapi.mlb.com/api/v1/conferences{}", gen_params! { "conferenceId"?: self.conference_id, "season"?: self.season })
 	}
 }
 
-impl StatsAPIUrl for ConferencesEndpointUrl {
+impl StatsAPIEndpointUrl for ConferencesEndpoint {
 	type Response = ConferencesResponse;
 }
 
@@ -110,7 +110,7 @@ static CACHE: RwLock<HydratedCacheTable<Conference>> = rwlock_const_new(Hydrated
 impl EndpointEntryCache for Conference {
 	type HydratedVariant = HydratedConference;
 	type Identifier = ConferenceId;
-	type URL = ConferencesEndpointUrl;
+	type URL = ConferencesEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -121,13 +121,13 @@ impl EndpointEntryCache for Conference {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		ConferencesEndpointUrl {
+		ConferencesEndpoint {
 			conference_id: Some(id.clone()),
 			season: None,
 		}
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -144,11 +144,11 @@ impl EndpointEntryCache for Conference {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::conferences::ConferencesEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::conferences::ConferencesEndpoint;
 
 	#[tokio::test]
 	async fn parse_all_conferences() {
-		let _response = ConferencesEndpointUrl { ..ConferencesEndpointUrl::default() }.get().await.unwrap();
+		let _response = ConferencesEndpoint { ..ConferencesEndpoint::default() }.get().await.unwrap();
 	}
 }

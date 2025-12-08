@@ -3,8 +3,8 @@ use derive_more::Display;
 use serde::Deserialize;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpointUrl;
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::meta::MetaEndpoint;
+use crate::endpoints::StatsAPIEndpointUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__HitTrajectoryStruct")]
@@ -32,6 +32,7 @@ pub enum HitTrajectory {
 }
 
 #[derive(Deserialize)]
+#[doc(hidden)]
 struct __HitTrajectoryStruct {
 	code: String,
 }
@@ -62,7 +63,7 @@ static CACHE: RwLock<HydratedCacheTable<HitTrajectory>> = rwlock_const_new(Hydra
 impl EndpointEntryCache for HitTrajectory {
 	type HydratedVariant = HitTrajectory;
 	type Identifier = HitTrajectory;
-	type URL = MetaEndpointUrl<Self>;
+	type URL = MetaEndpoint<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		Some(self)
@@ -73,10 +74,10 @@ impl EndpointEntryCache for HitTrajectory {
 	}
 
 	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
-		MetaEndpointUrl::new()
+		MetaEndpoint::new()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -93,11 +94,11 @@ impl EndpointEntryCache for HitTrajectory {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {
-		let _response = MetaEndpointUrl::<super::HitTrajectory>::new().get().await.unwrap();
+		let _response = MetaEndpoint::<super::HitTrajectory>::new().get().await.unwrap();
 	}
 }

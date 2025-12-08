@@ -1,12 +1,12 @@
-use crate::endpoints::{MetaKind, StatsAPIUrl};
+use crate::endpoints::{MetaKind, StatsAPIEndpointUrl};
 use derive_more::{Display, FromStr};
 use serde::Deserialize;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpointUrl;
+use crate::endpoints::meta::MetaEndpoint;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr, Hash, Display)]
-#[serde(try_from = "__StatGroupStruct")]
+#[serde(try_from = "__StatGroupMaybeInline")]
 pub enum StatGroup {
 	Hitting,
 	Pitching,
@@ -19,16 +19,31 @@ pub enum StatGroup {
 }
 
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct __StatGroupStruct {
-	display_name: String,
+#[serde(untagged)]
+#[doc(hidden)]
+enum __StatGroupMaybeInline {
+	Wrapped {
+		#[serde(rename = "displayName")]
+		display_name: String,
+	},
+	Inline(String),
 }
 
-impl TryFrom<__StatGroupStruct> for StatGroup {
+impl __StatGroupMaybeInline {
+	#[must_use]
+	pub fn into_string(self) -> String {
+		match self {
+			__StatGroupMaybeInline::Wrapped { display_name } => display_name,
+			__StatGroupMaybeInline::Inline(name) => name,
+		}
+	}
+}
+
+impl TryFrom<__StatGroupMaybeInline> for StatGroup {
 	type Error = derive_more::FromStrError;
 
-	fn try_from(value: __StatGroupStruct) -> Result<Self, Self::Error> {
-		value.display_name.parse::<Self>()
+	fn try_from(value: __StatGroupMaybeInline) -> Result<Self, Self::Error> {
+		value.into_string().parse::<Self>()
 	}
 }
 
@@ -41,7 +56,7 @@ static CACHE: RwLock<HydratedCacheTable<StatGroup>> = rwlock_const_new(HydratedC
 impl EndpointEntryCache for StatGroup {
 	type HydratedVariant = StatGroup;
 	type Identifier = StatGroup;
-	type URL = MetaEndpointUrl<Self>;
+	type URL = MetaEndpoint<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		Some(self)
@@ -52,10 +67,10 @@ impl EndpointEntryCache for StatGroup {
 	}
 
 	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
-		MetaEndpointUrl::new()
+		MetaEndpoint::new()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -72,11 +87,11 @@ impl EndpointEntryCache for StatGroup {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {
-		let _response = MetaEndpointUrl::<super::StatGroup>::new().get().await.unwrap();
+		let _response = MetaEndpoint::<super::StatGroup>::new().get().await.unwrap();
 	}
 }

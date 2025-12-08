@@ -1,4 +1,4 @@
-use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
+use crate::endpoints::meta::{MetaEndpoint, MetaKind};
 use crate::endpoints::stat_groups::StatGroup;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
@@ -6,7 +6,7 @@ use std::ops::{Deref, DerefMut};
 use strum::EnumTryAs;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableBaseballStat {
@@ -15,7 +15,7 @@ pub struct IdentifiableBaseballStat {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
 pub struct BaseballStatId(String);
 
 impl BaseballStatId {
@@ -81,7 +81,7 @@ static CACHE: RwLock<HydratedCacheTable<BaseballStat>> = rwlock_const_new(Hydrat
 impl EndpointEntryCache for BaseballStat {
 	type HydratedVariant = HydratedBaseballStat;
 	type Identifier = BaseballStatId;
-	type URL = MetaEndpointUrl<Self>;
+	type URL = MetaEndpoint<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -92,10 +92,10 @@ impl EndpointEntryCache for BaseballStat {
 	}
 
 	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
-		MetaEndpointUrl::new()
+		MetaEndpoint::new()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -112,11 +112,11 @@ impl EndpointEntryCache for BaseballStat {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {
-		let _response = MetaEndpointUrl::<super::BaseballStat>::new().get().await.unwrap();
+		let _response = MetaEndpoint::<super::BaseballStat>::new().get().await.unwrap();
 	}
 }

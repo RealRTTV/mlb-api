@@ -1,4 +1,4 @@
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::endpoints::league::{League, LeagueId};
 use crate::endpoints::sports::{Sport, SportId};
 use crate::{gen_params, rwlock_const_new, RwLock};
@@ -36,7 +36,7 @@ pub struct IdentifiableAward {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
 pub struct AwardId(String);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
@@ -64,14 +64,14 @@ impl Deref for Award {
 }
 
 #[derive(Default)]
-pub struct AwardEndpointUrl {
+pub struct AwardEndpoint {
 	pub award_id: Option<AwardId>,
 	pub sport_id: Option<SportId>,
 	pub league_id: Option<LeagueId>,
 	pub season: Option<u16>,
 }
 
-impl Display for AwardEndpointUrl {
+impl Display for AwardEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(
 			f,
@@ -81,7 +81,7 @@ impl Display for AwardEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for AwardEndpointUrl {
+impl StatsAPIEndpointUrl for AwardEndpoint {
 	type Response = AwardsResponse;
 }
 
@@ -90,7 +90,7 @@ static CACHE: RwLock<HydratedCacheTable<Award>> = rwlock_const_new(HydratedCache
 impl EndpointEntryCache for Award {
 	type HydratedVariant = HydratedAward;
 	type Identifier = AwardId;
-	type URL = AwardEndpointUrl;
+	type URL = AwardEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -101,7 +101,7 @@ impl EndpointEntryCache for Award {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		AwardEndpointUrl {
+		AwardEndpoint {
 			award_id: Some(id.clone()),
 			sport_id: None,
 			league_id: None,
@@ -109,7 +109,7 @@ impl EndpointEntryCache for Award {
 		}
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -126,11 +126,11 @@ impl EndpointEntryCache for Award {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::awards::AwardEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::awards::AwardEndpoint;
 
 	#[tokio::test]
 	async fn parse_this_season() {
-		let _response = AwardEndpointUrl::default().get().await.unwrap();
+		let _response = AwardEndpoint::default().get().await.unwrap();
 	}
 }

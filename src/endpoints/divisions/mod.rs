@@ -1,4 +1,4 @@
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::endpoints::league::{IdentifiableLeague, LeagueId};
 use crate::endpoints::sports::{IdentifiableSport, SportId};
 use crate::{gen_params, rwlock_const_new, RwLock};
@@ -93,18 +93,18 @@ impl DerefMut for Division {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct DivisionId(u32);
 
 #[derive(Default)]
-pub struct DivisionsEndpointUrl {
+pub struct DivisionsEndpoint {
 	pub division_id: Option<DivisionId>,
 	pub league_id: Option<LeagueId>,
 	pub sport_id: Option<SportId>,
 	pub season: Option<u16>,
 }
 
-impl Display for DivisionsEndpointUrl {
+impl Display for DivisionsEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(
 			f,
@@ -114,7 +114,7 @@ impl Display for DivisionsEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for DivisionsEndpointUrl {
+impl StatsAPIEndpointUrl for DivisionsEndpoint {
 	type Response = DivisionsResponse;
 }
 
@@ -123,7 +123,7 @@ static CACHE: RwLock<HydratedCacheTable<Division>> = rwlock_const_new(HydratedCa
 impl EndpointEntryCache for Division {
 	type HydratedVariant = HydratedDivision;
 	type Identifier = DivisionId;
-	type URL = DivisionsEndpointUrl;
+	type URL = DivisionsEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -134,7 +134,7 @@ impl EndpointEntryCache for Division {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		DivisionsEndpointUrl {
+		DivisionsEndpoint {
 			division_id: Some(id.clone()),
 			league_id: None,
 			sport_id: None,
@@ -142,7 +142,7 @@ impl EndpointEntryCache for Division {
 		}
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -159,11 +159,11 @@ impl EndpointEntryCache for Division {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::divisions::DivisionsEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::divisions::DivisionsEndpoint;
 
 	#[tokio::test]
 	async fn all_divisions_this_season() {
-		let _response = DivisionsEndpointUrl::default().get().await.unwrap();
+		let _response = DivisionsEndpoint::default().get().await.unwrap();
 	}
 }

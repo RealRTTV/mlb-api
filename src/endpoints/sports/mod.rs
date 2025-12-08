@@ -1,6 +1,6 @@
 pub mod players;
 
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
@@ -18,7 +18,7 @@ pub struct SportsResponse {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct SportId(pub(super) u32);
 
 impl SportId {
@@ -37,17 +37,17 @@ impl Default for SportId {
 	}
 }
 
-pub struct SportsEndpointUrl {
+pub struct SportsEndpoint {
 	pub id: Option<SportId>,
 }
 
-impl Display for SportsEndpointUrl {
+impl Display for SportsEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "http://statsapi.mlb.com/api/v1/sports{}", gen_params! { "sportId"?: self.id })
 	}
 }
 
-impl StatsAPIUrl for SportsEndpointUrl {
+impl StatsAPIEndpointUrl for SportsEndpoint {
 	type Response = SportsResponse;
 }
 
@@ -123,7 +123,7 @@ static CACHE: RwLock<HydratedCacheTable<Sport>> = rwlock_const_new(HydratedCache
 impl EndpointEntryCache for Sport {
 	type HydratedVariant = HydratedSport;
 	type Identifier = SportId;
-	type URL = SportsEndpointUrl;
+	type URL = SportsEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -134,12 +134,12 @@ impl EndpointEntryCache for Sport {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		SportsEndpointUrl {
+		SportsEndpoint {
 			id: Some(id.clone()),
 		}
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -157,10 +157,10 @@ impl EndpointEntryCache for Sport {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_all_sports() {
-		let _result = SportsEndpointUrl { id: None }.get().await.unwrap();
+		let _result = SportsEndpoint { id: None }.get().await.unwrap();
 	}
 }

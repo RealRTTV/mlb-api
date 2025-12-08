@@ -3,13 +3,13 @@ pub mod series;
 use std::fmt::{Display, Formatter};
 use chrono::{Datelike, Local};
 use itertools::Itertools;
-use crate::endpoints::{GameType, StatsAPIUrl};
+use crate::endpoints::{GameType, StatsAPIEndpointUrl};
 use crate::endpoints::schedule::ScheduleResponse;
 use crate::endpoints::sports::SportId;
 use crate::endpoints::teams::team::TeamId;
 use crate::gen_params;
 
-pub struct SchedulePostseasonEndpointUrl {
+pub struct SchedulePostseasonEndpoint {
     pub season: u32,
     pub sport_id: SportId,
     pub team_id: Option<TeamId>,
@@ -17,7 +17,7 @@ pub struct SchedulePostseasonEndpointUrl {
     pub series_number: Option<u32>,
 }
 
-impl Default for SchedulePostseasonEndpointUrl {
+impl Default for SchedulePostseasonEndpoint {
     fn default() -> Self {
         Self {
             season: Local::now().year() as _,
@@ -29,7 +29,7 @@ impl Default for SchedulePostseasonEndpointUrl {
     }
 }
 
-impl Display for SchedulePostseasonEndpointUrl {
+impl Display for SchedulePostseasonEndpoint {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/schedule/games/tied{params}", params = gen_params! {
             "season": self.season,
@@ -40,19 +40,19 @@ impl Display for SchedulePostseasonEndpointUrl {
     }
 }
 
-impl StatsAPIUrl for SchedulePostseasonEndpointUrl {
+impl StatsAPIEndpointUrl for SchedulePostseasonEndpoint {
     type Response = ScheduleResponse;
 }
 
 #[cfg(test)]
 mod tests {
     use chrono::{Datelike, Local};
-    use crate::endpoints::schedule::postseason::SchedulePostseasonEndpointUrl;
-    use crate::endpoints::StatsAPIUrl;
+    use crate::endpoints::schedule::postseason::SchedulePostseasonEndpoint;
+    use crate::endpoints::StatsAPIEndpointUrl;
 
     #[tokio::test]
     async fn test_one_season() {
-        let request = SchedulePostseasonEndpointUrl {
+        let request = SchedulePostseasonEndpoint {
             season: 2025,
             ..Default::default()
         };
@@ -63,7 +63,7 @@ mod tests {
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_all_seasons() {
         for season in 1876..=Local::now().year() as _ {
-            let request = SchedulePostseasonEndpointUrl {
+            let request = SchedulePostseasonEndpoint {
                 season,
                 ..Default::default()
             };

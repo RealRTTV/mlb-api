@@ -290,7 +290,7 @@ impl TeamNameRaw {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct TeamId(u32);
 
 impl TeamId {
@@ -310,7 +310,7 @@ pub struct NamedOrganization {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct OrganizationId(u16);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]

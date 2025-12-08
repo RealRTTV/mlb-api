@@ -1,16 +1,16 @@
 use std::fmt::{Display, Formatter};
 use chrono::{Datelike, Local};
 use itertools::Itertools;
-use crate::endpoints::{GameType, StatsAPIUrl};
+use crate::endpoints::{GameType, StatsAPIEndpointUrl};
 use crate::endpoints::schedule::ScheduleResponse;
 use crate::gen_params;
 
-pub struct ScheduleTiedEndpointUrl {
+pub struct ScheduleTiedEndpoint {
     pub season: u32,
     pub game_types: Option<Vec<GameType>>,
 }
 
-impl Default for ScheduleTiedEndpointUrl {
+impl Default for ScheduleTiedEndpoint {
     fn default() -> Self {
         Self {
             season: Local::now().year() as _,
@@ -19,7 +19,7 @@ impl Default for ScheduleTiedEndpointUrl {
     }
 }
 
-impl Display for ScheduleTiedEndpointUrl {
+impl Display for ScheduleTiedEndpoint {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/schedule/games/tied{params}", params = gen_params! {
             "season": self.season,
@@ -28,19 +28,19 @@ impl Display for ScheduleTiedEndpointUrl {
     }
 }
 
-impl StatsAPIUrl for ScheduleTiedEndpointUrl {
+impl StatsAPIEndpointUrl for ScheduleTiedEndpoint {
     type Response = ScheduleResponse;
 }
 
 #[cfg(test)]
 mod tests {
     use chrono::{Datelike, Local};
-    use crate::endpoints::schedule::tied::ScheduleTiedEndpointUrl;
-    use crate::endpoints::StatsAPIUrl;
+    use crate::endpoints::schedule::tied::ScheduleTiedEndpoint;
+    use crate::endpoints::StatsAPIEndpointUrl;
 
     #[tokio::test]
     async fn test_one_season() {
-        let request = ScheduleTiedEndpointUrl {
+        let request = ScheduleTiedEndpoint {
             season: 1961,
             game_types: None,
         };
@@ -51,7 +51,7 @@ mod tests {
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_all_seasons() {
         for season in 1876..=Local::now().year() as _ {
-            let request = ScheduleTiedEndpointUrl {
+            let request = ScheduleTiedEndpoint {
                 season,
                 game_types: None,
             };

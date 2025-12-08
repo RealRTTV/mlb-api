@@ -3,7 +3,7 @@ use chrono::{Datelike, Local};
 use itertools::Itertools;
 use serde::{Deserialize, Deserializer};
 use serde::de::Error;
-use crate::endpoints::{GameType, StatsAPIUrl};
+use crate::endpoints::{GameType, StatsAPIEndpointUrl};
 use crate::endpoints::schedule::ScheduleGame;
 use crate::endpoints::sports::SportId;
 use crate::endpoints::teams::team::TeamId;
@@ -41,7 +41,7 @@ pub fn series_number_from_id<'de, D: Deserializer<'de>>(deserializer: D) -> Resu
     Ok(series_number)
 }
 
-pub struct SchedulePostseasonSeriesEndpointUrl {
+pub struct SchedulePostseasonSeriesEndpoint {
     pub season: u32,
     pub sport_id: Option<SportId>,
     pub team_id: Option<TeamId>,
@@ -49,7 +49,7 @@ pub struct SchedulePostseasonSeriesEndpointUrl {
     pub series_number: Option<u32>,
 }
 
-impl Default for SchedulePostseasonSeriesEndpointUrl {
+impl Default for SchedulePostseasonSeriesEndpoint {
     fn default() -> Self {
         Self {
             season: Local::now().year() as _,
@@ -61,7 +61,7 @@ impl Default for SchedulePostseasonSeriesEndpointUrl {
     }
 }
 
-impl Display for SchedulePostseasonSeriesEndpointUrl {
+impl Display for SchedulePostseasonSeriesEndpoint {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/schedule/postseason/series{params}", params = gen_params! {
             "season": self.season,
@@ -73,6 +73,6 @@ impl Display for SchedulePostseasonSeriesEndpointUrl {
     }
 }
 
-impl StatsAPIUrl for SchedulePostseasonSeriesEndpointUrl {
+impl StatsAPIEndpointUrl for SchedulePostseasonSeriesEndpoint {
     type Response = SchedulePostseasonSeriesResponse;
 }

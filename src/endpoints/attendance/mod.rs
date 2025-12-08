@@ -1,7 +1,7 @@
 use crate::endpoints::game::Game;
 use crate::endpoints::league::LeagueId;
 use crate::endpoints::teams::team::TeamId;
-use crate::endpoints::{GameType, StatsAPIUrl};
+use crate::endpoints::{GameType, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
@@ -242,14 +242,14 @@ impl Ord for DatedAttendance {
 	}
 }
 
-pub struct AttendanceEndpointUrl {
+pub struct AttendanceEndpoint {
 	pub id: Result<TeamId, LeagueId>,
 	pub season: Option<u16>,
 	pub date: Option<NaiveDate>,
 	pub game_type: GameType,
 }
 
-impl Display for AttendanceEndpointUrl {
+impl Display for AttendanceEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(
 			f,
@@ -259,19 +259,19 @@ impl Display for AttendanceEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for AttendanceEndpointUrl { type Response = AttendanceResponse; }
+impl StatsAPIEndpointUrl for AttendanceEndpoint { type Response = AttendanceResponse; }
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::attendance::AttendanceEndpointUrl;
+	use crate::endpoints::attendance::AttendanceEndpoint;
 	use crate::endpoints::sports::SportId;
-	use crate::endpoints::teams::TeamsEndpointUrl;
-	use crate::endpoints::{GameType, StatsAPIUrl};
+	use crate::endpoints::teams::TeamsEndpoint;
+	use crate::endpoints::{GameType, StatsAPIEndpointUrl};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_mlb_teams_2025() {
-		let mlb_teams = TeamsEndpointUrl {
+		let mlb_teams = TeamsEndpoint {
 			sport_id: Some(SportId::MLB),
 			season: Some(2025),
 		}
@@ -280,7 +280,7 @@ mod tests {
 		.unwrap()
 		.teams;
 		for team in mlb_teams {
-			let _response = AttendanceEndpointUrl {
+			let _response = AttendanceEndpoint {
 				id: Ok(team.id),
 				season: None,
 				date: None,

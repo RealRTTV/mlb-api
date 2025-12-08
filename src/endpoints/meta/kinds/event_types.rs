@@ -1,11 +1,11 @@
 use std::ops::{Deref, DerefMut};
-use crate::endpoints::meta::{MetaEndpointUrl, MetaKind};
+use crate::endpoints::meta::{MetaEndpoint, MetaKind};
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use strum::EnumTryAs;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -14,7 +14,7 @@ pub struct IdentifiableEventType {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
 pub struct EventTypeId(String);
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
@@ -73,7 +73,7 @@ static CACHE: RwLock<HydratedCacheTable<EventType>> = rwlock_const_new(HydratedC
 impl EndpointEntryCache for EventType {
 	type HydratedVariant = HydratedEventType;
 	type Identifier = EventTypeId;
-	type URL = MetaEndpointUrl<Self>;
+	type URL = MetaEndpoint<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -84,10 +84,10 @@ impl EndpointEntryCache for EventType {
 	}
 
 	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
-		MetaEndpointUrl::new()
+		MetaEndpoint::new()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -104,11 +104,11 @@ impl EndpointEntryCache for EventType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {
-		let _response = MetaEndpointUrl::<super::EventType>::new().get().await.unwrap();
+		let _response = MetaEndpoint::<super::EventType>::new().get().await.unwrap();
 	}
 }

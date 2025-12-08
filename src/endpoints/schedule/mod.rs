@@ -4,7 +4,7 @@ use crate::endpoints::league::LeagueId;
 use crate::endpoints::sports::SportId;
 use crate::endpoints::teams::team::{Team, TeamId};
 use crate::endpoints::venue::{Venue, VenueId};
-use crate::endpoints::{GameStatus, GameType, Sky, StatsAPIUrl};
+use crate::endpoints::{GameStatus, GameType, Sky, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT, NaiveDateRange};
 use chrono::{NaiveDate, Utc};
@@ -209,7 +209,7 @@ impl Standings {
 	}
 }
 
-pub struct ScheduleEndpointUrl {
+pub struct ScheduleEndpoint {
 	pub sport_id: SportId,
 	pub game_ids: Option<Vec<GameId>>,
 	pub team_id: Option<TeamId>,
@@ -220,7 +220,7 @@ pub struct ScheduleEndpointUrl {
 	pub season: Option<u32>,
 }
 
-impl Default for ScheduleEndpointUrl {
+impl Default for ScheduleEndpoint {
 	fn default() -> Self {
 		Self {
 			sport_id: SportId::MLB,
@@ -235,7 +235,7 @@ impl Default for ScheduleEndpointUrl {
 	}
 }
 
-impl Display for ScheduleEndpointUrl {
+impl Display for ScheduleEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(
 			f,
@@ -256,26 +256,26 @@ impl Display for ScheduleEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for ScheduleEndpointUrl {
+impl StatsAPIEndpointUrl for ScheduleEndpoint {
 	type Response = ScheduleResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::schedule::ScheduleEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::schedule::ScheduleEndpoint;
 	use chrono::{Datelike, Local, NaiveDate};
 
 	#[tokio::test]
 	async fn test_one_date() {
 		let date = NaiveDate::from_ymd_opt(2020, 8, 2).expect("Valid date");
-		let _ = ScheduleEndpointUrl { date: Ok(date), ..Default::default() }.get().await.unwrap();
+		let _ = ScheduleEndpoint { date: Ok(date), ..Default::default() }.get().await.unwrap();
 	}
 
 	#[tokio::test]
 	async fn test_all_dates_current_year() {
 		let current_date = Local::now().naive_local().date();
-		let request = ScheduleEndpointUrl {
+		let request = ScheduleEndpoint {
 			date: Err(current_date.with_ordinal0(0).unwrap()..=current_date.with_month(12).unwrap().with_day(31).unwrap()),
 			..Default::default()
 		};
@@ -288,7 +288,7 @@ mod tests {
 	async fn test_all_dates_all_years() {
 		for year in 1876..=Local::now().year() as _ {
 			dbg!(year);
-			let _ = ScheduleEndpointUrl {
+			let _ = ScheduleEndpoint {
 				date: Err(NaiveDate::from_ymd_opt(year, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(year, 12, 31).unwrap()),
 				..Default::default()
 			}

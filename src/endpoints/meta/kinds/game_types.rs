@@ -1,11 +1,11 @@
-use crate::endpoints::{MetaKind, StatsAPIUrl};
+use crate::endpoints::{MetaKind, StatsAPIEndpointUrl};
 use derive_more::Display;
 use serde::Deserialize;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpointUrl;
+use crate::endpoints::meta::MetaEndpoint;
 
 #[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__GameTypeStruct")]
@@ -72,18 +72,21 @@ impl Debug for GameType {
 }
 
 #[derive(Deserialize)]
+#[doc(hidden)]
 #[serde(untagged)]
 enum __GameTypeStruct {
-	Named { id: String },
+	Wrapped {
+		id: String,
+	},
 	Inline(String),
 }
 
 impl Deref for __GameTypeStruct {
-	type Target = str;
+	type Target = String;
 
 	fn deref(&self) -> &Self::Target {
 		match self {
-			Self::Named { id } => id,
+			Self::Wrapped { id, .. } => id,
 			Self::Inline(id) => id,
 		}
 	}
@@ -93,7 +96,7 @@ impl TryFrom<__GameTypeStruct> for GameType {
 	type Error = &'static str;
 
 	fn try_from(value: __GameTypeStruct) -> Result<Self, Self::Error> {
-		Ok(match &*value {
+		Ok(match &**value {
 			"S" => GameType::SpringTraining,
 			"I" => GameType::Intrasquad,
 			"E" => GameType::Exhibition,
@@ -120,7 +123,7 @@ static CACHE: RwLock<HydratedCacheTable<GameType>> = rwlock_const_new(HydratedCa
 impl EndpointEntryCache for GameType {
 	type HydratedVariant = GameType;
 	type Identifier = GameType;
-	type URL = MetaEndpointUrl<Self>;
+	type URL = MetaEndpoint<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		Some(self)
@@ -131,10 +134,10 @@ impl EndpointEntryCache for GameType {
 	}
 
 	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
-		MetaEndpointUrl::new()
+		MetaEndpoint::new()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -151,11 +154,11 @@ impl EndpointEntryCache for GameType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::meta::MetaEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {
-		let _response = MetaEndpointUrl::<super::GameType>::new().get().await.unwrap();
+		let _response = MetaEndpoint::<super::GameType>::new().get().await.unwrap();
 	}
 }

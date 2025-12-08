@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 use chrono::NaiveDate;
 use serde::Deserialize;
-use crate::endpoints::{JobTypeId, StatsAPIUrl};
+use crate::endpoints::{JobTypeId, StatsAPIEndpointUrl};
 use crate::endpoints::person::Person;
 use crate::endpoints::sports::SportId;
 use crate::gen_params;
@@ -29,13 +29,13 @@ pub struct EmployedPerson {
     #[serde(rename = "title")] pub job_title: String,
 }
 
-pub struct JobsEndpointUrl {
+pub struct JobsEndpoint {
     pub job_type: JobTypeId,
     pub sport_id: Option<SportId>,
     pub date: Option<NaiveDate>,
 }
 
-impl Display for JobsEndpointUrl {
+impl Display for JobsEndpoint {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/jobs{}", gen_params! {
             "jobType": self.job_type,
@@ -45,21 +45,21 @@ impl Display for JobsEndpointUrl {
     }
 }
 
-impl StatsAPIUrl for JobsEndpointUrl {
+impl StatsAPIEndpointUrl for JobsEndpoint {
 	type Response = JobsResponse;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::{JobType, StatsAPIUrl};
-    use crate::endpoints::jobs::JobsEndpointUrl;
-    use crate::endpoints::meta::MetaEndpointUrl;
+    use crate::endpoints::{JobType, StatsAPIEndpointUrl};
+    use crate::endpoints::jobs::JobsEndpoint;
+    use crate::endpoints::meta::MetaEndpoint;
 
     #[tokio::test]
     async fn parse_all_job_types() {
-        let job_types = MetaEndpointUrl::<JobType>::new().get().await.unwrap().entries;
+        let job_types = MetaEndpoint::<JobType>::new().get().await.unwrap().entries;
         for job_type in job_types.into_iter() {
-            let _response = JobsEndpointUrl { job_type: job_type.id.clone(), sport_id: None, date: None }.get().await.unwrap();
+            let _response = JobsEndpoint { job_type: job_type.id.clone(), sport_id: None, date: None }.get().await.unwrap();
         }
     }
 }

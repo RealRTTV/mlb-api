@@ -1,9 +1,9 @@
 use chrono::{Datelike, Local, NaiveDate};
-use derive_more::Display;
+use derive_more::{Display, FromStr};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
-use std::num::ParseIntError;
+use std::num::{ParseFloatError, ParseIntError};
 use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
 use compact_str::CompactString;
@@ -20,6 +20,7 @@ pub enum Copyright {
 }
 
 #[derive(Deserialize)]
+#[doc(hidden)]
 struct __CopyrightStruct(String);
 
 impl From<__CopyrightStruct> for Copyright {
@@ -151,6 +152,7 @@ pub enum Handedness {
 }
 
 #[derive(Deserialize)]
+#[doc(hidden)]
 struct __HandednessStruct {
 	code: String,
 }
@@ -312,3 +314,77 @@ pub struct StatsAPIError {
 }
 
 impl std::error::Error for StatsAPIError {}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
+#[serde(try_from = "&str")]
+pub struct RGBAColor {
+	pub red: u8,
+	pub green: u8,
+	pub blue: u8,
+	pub alpha: u8,
+}
+
+impl Display for RGBAColor {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "0x{:02x}{:02x}{:02x}{:02x}", self.alpha, self.red, self.green, self.blue)
+	}
+}
+
+#[derive(Debug, Error)]
+pub enum RGBAColorFromStrError {
+	#[error("Invalid spec")]
+	InvalidFormat,
+	#[error(transparent)]
+	InvalidInt(#[from] ParseIntError),
+	#[error(transparent)]
+	InvalidFloat(#[from] ParseFloatError),
+}
+
+impl<'a> TryFrom<&'a str> for RGBAColor {
+	type Error = <Self as FromStr>::Err;
+
+	fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+		<Self as FromStr>::from_str(value)
+	}
+}
+
+impl FromStr for RGBAColor {
+	type Err = RGBAColorFromStrError;
+
+	fn from_str(mut s: &str) -> Result<Self, Self::Err> {
+		s = s.strip_suffix("rgba(").ok_or(Self::Err::InvalidFormat)?;
+		let (red, s) = s.split_once(", ").ok_or(Self::Err::InvalidFormat)?;
+		let red = red.parse::<u8>()?;
+		let (green, s) = s.split_once(", ").ok_or(Self::Err::InvalidFormat)?;
+		let green = green.parse::<u8>()?;
+		let (blue, s) = s.split_once(", ").ok_or(Self::Err::InvalidFormat)?;
+		let blue = blue.parse::<u8>()?;
+		let (alpha, s) = s.split_once(")").ok_or(Self::Err::InvalidFormat)?;
+		let alpha = (alpha.parse::<f32>()? * 255.0).round() as u8;
+		if !s.is_empty() { return Err(Self::Err::InvalidFormat); }
+		Ok(RGBAColor {
+			red,
+			green,
+			blue,
+			alpha
+		})
+	}
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, FromStr)]
+#[serde(try_from = "&str")]
+pub enum SimpleTemperature {
+	Hot,
+	Warm,
+	Lukewarm,
+	Cool,
+	Cold,
+}
+
+impl<'a> TryFrom<&'a str> for SimpleTemperature {
+	type Error = <Self as FromStr>::Err;
+
+	fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+		<Self as FromStr>::from_str(value)
+	}
+}

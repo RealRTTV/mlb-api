@@ -1,4 +1,4 @@
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::endpoints::sports::SportId;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
@@ -66,7 +66,7 @@ pub struct HydratedVenue {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct VenueId(u32);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
@@ -113,19 +113,19 @@ impl DerefMut for Venue {
 }
 
 #[derive(Default)]
-pub struct VenuesEndpointUrl {
+pub struct VenuesEndpoint {
 	pub sport_id: Option<SportId>,
 	pub venue_ids: Option<Vec<VenueId>>,
 	pub season: Option<u16>,
 }
 
-impl Display for VenuesEndpointUrl {
+impl Display for VenuesEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "http://statsapi.mlb.com/api/v1/venues{}{}", self.sport_id.map_or(String::new(), |id| format!("/{id}")), gen_params! { "season"?: self.season, "venueIds"?: self.venue_ids.as_ref().map(|ids| ids.iter().join(",")) })
 	}
 }
 
-impl StatsAPIUrl for VenuesEndpointUrl {
+impl StatsAPIEndpointUrl for VenuesEndpoint {
 	type Response = VenuesResponse;
 }
 
@@ -134,7 +134,7 @@ static CACHE: RwLock<HydratedCacheTable<Venue>> = rwlock_const_new(HydratedCache
 impl EndpointEntryCache for Venue {
 	type HydratedVariant = HydratedVenue;
 	type Identifier = VenueId;
-	type URL = VenuesEndpointUrl;
+	type URL = VenuesEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -145,14 +145,14 @@ impl EndpointEntryCache for Venue {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		VenuesEndpointUrl {
+		VenuesEndpoint {
 			sport_id: None,
 			venue_ids: Some(vec![id.clone()]),
 			season: None,
 		}
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
@@ -169,19 +169,19 @@ impl EndpointEntryCache for Venue {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::venue::VenuesEndpointUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::venue::VenuesEndpoint;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_venues_all_seasons() {
 		for season in 1876..=Local::now().year() as _ {
-			let _response = VenuesEndpointUrl { sport_id: None, season: Some(season), venue_ids: None }.get().await.unwrap();
+			let _response = VenuesEndpoint { sport_id: None, season: Some(season), venue_ids: None }.get().await.unwrap();
 		}
 	}
 
 	async fn parse_all_venues() {
-		let _response = VenuesEndpointUrl { sport_id: None, season: None, venue_ids: None }.get().await.unwrap();
+		let _response = VenuesEndpoint { sport_id: None, season: None, venue_ids: None }.get().await.unwrap();
 	}
 }

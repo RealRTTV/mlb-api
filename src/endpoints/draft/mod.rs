@@ -1,9 +1,9 @@
 use crate::endpoints::person::{Person, PersonId};
 use crate::endpoints::teams::team::{Team, TeamId};
-use crate::endpoints::{Position, StatsAPIUrl};
+use crate::endpoints::{Position, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, Location};
-use derive_more::{Deref, Display};
+use derive_more::{Deref, Display, From};
 use serde::Deserialize;
 use serde_with::DisplayFromStr;
 use serde_with::serde_as;
@@ -33,7 +33,7 @@ pub struct DraftRound {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct EBISPersonId(u32);
 
 impl EBISPersonId {
@@ -134,6 +134,7 @@ pub enum DraftType {
 }
 
 #[derive(Deserialize)]
+#[doc(hidden)]
 struct __DraftTypeStruct {
 	code: String,
 }
@@ -157,24 +158,24 @@ impl TryFrom<__DraftTypeStruct> for DraftType {
 
 /// This endpoint sorts into rounds
 #[derive(Clone)]
-pub struct DraftEndpointUrl {
+pub struct DraftEndpoint {
 	/// Year of the draft.
 	pub year: Option<u32>,
 	/// Kind of request to make.
-	pub kind: DraftEndpointUrlKind,
+	pub kind: DraftEndpointKind,
 }
 
 #[derive(Clone)]
-pub enum DraftEndpointUrlKind {
+pub enum DraftEndpointKind {
 	/// Gets the latest draft pick.\
 	/// During the draft, this is the most recent draft pick, however when the draft has ended, this is the last draft pick.
 	Latest,
 	/// A regular draft pick endpoint request.
-	Regular(DraftEndpointUrlData),
+	Regular(DraftEndpointData),
 }
 
 #[derive(Clone)]
-pub struct DraftEndpointUrlData {
+pub struct DraftEndpointData {
 	/// Number of results to return.
 	pub limit: Option<u32>,
 	/// Offset in the results (used for pagination).
@@ -198,11 +199,11 @@ pub struct DraftEndpointUrlData {
 	pub player_id: Option<PersonId>,
 }
 
-impl Display for DraftEndpointUrl {
+impl Display for DraftEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self.kind.clone() {
-			DraftEndpointUrlKind::Latest => write!(f, "http://statsapi.mlb.com/api/v1/draft/{year}/latest", year = self.year.map_or(String::new(), |x| x.to_string())),
-			DraftEndpointUrlKind::Regular(DraftEndpointUrlData {
+			DraftEndpointKind::Latest => write!(f, "http://statsapi.mlb.com/api/v1/draft/{year}/latest", year = self.year.map_or(String::new(), |x| x.to_string())),
+			DraftEndpointKind::Regular(DraftEndpointData {
 				                              limit,
 				                              offset,
 				                              round,
@@ -234,22 +235,22 @@ impl Display for DraftEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for DraftEndpointUrl {
+impl StatsAPIEndpointUrl for DraftEndpoint {
 	type Response = DraftResponse;
 }
 
 // todo: make type system allow for only the `Regular` variant here
 /// This endpoint gives a list of prospects.
-pub struct DraftProspectsEndpointUrl {
+pub struct DraftProspectsEndpoint {
 	/// Year of the draft.
 	pub year: Option<u32>,
 	/// Kind of request to make.
-	pub kind: DraftEndpointUrlData,
+	pub kind: DraftEndpointData,
 }
 
-impl Display for DraftProspectsEndpointUrl {
+impl Display for DraftProspectsEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		let DraftEndpointUrlData {
+		let DraftEndpointData {
 			limit,
 			offset,
 			round,
@@ -281,21 +282,21 @@ impl Display for DraftProspectsEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for DraftProspectsEndpointUrl {
+impl StatsAPIEndpointUrl for DraftProspectsEndpoint {
 	type Response = DraftProspectsResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
-	use crate::endpoints::draft::{DraftEndpointUrl, DraftEndpointUrlKind, DraftProspectsEndpointUrl, DraftEndpointUrlData};
+	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::endpoints::draft::{DraftEndpoint, DraftEndpointKind, DraftProspectsEndpoint, DraftEndpointData};
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	async fn draft_2025() {
-		let _ = DraftEndpointUrl {
+		let _ = DraftEndpoint {
 			year: Some(2025),
-			kind: DraftEndpointUrlKind::Regular(DraftEndpointUrlData {
+			kind: DraftEndpointKind::Regular(DraftEndpointData {
 				limit: None,
 				offset: None,
 				round: None,
@@ -312,9 +313,9 @@ mod tests {
 			.await
 			.unwrap();
 
-		let _ = DraftProspectsEndpointUrl {
+		let _ = DraftProspectsEndpoint {
 			year: Some(2025),
-			kind: DraftEndpointUrlData {
+			kind: DraftEndpointData {
 				limit: None,
 				offset: None,
 				round: None,
@@ -336,67 +337,37 @@ mod tests {
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn draft_all_years() {
 		for year in 1965..=Local::now().year() as _ {
-			let json = reqwest::get(
-				DraftEndpointUrl {
-					year: Some(year),
-					kind: DraftEndpointUrlKind::Regular(DraftEndpointUrlData {
-						limit: None,
-						offset: None,
-						round: None,
-						drafted_only: None,
-						last_name: None,
-						school: None,
-						position: None,
-						team_id: None,
-						home_country: None,
-						player_id: None,
-					}),
-				}
-					.to_string(),
-			)
-				.await
-				.unwrap()
-				.bytes()
-				.await
-				.unwrap();
-			let mut de = serde_json::Deserializer::from_slice(&json);
-			let result: Result<<DraftEndpointUrl as StatsAPIUrl>::Response, serde_path_to_error::Error<_>> = serde_path_to_error::deserialize(&mut de);
-			match result {
-				Ok(_) => {}
-				Err(e) if format!("{:?}", e.inner()).contains("missing field `copyright`") => {}
-				Err(e) => panic!("Err: {:?} (yr: {year})", e),
-			}
+			let _ = crate::serde_path_to_error_parse(DraftEndpoint {
+				year: Some(year),
+				kind: DraftEndpointKind::Regular(DraftEndpointData {
+					limit: None,
+					offset: None,
+					round: None,
+					drafted_only: None,
+					last_name: None,
+					school: None,
+					position: None,
+					team_id: None,
+					home_country: None,
+					player_id: None,
+				}),
+			}).await;
 
-			let json = reqwest::get(
-				DraftProspectsEndpointUrl {
-					year: Some(year),
-					kind: DraftEndpointUrlData {
-						limit: None,
-						offset: None,
-						round: None,
-						drafted_only: None,
-						last_name: None,
-						school: None,
-						position: None,
-						team_id: None,
-						home_country: None,
-						player_id: None,
-					},
-				}
-					.to_string(),
-			)
-				.await
-				.unwrap()
-				.bytes()
-				.await
-				.unwrap();
-			let mut de = serde_json::Deserializer::from_slice(&json);
-			let result: Result<<DraftProspectsEndpointUrl as StatsAPIUrl>::Response, serde_path_to_error::Error<_>> = serde_path_to_error::deserialize(&mut de);
-			match result {
-				Ok(_) => {}
-				Err(e) if format!("{:?}", e.inner()).contains("missing field `copyright`") => {}
-				Err(e) => panic!("Err: {:?} (yr: {year})", e),
-			}
+			let _ = crate::serde_path_to_error_parse(DraftProspectsEndpoint {
+				year: Some(year),
+				kind: DraftEndpointData {
+					limit: None,
+					offset: None,
+					round: None,
+					drafted_only: None,
+					last_name: None,
+					school: None,
+					position: None,
+					team_id: None,
+					home_country: None,
+					player_id: None,
+				},
+			}).await;
 		}
 	}
 }

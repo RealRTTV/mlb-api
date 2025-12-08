@@ -1,14 +1,14 @@
 use serde::Deserialize;
-use crate::endpoints::person::Person;
+use crate::endpoints::person::{Person, PersonHydrations};
 use crate::types::Copyright;
 
-pub mod changes;
 pub mod free_agents;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PeopleResponse {
+#[serde(bound = "H: PersonHydrations")]
+pub struct PeopleResponse<H: PersonHydrations> {
     pub copyright: Copyright,
     #[serde(default)]
-    pub people: Vec<Person>,
+    pub people: Vec<Person<H>>,
 }

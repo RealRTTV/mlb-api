@@ -1,11 +1,11 @@
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::endpoints::person::{Person, PersonId};
 use crate::endpoints::sports::SportId;
 use crate::endpoints::teams::team::{Team, TeamId};
 use crate::gen_params;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT, NaiveDateRange};
 use chrono::NaiveDate;
-use derive_more::{Deref, Display};
+use derive_more::{Deref, Display, From};
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -376,7 +376,7 @@ impl Display for Transaction {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct TransactionId(u32);
 
 impl TransactionId {
@@ -386,14 +386,14 @@ impl TransactionId {
 	}
 }
 
-pub enum TransactionsEndpointUrlKind {
+pub enum TransactionsEndpointKind {
 	Team(TeamId),
 	Player(PersonId),
 	Transactions(Vec<TransactionId>),
 	DateRange(NaiveDateRange),
 }
 
-impl Display for TransactionsEndpointUrlKind {
+impl Display for TransactionsEndpointKind {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::Team(team_id) => write!(f, "teamId={team_id}"),
@@ -408,12 +408,12 @@ impl Display for TransactionsEndpointUrlKind {
 /// Vladimir Guerrero Jr.'s `.` in his name causes the API to be super confused and generate 5 players, four of which don't exist.\
 /// Of course putting `[Option<Person>]` for the `person` field is needlessly overkill since mostly all situations will not cause this, but the transactions shouldn't be discarded.\
 /// Instead, these values (no team, no date, no player) are given default values such that they are valid, but any further API requests with them return an error, such as a person with ID 0.
-pub struct TransactionsEndpointUrl {
-	pub kind: TransactionsEndpointUrlKind,
+pub struct TransactionsEndpoint {
+	pub kind: TransactionsEndpointKind,
 	pub sport_id: Option<SportId>,
 }
 
-impl Display for TransactionsEndpointUrl {
+impl Display for TransactionsEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(
 			f,
@@ -426,47 +426,32 @@ impl Display for TransactionsEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for TransactionsEndpointUrl {
+impl StatsAPIEndpointUrl for TransactionsEndpoint {
 	type Response = TransactionsResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIUrl;
+	use crate::endpoints::StatsAPIEndpointUrl;
 	use crate::endpoints::sports::SportId;
-	use crate::endpoints::sports::players::SportsPlayersEndpointUrl;
-	use crate::endpoints::teams::TeamsEndpointUrl;
+	use crate::endpoints::sports::players::SportsPlayersEndpoint;
+	use crate::endpoints::teams::TeamsEndpoint;
 	use crate::endpoints::teams::team::Team;
-	use crate::endpoints::transactions::{TransactionsEndpointUrl, TransactionsEndpointUrlKind, TransactionsResponse};
+	use crate::endpoints::transactions::{TransactionsEndpoint, TransactionsEndpointKind};
 	use chrono::NaiveDate;
 	use crate::endpoints::person::Person;
 
 	#[tokio::test]
 	async fn parse_2025() {
-		let json = reqwest::get(
-			TransactionsEndpointUrl {
-				kind: TransactionsEndpointUrlKind::DateRange(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
-				sport_id: Some(SportId::MLB),
-			}
-			.to_string(),
-		)
-		.await
-		.unwrap()
-		.bytes()
-		.await
-		.unwrap();
-		let mut de = serde_json::Deserializer::from_slice(&json);
-		let result: Result<TransactionsResponse, serde_path_to_error::Error<_>> = serde_path_to_error::deserialize(&mut de);
-		match result {
-			Ok(_) => {}
-			Err(e) if format!("{:?}", e.inner()).contains("missing field `copyright`") => {}
-			Err(e) => panic!("Err: {:?}", e),
-		}
+		let _ = crate::serde_path_to_error_parse(TransactionsEndpoint {
+			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
+			sport_id: Some(SportId::MLB),
+		}).await;
 	}
 
 	#[tokio::test]
 	async fn parse_all_endpoints() {
-		let blue_jays = TeamsEndpointUrl {
+		let blue_jays = TeamsEndpoint {
 			sport_id: Some(SportId::MLB),
 			season: Some(2025),
 		}
@@ -478,7 +463,7 @@ mod tests {
 		.filter_map(Team::try_as_named)
 		.find(|team| team.name.as_str() == "Toronto Blue Jays")
 		.unwrap();
-		let bo_bichette = SportsPlayersEndpointUrl { id: SportId::MLB, season: Some(2025) }
+		let bo_bichette = SportsPlayersEndpoint { id: SportId::MLB, season: Some(2025) }
 			.get()
 			.await
 			.unwrap()
@@ -488,30 +473,30 @@ mod tests {
 			.find(|person| person.full_name == "Bo Bichette")
 			.unwrap();
 
-		let response = TransactionsEndpointUrl {
-			kind: TransactionsEndpointUrlKind::DateRange(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
+		let response = TransactionsEndpoint {
+			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
 			sport_id: Some(SportId::MLB),
 		}
 		.get()
 		.await
 		.unwrap();
 		let transaction_ids = response.transactions.into_iter().take(1).map(|transaction| transaction.id).collect::<Vec<_>>();
-		let _response = TransactionsEndpointUrl {
-			kind: TransactionsEndpointUrlKind::Team(blue_jays.id),
+		let _response = TransactionsEndpoint {
+			kind: TransactionsEndpointKind::Team(blue_jays.id),
 			sport_id: Some(SportId::MLB),
 		}
 		.get()
 		.await
 		.unwrap();
-		let _response = TransactionsEndpointUrl {
-			kind: TransactionsEndpointUrlKind::Player(bo_bichette.id),
+		let _response = TransactionsEndpoint {
+			kind: TransactionsEndpointKind::Player(bo_bichette.id),
 			sport_id: Some(SportId::MLB),
 		}
 		.get()
 		.await
 		.unwrap();
-		let _response = TransactionsEndpointUrl {
-			kind: TransactionsEndpointUrlKind::Transactions(transaction_ids),
+		let _response = TransactionsEndpoint {
+			kind: TransactionsEndpointKind::Transactions(transaction_ids),
 			sport_id: Some(SportId::MLB),
 		}
 		.get()

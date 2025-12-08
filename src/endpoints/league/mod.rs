@@ -10,7 +10,7 @@ use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use itertools::Itertools;
 use strum::EnumTryAs;
-use crate::endpoints::StatsAPIUrl;
+use crate::endpoints::StatsAPIEndpointUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 
@@ -100,7 +100,7 @@ fn bad_league_season_schema_deserializer<'de, D: serde::Deserializer<'de>>(deser
 }
 
 #[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct LeagueId(u32);
 
 impl LeagueId {
@@ -153,12 +153,12 @@ impl DerefMut for League {
 	}
 }
 
-pub struct LeagueEndpointUrl {
+pub struct LeagueEndpoint {
 	pub sport_id: Option<SportId>,
 	pub league_ids: Option<Vec<LeagueId>>,
 }
 
-impl Display for LeagueEndpointUrl {
+impl Display for LeagueEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "http://statsapi.mlb.com/api/v1/leagues{}", gen_params! {
 			"sportId"?: self.sport_id,
@@ -167,7 +167,7 @@ impl Display for LeagueEndpointUrl {
 	}
 }
 
-impl StatsAPIUrl for LeagueEndpointUrl {
+impl StatsAPIEndpointUrl for LeagueEndpoint {
 	type Response = LeagueResponse;
 }
 
@@ -176,7 +176,7 @@ static CACHE: RwLock<HydratedCacheTable<League>> = rwlock_const_new(HydratedCach
 impl EndpointEntryCache for League {
 	type HydratedVariant = HydratedLeague;
 	type Identifier = LeagueId;
-	type URL = LeagueEndpointUrl;
+	type URL = LeagueEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
 		self.try_as_hydrated()
@@ -187,13 +187,13 @@ impl EndpointEntryCache for League {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		LeagueEndpointUrl {
+		LeagueEndpoint {
 			sport_id: None,
 			league_ids: Some(vec![id.clone()]),
 		}
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
