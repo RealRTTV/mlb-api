@@ -1,6 +1,6 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::league::League;
-use crate::endpoints::sports::Sport;
+use crate::StatsAPIEndpointUrl;
+use crate::league::League;
+use crate::sports::Sport;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
@@ -144,8 +144,8 @@ impl EndpointEntryCache for Conference {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::conferences::ConferencesEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::conferences::ConferencesEndpoint;
 
 	#[tokio::test]
 	async fn parse_all_conferences() {

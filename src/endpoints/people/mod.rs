@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use crate::endpoints::person::{Person, PersonHydrations};
+use crate::person::{Person, PersonHydrations};
 use crate::types::Copyright;
 
 pub mod free_agents;

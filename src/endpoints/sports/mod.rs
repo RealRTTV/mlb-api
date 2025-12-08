@@ -1,6 +1,6 @@
 pub mod players;
 
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::StatsAPIEndpointUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
@@ -157,7 +157,7 @@ impl EndpointEntryCache for Sport {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::StatsAPIEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_all_sports() {

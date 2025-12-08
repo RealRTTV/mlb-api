@@ -6,16 +6,17 @@ pub mod roster; // done
 pub mod stats;
 pub mod uniforms; // done
 
-use crate::endpoints::divisions::NamedDivision;
-use crate::endpoints::league::NamedLeague;
-use crate::endpoints::sports::NamedSport;
-use crate::endpoints::venue::NamedVenue;
+use crate::divisions::NamedDivision;
+use crate::league::NamedLeague;
+use crate::sports::NamedSport;
+use crate::venue::NamedVenue;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use serde_with::DefaultOnError;
 use serde_with::serde_as;
 use std::ops::{Deref, DerefMut};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use crate::seasons::season::SeasonId;
 
 #[serde_as]
 #[derive(Deserialize)]
@@ -25,7 +26,7 @@ struct RegularTeamRaw {
 	#[serde(default)]
 	all_star_status: bool,
 	active: bool,
-	season: u16,
+	season: SeasonId,
 	#[serde_as(deserialize_as = "DefaultOnError")]
 	#[serde(default)]
 	venue: NamedVenue,
@@ -50,7 +51,7 @@ struct RegularTeamRaw {
 pub struct RegularTeam {
 	pub all_star_status: bool,
 	pub active: bool,
-	pub season: u16,
+	pub season: SeasonId,
 	pub venue: NamedVenue,
 	pub name: TeamName,
 	pub location_name: Option<String>,
@@ -90,7 +91,7 @@ impl From<RegularTeamRaw> for RegularTeam {
 			venue,
 			name: name.initialize(inner.id),
 			location_name,
-			first_year_of_play: first_year_of_play.unwrap_or(season),
+			first_year_of_play: first_year_of_play.unwrap_or(*season as _),
 			league,
 			division,
 			sport,

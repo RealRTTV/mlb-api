@@ -1,6 +1,6 @@
-use crate::endpoints::jobs::JobsResponse;
-use crate::endpoints::sports::SportId;
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::jobs::JobsResponse;
+use crate::sports::SportId;
+use crate::StatsAPIEndpointUrl;
 use crate::gen_params;
 use crate::types::MLB_API_DATE_FORMAT;
 use chrono::NaiveDate;

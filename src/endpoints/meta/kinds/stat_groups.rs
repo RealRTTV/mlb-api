@@ -1,9 +1,9 @@
-use crate::endpoints::{MetaKind, StatsAPIEndpointUrl};
+use crate::{MetaKind, StatsAPIEndpointUrl};
 use derive_more::{Display, FromStr};
 use serde::Deserialize;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpoint;
+use crate::meta::MetaEndpoint;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr, Hash, Display)]
 #[serde(try_from = "__StatGroupMaybeInline")]
@@ -87,8 +87,8 @@ impl EndpointEntryCache for StatGroup {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {

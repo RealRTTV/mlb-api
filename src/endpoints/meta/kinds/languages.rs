@@ -1,12 +1,12 @@
-use crate::endpoints::meta::kinds::MetaKind;
+use crate::meta::kinds::MetaKind;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpoint;
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::meta::MetaEndpoint;
+use crate::StatsAPIEndpointUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -123,8 +123,8 @@ impl EndpointEntryCache for Language {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {

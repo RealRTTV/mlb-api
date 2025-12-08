@@ -1,10 +1,10 @@
-use crate::endpoints::meta::kinds::MetaKind;
+use crate::meta::kinds::MetaKind;
 use derive_more::Display;
 use serde::Deserialize;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpoint;
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::meta::MetaEndpoint;
+use crate::StatsAPIEndpointUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__HitTrajectoryStruct")]
@@ -94,8 +94,8 @@ impl EndpointEntryCache for HitTrajectory {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {

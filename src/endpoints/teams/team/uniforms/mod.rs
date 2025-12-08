@@ -4,8 +4,8 @@ use derive_more::{Deref, DerefMut, Display, From};
 use itertools::Itertools;
 use serde::Deserialize;
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::teams::team::TeamId;
+use crate::StatsAPIEndpointUrl;
+use crate::teams::team::TeamId;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::types::Copyright;
@@ -157,10 +157,10 @@ impl EndpointEntryCache for UniformAsset {
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::sports::SportId;
-    use crate::endpoints::StatsAPIEndpointUrl;
-    use crate::endpoints::teams::team::uniforms::UniformsEndpoint;
-    use crate::endpoints::teams::TeamsEndpoint;
+    use crate::sports::SportId;
+    use crate::StatsAPIEndpointUrl;
+    use crate::teams::team::uniforms::UniformsEndpoint;
+    use crate::teams::TeamsEndpoint;
 
     #[tokio::test]
     async fn parse_all_mlb_teams_this_season() {

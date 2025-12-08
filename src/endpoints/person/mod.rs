@@ -2,24 +2,22 @@ pub mod stats;
 
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
-use crate::endpoints::positions::Position;
+use crate::positions::Position;
 use crate::types::{Gender, Handedness, HeightMeasurement};
 use chrono::NaiveDate;
 use derive_more::{Deref, DerefMut, Display, From};
-use serde::Deserialize;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
+use serde::{Deserialize, Deserializer};
 use std::ops::{Deref, DerefMut};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use serde::de::Error;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::draft::School;
-use crate::endpoints::people::PeopleResponse;
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::teams::team::Team;
+use crate::draft::School;
+use crate::people::PeopleResponse;
+use crate::StatsAPIEndpointUrl;
+use crate::teams::team::Team;
 use crate::hydrations::Hydrations;
 
-#[serde_as]
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
@@ -27,7 +25,7 @@ pub struct Ballplayer<H: PersonHydrations> {
 	#[serde(deserialize_with = "crate::types::try_from_str")]
 	#[serde(default)]
 	pub primary_number: Option<u8>,
-	pub current_age: u8,
+	pub current_age: u16,
 	#[serde(flatten)]
 	pub birth_data: BirthData,
 	#[serde(flatten)]
@@ -59,11 +57,9 @@ pub struct BirthData {
 	pub birth_country: String,
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BodyMeasurements {
-	#[serde_as(as = "DisplayFromStr")]
 	pub height: HeightMeasurement,
 	pub weight: u16,
 }
@@ -192,6 +188,19 @@ impl PersonId {
 	}
 }
 
+#[repr(transparent)]
+#[derive(Debug, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
+pub struct JerseyNumber(u8);
+
+impl<'de> Deserialize<'de> for JerseyNumber {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		String::deserialize(deserializer)?.parse::<u8>().map(JerseyNumber).map_err(D::Error::custom)
+	}
+}
+
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 #[serde(bound = "H: PersonHydrations")]
@@ -265,12 +274,10 @@ impl<H: PersonHydrations> StatsAPIEndpointUrl for PersonEndpoint<H> {
 	type Response = PeopleResponse<H>;
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PreferredTeamData {
-	#[serde_as(as = "DisplayFromStr")]
-	pub jersey_number: u8,
+	pub jersey_number: JerseyNumber,
 	pub position: Position,
 	pub team: Team,
 }
@@ -350,41 +357,41 @@ macro_rules! person_hydrations {
 		    #[keep]
 		    pub stats: $stats,
 		    #[serde(default)]
-		    pub awards: ::std::vec::Vec<$crate::endpoints::awards::Award>,
-		    pub current_team: $crate::endpoints::teams::team::Team,
-			pub preferred_team: $crate::endpoints::person::PreferredTeamData,
-		    // team: $crate::endpoints::teams::team::Team,
+		    pub awards: ::std::vec::Vec<$crate::awards::Award>,
+		    pub current_team: $crate::teams::team::Team,
+			pub preferred_team: $crate::person::PreferredTeamData,
+		    // team: $crate::teams::team::Team,
 		    #[serde(default)]
-		    pub roster_entries: ::std::vec::Vec<$crate::endpoints::teams::team::roster::RosterEntry>,
+		    pub roster_entries: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
 		    #[serde(default, rename = "jobEntries")]
-		    jobs: ::std::vec::Vec<$crate::endpoints::jobs::EmployedPerson>,
+		    jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
 		    #[serde(default)]
-		    pub relatives: ::std::vec::Vec<$crate::endpoints::person::Relative>,
+		    pub relatives: ::std::vec::Vec<$crate::person::Relative>,
 		    #[serde(default)]
-		    pub transactions: ::std::vec::Vec<$crate::endpoints::transactions::Transaction>,
+		    pub transactions: ::std::vec::Vec<$crate::transactions::Transaction>,
 		    // possibly add a specific type? likely not as socials can always add more over time
 		    #[serde(default)]
 		    pub social: ::std::collections::HashMap<String, Vec<String>>,
 		    #[serde(default)]
-		    pub education: $crate::endpoints::person::Education,
+		    pub education: $crate::person::Education,
 		    #[serde(default, rename = "drafts")]
-		    pub draft: ::std::vec::Vec<$crate::endpoints::draft::DraftPick>,
+		    pub draft: ::std::vec::Vec<$crate::draft::DraftPick>,
 		    #[serde(default, rename = "xrefIds")]
 		    pub xref_id: ::std::vec::Vec<ExternalReference>,
 		    #[serde(default)]
 		    pub nicknames: ::std::vec::Vec<String>,
 		    #[serde(default)]
-		    pub depth_charts: ::std::vec::Vec<$crate::endpoints::teams::team::roster::RosterEntry>,
+		    pub depth_charts: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
 	    }
 
 	    impl $crate::hydrations::Hydrations for $hydrations_name {
 		    fn request_text() -> ::core::option::Option<::std::borrow::Cow<'static, str>> {
 			    let base = ::mlb_api_proc::concat_camel_case!($($hydration)*);
-			    Some(::std::borrow::Cow::Owned(::std::string::String::from(base) + <$stats as $crate::endpoints::stats::Stats>::request_text()))
+			    Some(::std::borrow::Cow::Owned(::std::string::String::from(base) + <$stats as $crate::stats::Stats>::request_text()))
             }
 	    }
 
-	    impl $crate::endpoints::person::PersonHydrations for $hydrations_name {}
+	    impl $crate::person::PersonHydrations for $hydrations_name {}
     };
 	(
 		$vis:vis struct $hydrations_name:ident {
@@ -397,31 +404,31 @@ macro_rules! person_hydrations {
 	    #[serde(rename_all = "camelCase")]
 	    $vis struct $hydrations_name {
 		    #[serde(default)]
-		    pub awards: ::std::vec::Vec<$crate::endpoints::awards::Award>,
-		    pub current_team: $crate::endpoints::teams::team::Team,
-			pub preferred_team: $crate::endpoints::person::PreferredTeamData,
-		    // team: $crate::endpoints::teams::team::Team,
+		    pub awards: ::std::vec::Vec<$crate::awards::Award>,
+		    pub current_team: $crate::teams::team::Team,
+			pub preferred_team: $crate::person::PreferredTeamData,
+		    // team: $crate::teams::team::Team,
 		    #[serde(default)]
-		    pub roster_entries: ::std::vec::Vec<$crate::endpoints::teams::team::roster::RosterEntry>,
+		    pub roster_entries: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
 		    #[serde(default, rename = "jobEntries")]
-		    jobs: ::std::vec::Vec<$crate::endpoints::jobs::EmployedPerson>,
+		    jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
 		    #[serde(default)]
-		    pub relatives: ::std::vec::Vec<$crate::endpoints::person::Relative>,
+		    pub relatives: ::std::vec::Vec<$crate::person::Relative>,
 		    #[serde(default)]
-		    pub transactions: ::std::vec::Vec<$crate::endpoints::transactions::Transaction>,
+		    pub transactions: ::std::vec::Vec<$crate::transactions::Transaction>,
 		    // possibly add a specific type? likely not as socials can always add more over time
 		    #[serde(default)]
 		    pub social: ::std::collections::HashMap<String, Vec<String>>,
 		    #[serde(default)]
-		    pub education: $crate::endpoints::person::Education,
+		    pub education: $crate::person::Education,
 		    #[serde(default, rename = "drafts")]
-		    pub draft: ::std::vec::Vec<$crate::endpoints::draft::DraftPick>,
+		    pub draft: ::std::vec::Vec<$crate::draft::DraftPick>,
 		    #[serde(default, rename = "xrefIds")]
 		    pub xref_id: ::std::vec::Vec<ExternalReference>,
 		    #[serde(default)]
 		    pub nicknames: ::std::vec::Vec<String>,
 		    #[serde(default)]
-		    pub depth_charts: ::std::vec::Vec<$crate::endpoints::teams::team::roster::RosterEntry>,
+		    pub depth_charts: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
 	    }
 
 		impl $crate::hydrations::Hydrations for $hydrations_name {
@@ -431,7 +438,7 @@ macro_rules! person_hydrations {
             }
 	    }
 
-	    impl $crate::endpoints::person::PersonHydrations for $hydrations_name {}
+	    impl $crate::person::PersonHydrations for $hydrations_name {}
     }
 }
 

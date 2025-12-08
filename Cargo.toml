@@ -12,8 +12,8 @@ keywords = ["mlb", "statcast", "api"]
 categories = ["api-bindings", "asynchronous"]
 
 [dependencies]
-serde = { version = "1.0.219", features = ["serde_derive"] }
-serde_with = "3.14.0"
+serde = { version = "1.0.228", features = ["serde_derive"] }
+serde_with = "3.16.1"
 derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str", "add", "add_assign", "as_ref", "try_from"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 thiserror = "2.0.12"
@@ -22,7 +22,7 @@ serde_json = "1.0.140"
 itertools = "0.14.0"
 fxhash = "0.2.1"
 compact_str = "0.9.0"
-mlb-api-proc = { path = "mlb-api-proc" }
+mlb-api-proc = "0.1.1"
 uuid = { version = "1.18.1", features = ["serde"] }
 bon = "3.8.1"
 

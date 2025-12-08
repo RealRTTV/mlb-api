@@ -3,14 +3,14 @@ pub mod all_star_final_vote;
 pub mod all_star_write_ins;
 
 use std::fmt::{Display, Formatter};
-use crate::endpoints::seasons::season::{Season, SeasonState};
-use crate::endpoints::sports::{NamedSport, SportId};
+use crate::seasons::season::{Season, SeasonState};
+use crate::sports::{NamedSport, SportId};
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use itertools::Itertools;
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::StatsAPIEndpointUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 

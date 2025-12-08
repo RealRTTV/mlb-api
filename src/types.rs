@@ -102,6 +102,15 @@ impl FromStr for HeightMeasurement {
 	}
 }
 
+impl<'de> Deserialize<'de> for HeightMeasurement {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		String::deserialize(deserializer)?.parse().map_err(D::Error::custom)
+	}
+}
+
 #[derive(Debug, Error)]
 pub enum HeightMeasurementParseError {
 	#[error(transparent)]

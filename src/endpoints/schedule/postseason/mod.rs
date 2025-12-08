@@ -3,14 +3,15 @@ pub mod series;
 use std::fmt::{Display, Formatter};
 use chrono::{Datelike, Local};
 use itertools::Itertools;
-use crate::endpoints::{GameType, StatsAPIEndpointUrl};
-use crate::endpoints::schedule::ScheduleResponse;
-use crate::endpoints::sports::SportId;
-use crate::endpoints::teams::team::TeamId;
+use crate::{GameType, StatsAPIEndpointUrl};
+use crate::schedule::ScheduleResponse;
+use crate::seasons::season::SeasonId;
+use crate::sports::SportId;
+use crate::teams::team::TeamId;
 use crate::gen_params;
 
 pub struct SchedulePostseasonEndpoint {
-    pub season: u32,
+    pub season: SeasonId,
     pub sport_id: SportId,
     pub team_id: Option<TeamId>,
     pub game_types: Option<Vec<GameType>>,
@@ -20,7 +21,7 @@ pub struct SchedulePostseasonEndpoint {
 impl Default for SchedulePostseasonEndpoint {
     fn default() -> Self {
         Self {
-            season: Local::now().year() as _,
+            season: (Local::now().year() as u32).into(),
             sport_id: SportId::MLB,
             team_id: None,
             game_types: None,
@@ -47,13 +48,13 @@ impl StatsAPIEndpointUrl for SchedulePostseasonEndpoint {
 #[cfg(test)]
 mod tests {
     use chrono::{Datelike, Local};
-    use crate::endpoints::schedule::postseason::SchedulePostseasonEndpoint;
-    use crate::endpoints::StatsAPIEndpointUrl;
+    use crate::schedule::postseason::SchedulePostseasonEndpoint;
+    use crate::StatsAPIEndpointUrl;
 
     #[tokio::test]
     async fn test_one_season() {
         let request = SchedulePostseasonEndpoint {
-            season: 2025,
+            season: 2025.into(),
             ..Default::default()
         };
         let _ = request.get().await.unwrap();
@@ -64,7 +65,7 @@ mod tests {
     async fn test_all_seasons() {
         for season in 1876..=Local::now().year() as _ {
             let request = SchedulePostseasonEndpoint {
-                season,
+                season: season.into(),
                 ..Default::default()
             };
             let _ = request.get().await.unwrap();

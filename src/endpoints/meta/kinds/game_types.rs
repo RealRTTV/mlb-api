@@ -1,11 +1,11 @@
-use crate::endpoints::{MetaKind, StatsAPIEndpointUrl};
+use crate::{MetaKind, StatsAPIEndpointUrl};
 use derive_more::Display;
 use serde::Deserialize;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpoint;
+use crate::meta::MetaEndpoint;
 
 #[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__GameTypeStruct")]
@@ -154,8 +154,8 @@ impl EndpointEntryCache for GameType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {

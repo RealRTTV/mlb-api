@@ -1,6 +1,6 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::league::{League, LeagueId};
-use crate::endpoints::sports::{Sport, SportId};
+use crate::StatsAPIEndpointUrl;
+use crate::league::{League, LeagueId};
+use crate::sports::{Sport, SportId};
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
@@ -126,8 +126,8 @@ impl EndpointEntryCache for Award {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::awards::AwardEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::awards::AwardEndpoint;
 
 	#[tokio::test]
 	async fn parse_this_season() {

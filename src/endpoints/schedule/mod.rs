@@ -1,19 +1,19 @@
 use serde_with::DefaultOnError;
-use crate::endpoints::game::{DoubleHeaderKind, GameId};
-use crate::endpoints::league::LeagueId;
-use crate::endpoints::sports::SportId;
-use crate::endpoints::teams::team::{Team, TeamId};
-use crate::endpoints::venue::{Venue, VenueId};
-use crate::endpoints::{GameStatus, GameType, Sky, StatsAPIEndpointUrl};
+use crate::game::{DoubleHeaderKind, GameId};
+use crate::league::LeagueId;
+use crate::sports::SportId;
+use crate::teams::team::{Team, TeamId};
+use crate::venue::{Venue, VenueId};
+use crate::{GameStatus, GameType, Sky, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT, NaiveDateRange};
 use chrono::{NaiveDate, Utc};
 use itertools::Itertools;
 use serde::Deserialize;
-use serde_with::DisplayFromStr;
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
+use crate::seasons::season::SeasonId;
 
 pub mod postseason;
 pub mod tied;
@@ -38,7 +38,7 @@ pub struct ScheduleGame {
 	pub game_id: GameId,
 	pub game_guid: Uuid,
 	pub game_type: GameType,
-	pub season: u32,
+	pub season: SeasonId,
 	// pub game_date: NaiveDateTime,
 	/// Different from `game_date` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
 	pub official_date: NaiveDate,
@@ -56,7 +56,7 @@ pub struct ScheduleGame {
 	// pub gameday_game_type: GamedayGameType,
 	pub is_tiebreaker: bool,
 	// pub calender_event_id: CalenderEventId,
-	pub displayed_season: u32,
+	pub displayed_season: SeasonId,
 	pub day_night: Sky,
 	pub description: Option<String>,
 	pub scheduled_innings: u32,
@@ -74,9 +74,8 @@ struct __ScheduleGameStruct {
 	game_id: GameId,
 	game_guid: Uuid,
 	game_type: GameType,
-	#[serde_as(as = "DisplayFromStr")]
-	season: u32,
-	// game_date: NaiveDateTime,
+	season: SeasonId,
+	// todo: // game_date: NaiveDateTime,
 	official_date: NaiveDate,
 	status: GameStatus,
 	teams: HomeAwaySplits<TeamWithStandings>,
@@ -93,9 +92,8 @@ struct __ScheduleGameStruct {
 	#[serde(rename = "tiebreaker", deserialize_with = "crate::types::from_yes_no")]
 	is_tiebreaker: bool,
 	// calender_event_id: CalenderEventId,
-	#[serde_as(as = "DisplayFromStr")]
 	#[serde(rename = "seasonDisplay")]
-	displayed_season: u32,
+	displayed_season: SeasonId,
 	day_night: Sky,
 	description: Option<String>,
 	scheduled_innings: u32,
@@ -202,7 +200,6 @@ impl Standings {
 		self.wins + self.losses
 	}
 
-	// todo: replace with PercentageStat
 	#[must_use]
 	pub fn pct(self) -> f64 {
 		self.wins as f64 / self.games_played() as f64
@@ -262,8 +259,8 @@ impl StatsAPIEndpointUrl for ScheduleEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::schedule::ScheduleEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::schedule::ScheduleEndpoint;
 	use chrono::{Datelike, Local, NaiveDate};
 
 	#[tokio::test]
@@ -279,7 +276,6 @@ mod tests {
 			date: Err(current_date.with_ordinal0(0).unwrap()..=current_date.with_month(12).unwrap().with_day(31).unwrap()),
 			..Default::default()
 		};
-		dbg!(request.to_string());
 		let _ = request.get().await.unwrap();
 	}
 

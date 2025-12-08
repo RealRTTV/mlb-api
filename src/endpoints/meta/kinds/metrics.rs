@@ -1,12 +1,12 @@
-use crate::endpoints::meta::{MetaEndpoint, MetaKind};
-use crate::endpoints::stat_groups::StatGroup;
+use crate::meta::{MetaEndpoint, MetaKind};
+use crate::stat_groups::StatGroup;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::StatsAPIEndpointUrl;
 
 macro_rules! units {
     ($($name:ident($func:path => $units:ty)),+ $(,)?) => {
@@ -173,8 +173,8 @@ impl EndpointEntryCache for Metric {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {

@@ -1,15 +1,44 @@
+use std::fmt::Formatter;
 use crate::types::NaiveDateRange;
 use chrono::NaiveDate;
-use serde::Deserialize;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
+use derive_more::{Deref, Display, From};
+use serde::{Deserialize, Deserializer};
 
-#[serde_as]
+#[repr(transparent)]
+#[derive(Debug, Default, Deref, Display, From, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+pub struct SeasonId(u32);
+
+impl<'de> Deserialize<'de> for SeasonId {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		struct Visitor;
+		
+		impl serde::de::Visitor<'_> for Visitor {
+			type Value = SeasonId;
+
+			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+				formatter.write_str("int or string")
+			}
+
+			fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E> {
+				Ok(SeasonId(v))
+			}
+
+			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
+				v.parse::<u32>().map(SeasonId).map_err(E::custom)
+			}
+		}
+		
+		deserializer.deserialize_any(Visitor)
+	}
+}
+
 #[derive(Deserialize)]
 struct SeasonRaw {
-	#[serde_as(as = "DisplayFromStr")]
 	#[serde(alias = "season", alias = "seasonId")]
-	pub id: u16,
+	pub id: SeasonId,
 
 	#[serde(default)] // will be overwriten if not present because of bad league schedule schema
 	#[serde(rename = "hasWildcard")]
@@ -92,7 +121,7 @@ impl From<SeasonRaw> for Season {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "SeasonRaw")]
 pub struct Season {
-	pub id: u16,
+	pub id: SeasonId,
 	pub has_wildcard: bool,
 	pub preseason: NaiveDateRange,
 	pub spring: Option<NaiveDateRange>,

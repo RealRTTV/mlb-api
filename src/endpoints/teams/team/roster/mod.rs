@@ -1,11 +1,11 @@
 
-use crate::endpoints::{Position, RosterTypeId, StatsAPIEndpointUrl};
-use crate::endpoints::teams::team::{Team, TeamId};
+use crate::{Position, RosterTypeId, StatsAPIEndpointUrl};
+use crate::teams::team::{Team, TeamId};
 use crate::gen_params;
 use std::fmt::{Display, Formatter};
 use chrono::NaiveDate;
 use serde::Deserialize;
-use crate::endpoints::person::Person;
+use crate::person::Person;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -111,12 +111,12 @@ pub struct RosterEntry {
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::{RosterType, StatsAPIEndpointUrl};
-    use crate::endpoints::teams::TeamsEndpoint;
-    use crate::endpoints::teams::team::roster::RosterEndpoint;
+    use crate::{RosterType, StatsAPIEndpointUrl};
+    use crate::teams::TeamsEndpoint;
+    use crate::teams::team::roster::RosterEndpoint;
     use chrono::{Datelike, Local};
-    use crate::endpoints::meta::MetaEndpoint;
-    use crate::endpoints::sports::SportId;
+    use crate::meta::MetaEndpoint;
+    use crate::sports::SportId;
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]

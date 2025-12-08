@@ -1,8 +1,8 @@
 pub mod season;
 
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::seasons::season::Season;
-use crate::endpoints::sports::SportId;
+use crate::StatsAPIEndpointUrl;
+use crate::seasons::season::Season;
+use crate::sports::SportId;
 use crate::gen_params;
 use crate::types::Copyright;
 use serde::Deserialize;
@@ -32,9 +32,9 @@ impl StatsAPIEndpointUrl for SeasonsEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::seasons::SeasonsEndpoint;
-	use crate::endpoints::sports::{SportId, SportsEndpoint};
+	use crate::StatsAPIEndpointUrl;
+	use crate::seasons::SeasonsEndpoint;
+	use crate::sports::{SportId, SportsEndpoint};
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]

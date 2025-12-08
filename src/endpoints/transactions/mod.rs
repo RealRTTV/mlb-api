@@ -1,7 +1,7 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::person::{Person, PersonId};
-use crate::endpoints::sports::SportId;
-use crate::endpoints::teams::team::{Team, TeamId};
+use crate::StatsAPIEndpointUrl;
+use crate::person::{Person, PersonId};
+use crate::sports::SportId;
+use crate::teams::team::{Team, TeamId};
 use crate::gen_params;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT, NaiveDateRange};
 use chrono::NaiveDate;
@@ -432,14 +432,14 @@ impl StatsAPIEndpointUrl for TransactionsEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::sports::SportId;
-	use crate::endpoints::sports::players::SportsPlayersEndpoint;
-	use crate::endpoints::teams::TeamsEndpoint;
-	use crate::endpoints::teams::team::Team;
-	use crate::endpoints::transactions::{TransactionsEndpoint, TransactionsEndpointKind};
+	use crate::StatsAPIEndpointUrl;
+	use crate::sports::SportId;
+	use crate::sports::players::SportsPlayersEndpoint;
+	use crate::teams::TeamsEndpoint;
+	use crate::teams::team::Team;
+	use crate::transactions::{TransactionsEndpoint, TransactionsEndpointKind};
 	use chrono::NaiveDate;
-	use crate::endpoints::person::Person;
+	use crate::person::Person;
 
 	#[tokio::test]
 	async fn parse_2025() {

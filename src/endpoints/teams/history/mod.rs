@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::teams::team::TeamId;
-use crate::endpoints::teams::TeamsResponse;
+use crate::StatsAPIEndpointUrl;
+use crate::teams::team::TeamId;
+use crate::teams::TeamsResponse;
 use crate::gen_params;
 
 /// History of a [`TeamId`] throughout the years.
@@ -24,10 +24,10 @@ impl StatsAPIEndpointUrl for TeamHistoryEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::sports::SportId;
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::teams::history::TeamHistoryEndpoint;
-	use crate::endpoints::teams::TeamsEndpoint;
+	use crate::sports::SportId;
+	use crate::StatsAPIEndpointUrl;
+	use crate::teams::history::TeamHistoryEndpoint;
+	use crate::teams::TeamsEndpoint;
 
 	#[tokio::test]
 	async fn all_mlb_teams() {
