@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use derive_more::{Deref, DerefMut, Display, From};
 use itertools::Itertools;
 use serde::Deserialize;
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::endpoints::StatsAPIEndpointUrl;
 use crate::endpoints::teams::team::TeamId;
 use crate::{gen_params, rwlock_const_new, RwLock};
@@ -23,7 +23,7 @@ pub struct TeamUniformAssets {
     pub uniform_assets: Vec<UniformAsset>,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum UniformAsset {
     Hydrated(HydratedUniformAsset),
@@ -126,7 +126,7 @@ impl EndpointEntryCache for UniformAsset {
     type URL = UniformsEndpoint;
 
     fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-        self.try_as_hydrated()
+        self.try_into_hydrated()
     }
 
     fn id(&self) -> &Self::Identifier {
@@ -166,6 +166,6 @@ mod tests {
     async fn parse_all_mlb_teams_this_season() {
         let mlb_teams = TeamsEndpoint { sport_id: Some(SportId::MLB), season: None }.get().await.unwrap();
         let team_ids = mlb_teams.teams.into_iter().map(|team| team.id).collect::<Vec<_>>();
-        for _ in (UniformsEndpoint { teams: team_ids, season: None }.get().await.unwrap().teams.into_iter().flat_map(|x| x.uniform_assets).map(|x| x.try_as_hydrated().unwrap())) {}
+        for _ in (UniformsEndpoint { teams: team_ids, season: None }.get().await.unwrap().teams.into_iter().flat_map(|x| x.uniform_assets).map(|x| x.try_into_hydrated().unwrap())) {}
     }
 }

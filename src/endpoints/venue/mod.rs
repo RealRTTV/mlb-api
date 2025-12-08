@@ -9,7 +9,7 @@ use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use itertools::Itertools;
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -69,7 +69,7 @@ pub struct HydratedVenue {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct VenueId(u32);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Venue {
 	Hydrated(HydratedVenue),
@@ -137,7 +137,7 @@ impl EndpointEntryCache for Venue {
 	type URL = VenuesEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {

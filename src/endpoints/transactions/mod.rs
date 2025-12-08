@@ -460,7 +460,7 @@ mod tests {
 		.unwrap()
 		.teams
 		.into_iter()
-		.filter_map(Team::try_as_named)
+		.filter_map(Team::try_into_named)
 		.find(|team| team.name.as_str() == "Toronto Blue Jays")
 		.unwrap();
 		let bo_bichette = SportsPlayersEndpoint { id: SportId::MLB, season: Some(2024) }

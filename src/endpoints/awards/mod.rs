@@ -7,7 +7,7 @@ use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{HydratedCacheTable, EndpointEntryCache};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -39,7 +39,7 @@ pub struct IdentifiableAward {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
 pub struct AwardId(String);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Award {
 	Hydrated(HydratedAward),
@@ -93,7 +93,7 @@ impl EndpointEntryCache for Award {
 	type URL = AwardEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {

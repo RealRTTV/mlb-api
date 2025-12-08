@@ -1,10 +1,11 @@
-mod stats;
+mod enum_try;
 mod filtered;
+mod stats;
 
 use itertools::{Itertools, Position};
 use proc_macro2::{Ident, Span};
-use quote::{format_ident, quote, ToTokens};
-use syn::LitStr;
+use quote::{ToTokens, format_ident, quote};
+use syn::{DeriveInput, LitStr};
 
 #[proc_macro]
 pub fn stats(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -17,7 +18,8 @@ pub fn concat_camel_case(input: proc_macro::TokenStream) -> proc_macro::TokenStr
 	let literal = LitStr::new(&input.into_iter().map(|tt| snake_case_to_camel_case0(tt.to_string())).join(","), Span::call_site());
 	quote! {
 		#literal
-	}.into()
+	}
+	.into()
 }
 
 #[proc_macro_attribute]
@@ -31,6 +33,24 @@ pub fn pascal_case_to_camel_case(input: proc_macro::TokenStream) -> proc_macro::
 	let ident = syn::parse_macro_input!(input as Ident);
 	let camel_case = pascal_case_to_camel_case0(ident.to_string());
 	format_ident!("{camel_case}").into_token_stream().into()
+}
+
+#[proc_macro_derive(EnumTryAs)]
+pub fn enum_try_as(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = syn::parse_macro_input!(input as DeriveInput);
+	enum_try::try_as(input).unwrap().into()
+}
+
+#[proc_macro_derive(EnumTryAsMut)]
+pub fn enum_try_as_mut(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = syn::parse_macro_input!(input as DeriveInput);
+	enum_try::try_as_mut(input).unwrap().into()
+}
+
+#[proc_macro_derive(EnumTryInto, attributes(try_into_field_name))]
+pub fn enum_try_into(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = syn::parse_macro_input!(input as DeriveInput);
+	enum_try::try_into(input).unwrap().into()
 }
 
 fn pascal_case_to_camel_case0(pascal_case: String) -> String {
@@ -119,8 +139,6 @@ fn snake_case_to_camel_case0(snake_case: String) -> String {
 
 	builder
 }
-
-
 
 #[cfg(test)]
 mod tests {

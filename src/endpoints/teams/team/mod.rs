@@ -15,7 +15,7 @@ use serde::Deserialize;
 use serde_with::DefaultOnError;
 use serde_with::serde_as;
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 
 #[serde_as]
 #[derive(Deserialize)]
@@ -143,7 +143,7 @@ pub struct IdentifiableTeam {
 	pub id: TeamId,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Team {
 	MLB(MLBTeam),
@@ -313,7 +313,7 @@ pub struct NamedOrganization {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct OrganizationId(u16);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Organization {
 	NamedOrganization(NamedOrganization),

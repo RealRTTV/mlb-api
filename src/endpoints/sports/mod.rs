@@ -7,7 +7,7 @@ use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -82,7 +82,7 @@ pub struct HydratedSport {
 	pub(super) inner: NamedSport,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Sport {
 	Hydrated(HydratedSport),
@@ -126,7 +126,7 @@ impl EndpointEntryCache for Sport {
 	type URL = SportsEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {

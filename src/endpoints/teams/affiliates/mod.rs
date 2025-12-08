@@ -41,7 +41,7 @@ mod tests {
 		for season in 1876..=Local::now().year() as _ {
 			for team in (TeamsEndpoint { sport_id: Some(SportId::MLB), season: Some(season) }).get().await.unwrap().teams {
 				dbg!(team.id);
-				dbg!(&*team.try_as_named_ref().unwrap().name);
+				dbg!(&*team.try_as_named().unwrap().name);
 				let affiliates_result = TeamAffiliatesEndpoint { id: team.id, season: Some(season) }.get().await;
 				match affiliates_result {
 					Ok(_) => {}
