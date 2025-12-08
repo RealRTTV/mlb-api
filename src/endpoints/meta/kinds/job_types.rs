@@ -1,11 +1,11 @@
-use crate::endpoints::meta::{MetaEndpoint, MetaKind};
+use crate::meta::{MetaEndpoint, MetaKind};
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::StatsAPIEndpointUrl;
 
 #[repr(transparent)]
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
@@ -32,10 +32,10 @@ pub struct HydratedJobType {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inenr: IdentifiableJobType,
+	inner: IdentifiableJobType,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum JobType {
 	Hydrated(HydratedJobType),
@@ -80,7 +80,7 @@ impl EndpointEntryCache for JobType {
 	type URL = MetaEndpoint<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {
@@ -108,8 +108,8 @@ impl EndpointEntryCache for JobType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {

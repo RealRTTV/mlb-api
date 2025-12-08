@@ -1,4 +1,4 @@
-use crate::endpoints::sports::SportId;
+use crate::sports::SportId;
 use crate::gen_params;
 use crate::types::MLB_API_DATE_FORMAT;
 use chrono::NaiveDate;

@@ -1,19 +1,20 @@
 use std::fmt::{Display, Formatter};
 use chrono::{Datelike, Local};
 use itertools::Itertools;
-use crate::endpoints::{GameType, StatsAPIEndpointUrl};
-use crate::endpoints::schedule::ScheduleResponse;
+use crate::{GameType, StatsAPIEndpointUrl};
+use crate::schedule::ScheduleResponse;
+use crate::seasons::season::SeasonId;
 use crate::gen_params;
 
 pub struct ScheduleTiedEndpoint {
-    pub season: u32,
+    pub season: SeasonId,
     pub game_types: Option<Vec<GameType>>,
 }
 
 impl Default for ScheduleTiedEndpoint {
     fn default() -> Self {
         Self {
-            season: Local::now().year() as _,
+            season: (Local::now().year() as u32).into(),
             game_types: None,
         }
     }
@@ -35,13 +36,13 @@ impl StatsAPIEndpointUrl for ScheduleTiedEndpoint {
 #[cfg(test)]
 mod tests {
     use chrono::{Datelike, Local};
-    use crate::endpoints::schedule::tied::ScheduleTiedEndpoint;
-    use crate::endpoints::StatsAPIEndpointUrl;
+    use crate::schedule::tied::ScheduleTiedEndpoint;
+    use crate::StatsAPIEndpointUrl;
 
     #[tokio::test]
     async fn test_one_season() {
         let request = ScheduleTiedEndpoint {
-            season: 1961,
+            season: 1961.into(),
             game_types: None,
         };
         let _ = request.get().await.unwrap();
@@ -52,7 +53,7 @@ mod tests {
     async fn test_all_seasons() {
         for season in 1876..=Local::now().year() as _ {
             let request = ScheduleTiedEndpoint {
-                season,
+                season: season.into(),
                 game_types: None,
             };
             let _ = request.get().await.unwrap();

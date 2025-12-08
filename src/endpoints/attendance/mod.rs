@@ -1,21 +1,20 @@
-use crate::endpoints::game::Game;
-use crate::endpoints::league::LeagueId;
-use crate::endpoints::teams::team::TeamId;
-use crate::endpoints::{GameType, StatsAPIEndpointUrl};
+use crate::game::Game;
+use crate::league::LeagueId;
+use crate::teams::team::TeamId;
+use crate::{GameType, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use serde::Deserialize;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::iter::Sum;
 use std::ops::Add;
+use crate::seasons::season::SeasonId;
 
 /// Within regards to attendance, the term frequently used is "Opening" over "Game"; this is for reasons including but not limited to: single ticket double headers, and partially cancelled/rescheduled games.
 ///
-/// Averages are canculated with respect to the # of openings on the sample, not the number of games the team played as either "home" or "away".
+/// Averages are calculated with respect to the # of openings on the sample, not the number of games the team played as either "home" or "away".
 ///
 /// Since the 2020 season had 0 total attendance, the 'peak attendance game' has its default value of [`NaiveDate::MIN`]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -52,7 +51,7 @@ pub struct AttendanceRecord {
 	pub total_openings: HomeAwaySplits<u32>,
 	pub total_openings_lost: u32,
 	pub total_games: HomeAwaySplits<u32>,
-	pub season: u16,
+	pub season: SeasonId,
 	pub attendance_totals: HomeAwaySplits<u32>,
 	pub single_opening_high: DatedAttendance,
 	pub single_opening_low: DatedAttendance,
@@ -74,7 +73,7 @@ impl Add for AttendanceRecord {
 				home: self.total_games.home + rhs.total_games.home,
 				away: self.total_games.away + rhs.total_games.away,
 			},
-			season: u16::max(self.season, rhs.season),
+			season: SeasonId::max(self.season, rhs.season),
 			attendance_totals: HomeAwaySplits {
 				home: self.attendance_totals.home + rhs.attendance_totals.home,
 				away: self.attendance_totals.away + rhs.attendance_totals.away,
@@ -92,7 +91,7 @@ impl Default for AttendanceRecord {
 			total_openings: HomeAwaySplits::new(0, 0),
 			total_openings_lost: 0,
 			total_games: HomeAwaySplits::new(0, 0),
-			season: Local::now().year() as _,
+			season: (Local::now().year() as u32).into(),
 			attendance_totals: HomeAwaySplits::new(0, 0),
 			single_opening_high: DatedAttendance::default(),
 			single_opening_low: DatedAttendance::default(),
@@ -116,7 +115,6 @@ impl AttendanceRecord {
 	}
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 struct AnnualRecordStruct {
@@ -127,8 +125,7 @@ struct AnnualRecordStruct {
 	// games_total: u32,
 	games_away_total: u32,
 	games_home_total: u32,
-	#[serde_as(as = "DisplayFromStr")]
-	year: u16,
+	year: SeasonId,
 	// attendance_average_away: u32,
 	// attendance_average_home: u32,
 	// attendance_average_ytd: u32,
@@ -263,10 +260,10 @@ impl StatsAPIEndpointUrl for AttendanceEndpoint { type Response = AttendanceResp
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::attendance::AttendanceEndpoint;
-	use crate::endpoints::sports::SportId;
-	use crate::endpoints::teams::TeamsEndpoint;
-	use crate::endpoints::{GameType, StatsAPIEndpointUrl};
+	use crate::attendance::AttendanceEndpoint;
+	use crate::sports::SportId;
+	use crate::teams::TeamsEndpoint;
+	use crate::{GameType, StatsAPIEndpointUrl};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]

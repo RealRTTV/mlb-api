@@ -1,17 +1,16 @@
-use crate::endpoints::league::League;
-use crate::endpoints::person::Person;
-use crate::endpoints::sports::{Sport, SportId};
-use crate::endpoints::teams::team::Team;
-use crate::endpoints::{BaseballStat, BaseballStatId, GameType, IdentifiableBaseballStat, StatGroup, StatType, StatsAPIEndpointUrl};
+use crate::league::League;
+use crate::person::Person;
+use crate::sports::{Sport, SportId};
+use crate::teams::team::Team;
+use crate::{BaseballStat, BaseballStatId, GameType, IdentifiableBaseballStat, StatGroup, StatType, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::Deserialize;
-use serde_with::serde_as;
-use serde_with::DisplayFromStr;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use crate::seasons::season::SeasonId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -58,7 +57,6 @@ impl TryFrom<__StatLeadersStruct> for StatLeaders {
 	}
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StatLeader {
@@ -66,13 +64,11 @@ pub struct StatLeader {
 	pub value: IntegerOrFloatStat,
 	#[serde(default = "Team::unknown_team")]
 	pub team: Team,
-	pub num_teams: u32,
 	#[serde(default = "League::unknown_league")]
 	pub league: League,
 	pub person: Person,
 	pub sport: Sport,
-	#[serde_as(as = "DisplayFromStr")]
-	pub season: u16,
+	pub season: SeasonId,
 }
 
 pub struct StatLeadersEndpoint {
@@ -123,10 +119,10 @@ impl StatsAPIEndpointUrl for StatLeadersEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpoint;
-	use crate::endpoints::sports::SportId;
-	use crate::endpoints::stats::leaders::StatLeadersEndpoint;
-	use crate::endpoints::{BaseballStat, GameType, StatsAPIEndpointUrl};
+	use crate::meta::MetaEndpoint;
+	use crate::sports::SportId;
+	use crate::stats::leaders::StatLeadersEndpoint;
+	use crate::{BaseballStat, GameType, StatsAPIEndpointUrl};
 	use crate::types::PlayerPool;
 
 	#[tokio::test]

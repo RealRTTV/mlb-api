@@ -5,7 +5,7 @@ use std::sync::Arc;
 use fxhash::FxBuildHasher;
 use serde::de::DeserializeOwned;
 use thiserror::Error;
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::StatsAPIEndpointUrl;
 use crate::RwLock;
 
 pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {

@@ -1,6 +1,6 @@
-use crate::endpoints::teams::team::TeamId;
-use crate::endpoints::teams::TeamsResponse;
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::teams::team::TeamId;
+use crate::teams::TeamsResponse;
+use crate::StatsAPIEndpointUrl;
 use crate::gen_params;
 use std::fmt::{Display, Formatter};
 
@@ -21,10 +21,10 @@ impl StatsAPIEndpointUrl for TeamAffiliatesEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::sports::SportId;
-	use crate::endpoints::teams::affiliates::TeamAffiliatesEndpoint;
-	use crate::endpoints::teams::TeamsEndpoint;
-	use crate::endpoints::StatsAPIEndpointUrl;
+	use crate::sports::SportId;
+	use crate::teams::affiliates::TeamAffiliatesEndpoint;
+	use crate::teams::TeamsEndpoint;
+	use crate::StatsAPIEndpointUrl;
 	use crate::request::Error as EndpointError;
 	use chrono::{Datelike, Local};
 
@@ -41,7 +41,7 @@ mod tests {
 		for season in 1876..=Local::now().year() as _ {
 			for team in (TeamsEndpoint { sport_id: Some(SportId::MLB), season: Some(season) }).get().await.unwrap().teams {
 				dbg!(team.id);
-				dbg!(&*team.try_as_named_ref().unwrap().name);
+				dbg!(&*team.try_as_named().unwrap().name);
 				let affiliates_result = TeamAffiliatesEndpoint { id: team.id, season: Some(season) }.get().await;
 				match affiliates_result {
 					Ok(_) => {}

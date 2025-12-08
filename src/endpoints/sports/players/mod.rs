@@ -1,8 +1,8 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::sports::SportId;
+use crate::StatsAPIEndpointUrl;
+use crate::sports::SportId;
 use crate::gen_params;
 use std::fmt::{Display, Formatter};
-use crate::endpoints::people::PeopleResponse;
+use crate::people::PeopleResponse;
 
 #[derive(Default)]
 pub struct SportsPlayersEndpoint {
@@ -23,8 +23,8 @@ impl StatsAPIEndpointUrl for SportsPlayersEndpoint {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::sports::SportId;
+	use crate::StatsAPIEndpointUrl;
+	use crate::sports::SportId;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]

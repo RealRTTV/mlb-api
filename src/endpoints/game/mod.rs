@@ -1,7 +1,7 @@
 use derive_more::{Deref, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 
 pub mod boxscore;
 pub mod changes;
@@ -39,7 +39,7 @@ impl Default for IdentifiableGame {
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Game {
 	Identifiable(IdentifiableGame),

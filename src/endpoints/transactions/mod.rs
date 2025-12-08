@@ -1,7 +1,7 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::person::{Person, PersonId};
-use crate::endpoints::sports::SportId;
-use crate::endpoints::teams::team::{Team, TeamId};
+use crate::StatsAPIEndpointUrl;
+use crate::person::{Person, PersonId};
+use crate::sports::SportId;
+use crate::teams::team::{Team, TeamId};
 use crate::gen_params;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT, NaiveDateRange};
 use chrono::NaiveDate;
@@ -432,19 +432,19 @@ impl StatsAPIEndpointUrl for TransactionsEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::sports::SportId;
-	use crate::endpoints::sports::players::SportsPlayersEndpoint;
-	use crate::endpoints::teams::TeamsEndpoint;
-	use crate::endpoints::teams::team::Team;
-	use crate::endpoints::transactions::{TransactionsEndpoint, TransactionsEndpointKind};
+	use crate::StatsAPIEndpointUrl;
+	use crate::sports::SportId;
+	use crate::sports::players::SportsPlayersEndpoint;
+	use crate::teams::TeamsEndpoint;
+	use crate::teams::team::Team;
+	use crate::transactions::{TransactionsEndpoint, TransactionsEndpointKind};
 	use chrono::NaiveDate;
-	use crate::endpoints::person::Person;
+	use crate::person::Person;
 
 	#[tokio::test]
 	async fn parse_2025() {
 		let _ = crate::serde_path_to_error_parse(TransactionsEndpoint {
-			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
+			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
 			sport_id: Some(SportId::MLB),
 		}).await;
 	}
@@ -460,16 +460,16 @@ mod tests {
 		.unwrap()
 		.teams
 		.into_iter()
-		.filter_map(Team::try_as_named)
+		.filter_map(Team::try_into_named)
 		.find(|team| team.name.as_str() == "Toronto Blue Jays")
 		.unwrap();
-		let bo_bichette = SportsPlayersEndpoint { id: SportId::MLB, season: Some(2025) }
+		let bo_bichette = SportsPlayersEndpoint { id: SportId::MLB, season: Some(2024) }
 			.get()
 			.await
 			.unwrap()
 			.people
 			.into_iter()
-			.filter_map(Person::try_as_named)
+			.filter_map(Person::try_into_named)
 			.find(|person| person.full_name == "Bo Bichette")
 			.unwrap();
 

@@ -3,14 +3,14 @@ pub mod all_star_final_vote;
 pub mod all_star_write_ins;
 
 use std::fmt::{Display, Formatter};
-use crate::endpoints::seasons::season::{Season, SeasonState};
-use crate::endpoints::sports::{NamedSport, SportId};
+use crate::seasons::season::{Season, SeasonState};
+use crate::sports::{NamedSport, SportId};
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 use itertools::Itertools;
-use strum::EnumTryAs;
-use crate::endpoints::StatsAPIEndpointUrl;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use crate::StatsAPIEndpointUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 
@@ -110,7 +110,7 @@ impl LeagueId {
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum League {
 	Hydrated(HydratedLeague),
@@ -179,7 +179,7 @@ impl EndpointEntryCache for League {
 	type URL = LeagueEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {

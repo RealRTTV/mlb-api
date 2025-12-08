@@ -1,12 +1,12 @@
-use crate::endpoints::meta::kinds::MetaKind;
+use crate::meta::kinds::MetaKind;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::meta::MetaEndpoint;
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::meta::MetaEndpoint;
+use crate::StatsAPIEndpointUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -40,7 +40,7 @@ impl LanguageId {
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Language {
 	Hydrated(HydratedLanguage),
@@ -95,7 +95,7 @@ impl EndpointEntryCache for Language {
 	type URL = MetaEndpoint<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {
@@ -123,8 +123,8 @@ impl EndpointEntryCache for Language {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[tokio::test]
 	async fn parse_meta() {

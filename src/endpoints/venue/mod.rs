@@ -1,16 +1,15 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::sports::SportId;
+use crate::StatsAPIEndpointUrl;
+use crate::sports::SportId;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use itertools::Itertools;
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::seasons::season::SeasonId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -51,13 +50,11 @@ impl Default for NamedVenue {
 	}
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HydratedVenue {
 	pub active: bool,
-	#[serde_as(as = "DisplayFromStr")]
-	pub season: u16,
+	pub season: SeasonId,
 
 	#[deref]
 	#[deref_mut]
@@ -69,7 +66,7 @@ pub struct HydratedVenue {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct VenueId(u32);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Venue {
 	Hydrated(HydratedVenue),
@@ -137,7 +134,7 @@ impl EndpointEntryCache for Venue {
 	type URL = VenuesEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {
@@ -169,8 +166,8 @@ impl EndpointEntryCache for Venue {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::venue::VenuesEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::venue::VenuesEndpoint;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
@@ -181,6 +178,7 @@ mod tests {
 		}
 	}
 
+	#[tokio::test]
 	async fn parse_all_venues() {
 		let _response = VenuesEndpoint { sport_id: None, season: None, venue_ids: None }.get().await.unwrap();
 	}

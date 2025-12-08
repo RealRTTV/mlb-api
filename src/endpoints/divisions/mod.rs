@@ -1,16 +1,15 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::league::{IdentifiableLeague, LeagueId};
-use crate::endpoints::sports::{IdentifiableSport, SportId};
+use crate::StatsAPIEndpointUrl;
+use crate::league::{IdentifiableLeague, LeagueId};
+use crate::sports::{IdentifiableSport, SportId};
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::seasons::season::SeasonId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -35,14 +34,12 @@ pub struct NamedDivision {
 	inner: IdentifiableDivision,
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HydratedDivision {
 	#[serde(rename = "nameShort")]
 	pub short_name: String,
-	#[serde_as(as = "DisplayFromStr")]
-	pub season: u16,
+	pub season: SeasonId,
 	pub abbreviation: String,
 	pub league: IdentifiableLeague,
 	pub sport: IdentifiableSport,
@@ -56,7 +53,7 @@ pub struct HydratedDivision {
 	inner: NamedDivision,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Division {
 	Hydrated(HydratedDivision),
@@ -126,7 +123,7 @@ impl EndpointEntryCache for Division {
 	type URL = DivisionsEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {
@@ -159,8 +156,8 @@ impl EndpointEntryCache for Division {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::divisions::DivisionsEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::divisions::DivisionsEndpoint;
 
 	#[tokio::test]
 	async fn all_divisions_this_season() {

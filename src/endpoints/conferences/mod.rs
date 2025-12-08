@@ -1,13 +1,13 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::league::League;
-use crate::endpoints::sports::Sport;
+use crate::StatsAPIEndpointUrl;
+use crate::league::League;
+use crate::sports::Sport;
 use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use strum::EnumTryAs;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{HydratedCacheTable, EndpointEntryCache};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -30,7 +30,7 @@ pub struct HydratedConference {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableConference,
+	inner: NamedConference,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
@@ -53,7 +53,7 @@ pub struct IdentifiableConference {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct ConferenceId(u32);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Conference {
 	Hydrated(HydratedConference),
@@ -113,7 +113,7 @@ impl EndpointEntryCache for Conference {
 	type URL = ConferencesEndpoint;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_as_hydrated()
+		self.try_into_hydrated()
 	}
 
 	fn id(&self) -> &Self::Identifier {
@@ -144,8 +144,8 @@ impl EndpointEntryCache for Conference {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::conferences::ConferencesEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::conferences::ConferencesEndpoint;
 
 	#[tokio::test]
 	async fn parse_all_conferences() {

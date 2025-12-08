@@ -1,10 +1,10 @@
 
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::teams::team::TeamId;
+use crate::StatsAPIEndpointUrl;
+use crate::teams::team::TeamId;
 use crate::gen_params;
 use std::fmt::{Display, Formatter};
 use chrono::NaiveDate;
-use crate::endpoints::people::PeopleResponse;
+use crate::people::PeopleResponse;
 use crate::types::MLB_API_DATE_FORMAT;
 
 pub struct CoachesEndpoint {
@@ -25,9 +25,9 @@ impl StatsAPIEndpointUrl for CoachesEndpoint {
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::StatsAPIEndpointUrl;
-    use crate::endpoints::teams::TeamsEndpoint;
-    use crate::endpoints::teams::team::coaches::CoachesEndpoint;
+    use crate::StatsAPIEndpointUrl;
+    use crate::teams::TeamsEndpoint;
+    use crate::teams::team::coaches::CoachesEndpoint;
     use chrono::{Datelike, Local};
 
     #[tokio::test]

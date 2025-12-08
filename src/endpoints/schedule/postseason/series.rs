@@ -3,10 +3,11 @@ use chrono::{Datelike, Local};
 use itertools::Itertools;
 use serde::{Deserialize, Deserializer};
 use serde::de::Error;
-use crate::endpoints::{GameType, StatsAPIEndpointUrl};
-use crate::endpoints::schedule::ScheduleGame;
-use crate::endpoints::sports::SportId;
-use crate::endpoints::teams::team::TeamId;
+use crate::{GameType, StatsAPIEndpointUrl};
+use crate::schedule::ScheduleGame;
+use crate::seasons::season::SeasonId;
+use crate::sports::SportId;
+use crate::teams::team::TeamId;
 use crate::gen_params;
 use crate::types::Copyright;
 
@@ -42,7 +43,7 @@ pub fn series_number_from_id<'de, D: Deserializer<'de>>(deserializer: D) -> Resu
 }
 
 pub struct SchedulePostseasonSeriesEndpoint {
-    pub season: u32,
+    pub season: SeasonId,
     pub sport_id: Option<SportId>,
     pub team_id: Option<TeamId>,
     pub game_types: Option<Vec<GameType>>,
@@ -52,7 +53,7 @@ pub struct SchedulePostseasonSeriesEndpoint {
 impl Default for SchedulePostseasonSeriesEndpoint {
     fn default() -> Self {
         Self {
-            season: Local::now().year() as _,
+            season: (Local::now().year() as u32).into(),
             sport_id: None,
             team_id: None,
             game_types: None,

@@ -1,14 +1,13 @@
-use crate::endpoints::person::{Person, PersonId};
-use crate::endpoints::teams::team::{Team, TeamId};
-use crate::endpoints::{Position, StatsAPIEndpointUrl};
+use crate::person::{Person, PersonId};
+use crate::teams::team::{Team, TeamId};
+use crate::{Position, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, Location};
 use derive_more::{Deref, Display, From};
 use serde::Deserialize;
-use serde_with::DisplayFromStr;
-use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
+use crate::seasons::season::SeasonId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -55,7 +54,6 @@ pub struct DraftProspectsResponse {
 	pub prospects: Vec<DraftPick>,
 }
 
-#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftPick {
@@ -84,8 +82,7 @@ pub struct DraftPick {
 	pub draft_type: DraftType,
 	pub is_drafted: bool,
 	pub is_pass: bool,
-	#[serde_as(as = "DisplayFromStr")]
-	pub year: u32,
+	pub year: SeasonId,
 }
 
 #[must_use]
@@ -288,8 +285,8 @@ impl StatsAPIEndpointUrl for DraftProspectsEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::draft::{DraftEndpoint, DraftEndpointKind, DraftProspectsEndpoint, DraftEndpointData};
+	use crate::StatsAPIEndpointUrl;
+	use crate::draft::{DraftEndpoint, DraftEndpointKind, DraftProspectsEndpoint, DraftEndpointData};
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]

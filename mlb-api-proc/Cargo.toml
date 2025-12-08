@@ -1,6 +1,6 @@
 [package]
 name = "mlb-api-proc"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Riley"]
 edition = "2024"
 description = "A private crate meant for internal use by mlb-api only."
@@ -20,3 +20,4 @@ syn = { version = "2.0.106", features = ["full"] }
 quote = "1.0.40"
 proc-macro2 = "1.0.101"
 derive-syn-parse = "0.2.0"
+anyhow = "1.0.100"

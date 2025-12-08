@@ -1,8 +1,8 @@
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::teams::team::TeamId;
+use crate::StatsAPIEndpointUrl;
+use crate::teams::team::TeamId;
 use crate::gen_params;
 use std::fmt::{Display, Formatter};
-use crate::endpoints::people::PeopleResponse;
+use crate::people::PeopleResponse;
 
 pub struct AlumniEndpoint {
 	team_id: TeamId,
@@ -21,9 +21,9 @@ impl StatsAPIEndpointUrl for AlumniEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::teams::TeamsEndpoint;
-	use crate::endpoints::teams::team::alumni::AlumniEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::teams::TeamsEndpoint;
+	use crate::teams::team::alumni::AlumniEndpoint;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]

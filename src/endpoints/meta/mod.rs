@@ -1,4 +1,4 @@
-use crate::endpoints::{MetaKind, StatsAPIEndpointUrl};
+use crate::{MetaKind, StatsAPIEndpointUrl};
 use derive_more::{Deref, DerefMut};
 use serde::de::{Error, MapAccess, SeqAccess};
 use serde::{Deserialize, Deserializer, de};

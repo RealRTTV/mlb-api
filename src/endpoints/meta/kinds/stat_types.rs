@@ -2,11 +2,11 @@
 use derive_more::Display;
 #[cfg(not(feature = "static_stat_types"))]
 use serde::Deserializer;
-use crate::endpoints::meta::{MetaEndpoint, MetaKind};
+use crate::meta::{MetaEndpoint, MetaKind};
 use serde::Deserialize;
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::{rwlock_const_new, RwLock};
-use crate::endpoints::StatsAPIEndpointUrl;
+use crate::StatsAPIEndpointUrl;
 
 #[cfg(feature = "static_stat_types")]
 use derive_more::{Display, FromStr};
@@ -188,14 +188,14 @@ impl EndpointEntryCache for StatType {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::StatsAPIEndpointUrl;
-	use crate::endpoints::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
+	use crate::meta::MetaEndpoint;
 
 	#[cfg(feature = "static_stat_types")]
 	#[tokio::test]
 	async fn is_still_up_to_date() {
-		use crate::endpoints::meta::MetaEndpoint;
-		use crate::endpoints::meta::kinds::stat_types::StatType;
+		use crate::meta::MetaEndpoint;
+		use crate::meta::kinds::stat_types::StatType;
 		use serde::Deserialize;
 
 		#[derive(Deserialize)]

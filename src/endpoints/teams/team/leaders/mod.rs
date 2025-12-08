@@ -1,6 +1,6 @@
-use crate::endpoints::stats::leaders::StatLeaders;
-use crate::endpoints::teams::team::TeamId;
-use crate::endpoints::{BaseballStatId, GameType, StatsAPIEndpointUrl};
+use crate::stats::leaders::StatLeaders;
+use crate::teams::team::TeamId;
+use crate::{BaseballStatId, GameType, StatsAPIEndpointUrl};
 use crate::gen_params;
 use crate::types::{Copyright, PlayerPool};
 use itertools::Itertools;
@@ -47,11 +47,11 @@ impl StatsAPIEndpointUrl for TeamStatLeadersEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::endpoints::meta::MetaEndpoint;
-	use crate::endpoints::sports::SportId;
-	use crate::endpoints::teams::team::leaders::TeamStatLeadersEndpoint;
-	use crate::endpoints::teams::TeamsEndpoint;
-	use crate::endpoints::{BaseballStat, StatsAPIEndpointUrl};
+	use crate::meta::MetaEndpoint;
+	use crate::sports::SportId;
+	use crate::teams::team::leaders::TeamStatLeadersEndpoint;
+	use crate::teams::TeamsEndpoint;
+	use crate::{BaseballStat, StatsAPIEndpointUrl};
 
 	#[tokio::test]
 	async fn test_all_mlb_teams_all_stats() {

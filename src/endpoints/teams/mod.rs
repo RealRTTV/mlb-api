@@ -3,9 +3,9 @@ pub mod history;
 pub mod stats;
 pub mod team;
 
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::endpoints::sports::SportId;
-use crate::endpoints::teams::team::Team;
+use crate::StatsAPIEndpointUrl;
+use crate::sports::SportId;
+use crate::teams::team::Team;
 use crate::gen_params;
 use crate::types::Copyright;
 use serde::Deserialize;

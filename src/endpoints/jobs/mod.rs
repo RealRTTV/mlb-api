@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter};
 use chrono::NaiveDate;
 use serde::Deserialize;
-use crate::endpoints::{JobTypeId, StatsAPIEndpointUrl};
-use crate::endpoints::person::Person;
-use crate::endpoints::sports::SportId;
+use crate::{JobTypeId, StatsAPIEndpointUrl};
+use crate::person::Person;
+use crate::sports::SportId;
 use crate::gen_params;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
 
@@ -51,9 +51,9 @@ impl StatsAPIEndpointUrl for JobsEndpoint {
 
 #[cfg(test)]
 mod tests {
-    use crate::endpoints::{JobType, StatsAPIEndpointUrl};
-    use crate::endpoints::jobs::JobsEndpoint;
-    use crate::endpoints::meta::MetaEndpoint;
+    use crate::{JobType, StatsAPIEndpointUrl};
+    use crate::jobs::JobsEndpoint;
+    use crate::meta::MetaEndpoint;
 
     #[tokio::test]
     async fn parse_all_job_types() {
