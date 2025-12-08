@@ -30,7 +30,7 @@ pub struct HydratedConference {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableConference,
+	inner: NamedConference,
 }
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]

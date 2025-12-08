@@ -1,7 +1,4 @@
 // todo: refactor all endpoints to be at `crate::*` depth
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::request::Error;
-use crate::types::StatsAPIError;
 
 #[macro_export]
 macro_rules! stats {
@@ -35,7 +32,7 @@ pub(crate) const fn rwlock_const_new<T>(t: T) -> RwLock<T> {
 }
 
 #[cfg(test)]
-pub(crate) async fn serde_path_to_error_parse<T: StatsAPIEndpointUrl>(url: T) -> T::Response {
+pub(crate) async fn serde_path_to_error_parse<T: endpoints::StatsAPIEndpointUrl>(url: T) -> T::Response {
     let url = url.to_string();
     println!("requesting: {url}");
     let bytes = reqwest::get(url).await.unwrap().bytes().await.unwrap();
@@ -44,7 +41,7 @@ pub(crate) async fn serde_path_to_error_parse<T: StatsAPIEndpointUrl>(url: T) ->
     match result {
         Ok(x) => x,
         Err(e) => {
-            if let Ok(e) = serde_json::from_slice::<'_, StatsAPIError>(&bytes).map(Error::StatsAPI) {
+            if let Ok(e) = serde_json::from_slice::<'_, types::StatsAPIError>(&bytes).map(request::Error::StatsAPI) {
                 panic!("{e}");
             } else {
                 panic!("{e}");

@@ -32,7 +32,7 @@ pub struct HydratedJobType {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inenr: IdentifiableJobType,
+	inner: IdentifiableJobType,
 }
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
