@@ -14,6 +14,7 @@ use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 use crate::seasons::season::SeasonId;
+use crate::stats::units::ThreeDecimalPlaceStat;
 
 pub mod postseason;
 pub mod tied;
@@ -201,8 +202,8 @@ impl Standings {
 	}
 
 	#[must_use]
-	pub fn pct(self) -> f64 {
-		self.wins as f64 / self.games_played() as f64
+	pub fn pct(self) -> ThreeDecimalPlaceStat {
+		(self.wins as f64 / self.games_played() as f64).into()
 	}
 }
 
