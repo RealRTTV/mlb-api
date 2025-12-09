@@ -15,7 +15,7 @@ pub struct TeamAffiliatesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: team_affiliates_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamAffiliatesRequestBuilder<S> where S: team_affiliates_request_builder::IsComplete {
+impl<S: team_affiliates_request_builder::State + team_affiliates_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamAffiliatesRequestBuilder<S> {
 	type Built = TeamAffiliatesRequest;
 }
 

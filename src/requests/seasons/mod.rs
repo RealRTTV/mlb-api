@@ -26,7 +26,7 @@ pub struct SeasonsRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: seasons_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for SeasonsRequestBuilder<S> where S: seasons_request_builder::IsComplete {
+impl<S: seasons_request_builder::State + seasons_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for SeasonsRequestBuilder<S> {
 	type Built = SeasonsRequest;
 }
 

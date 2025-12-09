@@ -109,8 +109,8 @@ impl __StatTypeMaybeInline {
 	#[must_use]
 	pub fn into_string(self) -> String {
 		match self {
-			__StatTypeMaybeInline::Wrapped { display_name } => display_name,
-			__StatTypeMaybeInline::Inline(name) => name,
+			Self::Wrapped { display_name } => display_name,
+			Self::Inline(name) => name,
 		}
 	}
 }
@@ -137,13 +137,14 @@ impl<'de> Deserialize<'de> for StatType {
 	where
 		D: Deserializer<'de>
 	{
-		Ok(StatType { name: __StatTypeMaybeInline::deserialize(deserializer)?.into_string() })
+		Ok(Self { name: __StatTypeMaybeInline::deserialize(deserializer)?.into_string() })
 	}
 }
 
 #[cfg(not(feature = "static_stat_types"))]
 impl StatType {
-	pub fn as_str(&self) -> &str {
+	#[must_use]
+	pub const fn as_str(&self) -> &str {
 		self.name.as_str()
 	}
 }
@@ -155,8 +156,8 @@ impl MetaKind for StatType {
 static CACHE: RwLock<HydratedCacheTable<StatType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for StatType {
-	type HydratedVariant = StatType;
-	type Identifier = StatType;
+	type HydratedVariant = Self;
+	type Identifier = Self;
 	type URL = MetaRequest<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {

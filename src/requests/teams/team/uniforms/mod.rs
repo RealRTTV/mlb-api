@@ -113,7 +113,7 @@ pub struct UniformsRequest {
     season: Option<SeasonId>,
 }
 
-impl<S: uniforms_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for UniformsRequestBuilder<S> where S: uniforms_request_builder::IsComplete {
+impl<S: uniforms_request_builder::State + uniforms_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for UniformsRequestBuilder<S> {
     type Built = UniformsRequest;
 }
 

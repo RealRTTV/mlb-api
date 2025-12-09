@@ -33,8 +33,8 @@ impl __StatGroupMaybeInline {
 	#[must_use]
 	pub fn into_string(self) -> String {
 		match self {
-			__StatGroupMaybeInline::Wrapped { display_name } => display_name,
-			__StatGroupMaybeInline::Inline(name) => name,
+			Self::Wrapped { display_name } => display_name,
+			Self::Inline(name) => name,
 		}
 	}
 }
@@ -54,8 +54,8 @@ impl MetaKind for StatGroup {
 static CACHE: RwLock<HydratedCacheTable<StatGroup>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for StatGroup {
-	type HydratedVariant = StatGroup;
-	type Identifier = StatGroup;
+	type HydratedVariant = Self;
+	type Identifier = Self;
 	type URL = MetaRequest<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {

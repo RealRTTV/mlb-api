@@ -12,7 +12,8 @@ pub trait StatsAPIRequestUrl: ToString {
 	where
 		Self: Sized,
 	{
-		request::get(self)
+        let url = self.to_string();
+		request::get::<Self::Response>(url)
 	}
 
 	#[cfg(feature = "reqwest")]
@@ -20,7 +21,8 @@ pub trait StatsAPIRequestUrl: ToString {
 	where
 		Self: Sized,
 	{
-		request::get(self)
+        let url = self.to_string();
+		request::get::<Self::Response>(url)
 	}
 }
 
@@ -30,15 +32,16 @@ pub trait StatsAPIRequestUrlBuilderExt where Self: Sized {
     #[cfg(feature = "ureq")]
     fn build_and_get(self) -> request::Result<<T as StatsAPIRequestUrl>::Response> {
         let built = T::from(self);
-        request::get(&built)
+        let url = built.to_string();
+        request::get::<<Self::Built as StatsAPIRequestUrl>::Response>(url)
     }
 
     #[cfg(feature = "reqwest")]
     fn build_and_get(self) -> impl Future<Output = request::Result<<Self::Built as StatsAPIRequestUrl>::Response>> {
         async {
             let built = Self::Built::from(self);
-            let str = built.to_string();
-            request::get::<<Self::Built as StatsAPIRequestUrl>::Response>(&str).await
+            let url = built.to_string();
+            request::get::<<Self::Built as StatsAPIRequestUrl>::Response>(url).await
         }
     }
 }

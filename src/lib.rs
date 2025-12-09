@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic, clippy::nursery)]
+
 #[macro_export]
 macro_rules! stats {
     ($($t:tt)*) => {

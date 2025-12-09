@@ -1,3 +1,5 @@
+#![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
+
 use crate::person::{Person, PersonHydrations};
 use crate::types::Copyright;
 use serde::Deserialize;

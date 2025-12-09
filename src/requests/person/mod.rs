@@ -1,3 +1,5 @@
+#![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
+
 pub mod stats;
 
 use crate::cache::{RequestEntryCache, HydratedCacheTable};
@@ -23,7 +25,7 @@ use std::ops::{Deref, DerefMut};
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
-pub struct Ballplayer<H: PersonHydrations> {
+pub struct Ballplayer<H> where H: PersonHydrations {
 	#[serde(deserialize_with = "crate::types::try_from_str")]
 	#[serde(default)]
 	pub primary_number: Option<u8>,
@@ -120,38 +122,22 @@ impl<H: PersonHydrations> HydratedPerson<H> {
 
 	#[must_use]
 	pub fn name_last_first_initial(&self) -> String {
-		if let Some(char) = self.use_first_name.chars().next() {
-			format!("{1}, {0}", char, self.use_last_name)
-		} else {
-			self.use_last_name.clone()
-		}
+		self.use_first_name.chars().next().map_or_else(|| self.use_last_name.clone(), |char| format!("{1}, {0}", char, self.use_last_name))
 	}
 
 	#[must_use]
 	pub fn name_first_initial_last(&self) -> String {
-		if let Some(char) = self.use_first_name.chars().next() {
-			format!("{0} {1}", char, self.use_last_name)
-		} else {
-			self.use_last_name.clone()
-		}
+		self.use_first_name.chars().next().map_or_else(|| self.use_last_name.clone(), |char| format!("{0} {1}", char, self.use_last_name))
 	}
 
 	#[must_use]
 	pub fn name_fml(&self) -> String {
-		if let Some(middle) = &self.middle_name {
-			format!("{0} {1} {2}", self.use_first_name, middle, self.use_last_name)
-		} else {
-			format!("{0} {1}", self.use_first_name, self.use_last_name)
-		}
+		self.middle_name.as_ref().map_or_else(|| format!("{0} {1}", self.use_first_name, self.use_last_name), |middle| format!("{0} {1} {2}", self.use_first_name, middle, self.use_last_name))
 	}
 
 	#[must_use]
 	pub fn name_lfm(&self) -> String {
-		if let Some(middle) = &self.middle_name {
-			format!("{2}, {0} {1}", self.use_first_name, middle, self.use_last_name)
-		} else {
-			format!("{1}, {0}", self.use_first_name, self.use_last_name)
-		}
+		self.middle_name.as_ref().map_or_else(|| format!("{1}, {0}", self.use_first_name, self.use_last_name), |middle| format!("{2}, {0} {1}", self.use_first_name, middle, self.use_last_name))
 	}
 }
 

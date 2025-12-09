@@ -24,7 +24,7 @@ pub struct SchedulePostseasonRequest {
     series_number: Option<u32>,
 }
 
-impl<S: schedule_postseason_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for SchedulePostseasonRequestBuilder<S> where S: schedule_postseason_request_builder::IsComplete {
+impl<S: schedule_postseason_request_builder::State + schedule_postseason_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for SchedulePostseasonRequestBuilder<S> {
     type Built = SchedulePostseasonRequest;
 }
 

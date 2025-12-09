@@ -59,10 +59,16 @@ pub struct MetaRequest<T: MetaKind> {
 	_marker: PhantomData<T>,
 }
 
+impl<T: MetaKind> Default for MetaRequest<T> {
+	fn default() -> Self {
+		Self { _marker: PhantomData }
+	}
+}
+
 impl<T: MetaKind> MetaRequest<T> {
 	#[must_use]
-	pub const fn new() -> Self {
-		Self { _marker: PhantomData }
+	pub fn new() -> Self {
+		Self::default()
 	}
 }
 

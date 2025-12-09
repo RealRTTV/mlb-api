@@ -78,7 +78,7 @@ pub struct AwardRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: award_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for AwardRequestBuilder<S> where S: award_request_builder::IsComplete {
+impl<S: award_request_builder::State + award_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for AwardRequestBuilder<S> {
     type Built = AwardRequest;
 }
 

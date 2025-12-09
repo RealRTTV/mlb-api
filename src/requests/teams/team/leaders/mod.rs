@@ -32,7 +32,7 @@ pub struct TeamStatLeadersRequest {
 	pub game_types: Option<Vec<GameType>>,
 }
 
-impl<S: team_stat_leaders_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamStatLeadersRequestBuilder<S> where S: team_stat_leaders_request_builder::IsComplete {
+impl<S: team_stat_leaders_request_builder::State + team_stat_leaders_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamStatLeadersRequestBuilder<S> {
 	type Built = TeamStatLeadersRequest;
 }
 

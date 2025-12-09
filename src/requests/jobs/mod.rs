@@ -40,7 +40,7 @@ pub struct JobsRequest {
     date: Option<NaiveDate>,
 }
 
-impl<S: jobs_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for JobsRequestBuilder<S> where S: jobs_request_builder::IsComplete {
+impl<S: jobs_request_builder::State + jobs_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for JobsRequestBuilder<S> {
     type Built = JobsRequest;
 }
 

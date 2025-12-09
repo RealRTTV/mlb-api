@@ -45,7 +45,7 @@ pub struct SportsRequest {
 	id: Option<SportId>,
 }
 
-impl<S: sports_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for SportsRequestBuilder<S> where S: sports_request_builder::IsComplete {
+impl<S: sports_request_builder::State + sports_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for SportsRequestBuilder<S> {
 	type Built = SportsRequest;
 }
 
@@ -142,7 +142,7 @@ impl RequestEntryCache for Sport {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		SportsRequest::builder().id(id.clone()).build()
+		SportsRequest::builder().id(*id).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>

@@ -14,7 +14,7 @@ pub struct ScheduleTiedRequest {
     game_types: Option<Vec<GameType>>,
 }
 
-impl<S: schedule_tied_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for ScheduleTiedRequestBuilder<S> where S: schedule_tied_request_builder::IsComplete {
+impl<S: schedule_tied_request_builder::State + schedule_tied_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for ScheduleTiedRequestBuilder<S> {
     type Built = ScheduleTiedRequest;
 }
 

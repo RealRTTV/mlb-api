@@ -54,6 +54,7 @@ impl Default for NamedLeague {
 	}
 }
 
+#[allow(clippy::struct_excessive_bools, reason = "false positive")]
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HydratedLeague {
@@ -167,7 +168,7 @@ use league_request_builder::{IsUnset, SetLeagueIds, State};
 impl<S: State> LeagueRequestBuilder<S> {
 	#[allow(dead_code)]
 	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeagueRequestBuilder<SetLeagueIds<S>> where S::LeagueIds: IsUnset {
-		self.league_ids_internal(league_ids.into_iter().map(|x| x.into()).collect::<Vec<_>>())
+		self.league_ids_internal(league_ids.into_iter().map(T::into).collect::<Vec<_>>())
 	}
 }
 
@@ -200,7 +201,7 @@ impl RequestEntryCache for League {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		LeagueRequest::builder().league_ids_internal(vec![id.clone()]).build()
+		LeagueRequest::builder().league_ids_internal(vec![*id]).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>

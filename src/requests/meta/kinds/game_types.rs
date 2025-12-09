@@ -85,10 +85,8 @@ impl Deref for __GameTypeStruct {
 	type Target = String;
 
 	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Wrapped { id, .. } => id,
-			Self::Inline(id) => id,
-		}
+		let (Self::Wrapped { id, .. } | Self::Inline(id)) = self;
+		id
 	}
 }
 
@@ -97,18 +95,18 @@ impl TryFrom<__GameTypeStruct> for GameType {
 
 	fn try_from(value: __GameTypeStruct) -> Result<Self, Self::Error> {
 		Ok(match &**value {
-			"S" => GameType::SpringTraining,
-			"I" => GameType::Intrasquad,
-			"E" => GameType::Exhibition,
-			"N" => GameType::NineteenthCenturySeries,
-			"R" => GameType::RegularSeason,
-			"A" => GameType::AllStarGame,
-			"D" => GameType::DivisionalSeries,
-			"F" => GameType::WildCardSeries,
-			"L" => GameType::ChampionshipSeries,
-			"W" => GameType::WorldSeries,
-			"P" => GameType::Playoffs,
-			"C" => GameType::Championship,
+			"S" => Self::SpringTraining,
+			"I" => Self::Intrasquad,
+			"E" => Self::Exhibition,
+			"N" => Self::NineteenthCenturySeries,
+			"R" => Self::RegularSeason,
+			"A" => Self::AllStarGame,
+			"D" => Self::DivisionalSeries,
+			"F" => Self::WildCardSeries,
+			"L" => Self::ChampionshipSeries,
+			"W" => Self::WorldSeries,
+			"P" => Self::Playoffs,
+			"C" => Self::Championship,
 			_ => return Err("unknown game type"),
 		})
 	}
@@ -121,8 +119,8 @@ impl MetaKind for GameType {
 static CACHE: RwLock<HydratedCacheTable<GameType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for GameType {
-	type HydratedVariant = GameType;
-	type Identifier = GameType;
+	type HydratedVariant = Self;
+	type Identifier = Self;
 	type URL = MetaRequest<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {

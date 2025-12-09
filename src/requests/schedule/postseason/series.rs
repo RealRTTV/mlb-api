@@ -35,10 +35,14 @@ pub struct SeriesData {
     pub game_type: GameType,
 }
 
+/// # Errors
+/// 1. Cannot deserialize into string
+/// 2. Not in format `{game_type}_{series_number}`
+/// 3. Not a valid `u32`
 pub fn series_number_from_id<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u32, D::Error> {
     let str = String::deserialize(deserializer)?;
     let (_game_type, series_number) = str.split_once('_').ok_or_else(|| D::Error::custom("Malformed id, expected format '{game_type}_{series_number}'"))?;
-    let series_number: u32 = series_number.parse().map_err(|e| D::Error::custom(e))?;
+    let series_number: u32 = series_number.parse().map_err(D::Error::custom)?;
     Ok(series_number)
 }
 
@@ -55,7 +59,7 @@ pub struct SchedulePostseasonSeriesRequest {
     series_number: Option<u32>,
 }
 
-impl<S: schedule_postseason_series_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for SchedulePostseasonSeriesRequestBuilder<S> where S: schedule_postseason_series_request_builder::IsComplete {
+impl<S: schedule_postseason_series_request_builder::State + schedule_postseason_series_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for SchedulePostseasonSeriesRequestBuilder<S> {
     type Built = SchedulePostseasonSeriesRequest;
 }
 

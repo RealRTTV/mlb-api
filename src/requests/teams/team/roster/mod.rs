@@ -61,20 +61,20 @@ impl TryFrom<__RosterStatusStruct> for RosterStatus {
 
     fn try_from(value: __RosterStatusStruct) -> Result<Self, Self::Error> {
         Ok(match &*value.code {
-            "A" => RosterStatus::Active,
-            "CL" => RosterStatus::Claimed,
-            "RM" => RosterStatus::ReassignedToMinors,
-            "RL" => RosterStatus::Released,
-            "MIN" => RosterStatus::MinorLeagueContract,
-            "D7" => RosterStatus::InjuryLeave10Day,
-            "D10" => RosterStatus::InjuryLeave10Day,
-            "D15" => RosterStatus::InjuryLeave15Day,
-            "D60" => RosterStatus::InjuryLeave60Day,
-            "TR" => RosterStatus::Traded,
-            "DES" => RosterStatus::DesignatedForAssignment,
-            "FA" => RosterStatus::FreeAgent,
-            "RST" => RosterStatus::RestrictedList,
-            "ASG" => RosterStatus::AssignedToNewTeam,
+            "A" => Self::Active,
+            "CL" => Self::Claimed,
+            "RM" => Self::ReassignedToMinors,
+            "RL" => Self::Released,
+            "MIN" => Self::MinorLeagueContract,
+            "D7" => Self::InjuryLeave7Day,
+            "D10" => Self::InjuryLeave10Day,
+            "D15" => Self::InjuryLeave15Day,
+            "D60" => Self::InjuryLeave60Day,
+            "TR" => Self::Traded,
+            "DES" => Self::DesignatedForAssignment,
+            "FA" => Self::FreeAgent,
+            "RST" => Self::RestrictedList,
+            "ASG" => Self::AssignedToNewTeam,
             code => return Err(format!("Invalid code '{code}' (desc: {})", value.description)),
         })
     }
@@ -92,7 +92,7 @@ pub struct RosterRequest {
     roster_type: RosterTypeId,
 }
 
-impl<S: roster_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for RosterRequestBuilder<S> where S: roster_request_builder::IsComplete {
+impl<S: roster_request_builder::State + roster_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for RosterRequestBuilder<S> {
     type Built = RosterRequest;
 }
 

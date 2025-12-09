@@ -107,7 +107,7 @@ pub struct DivisionsRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: divisions_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for DivisionsRequestBuilder<S> where S: divisions_request_builder::IsComplete {
+impl<S: divisions_request_builder::State + divisions_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for DivisionsRequestBuilder<S> {
     type Built = DivisionsRequest;
 }
 
@@ -141,7 +141,7 @@ impl RequestEntryCache for Division {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		DivisionsRequest::builder().division_id(id.clone()).build()
+		DivisionsRequest::builder().division_id(*id).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>

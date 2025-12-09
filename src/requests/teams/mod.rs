@@ -48,7 +48,7 @@ pub struct TeamsRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: teams_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamsRequestBuilder<S> where S: teams_request_builder::IsComplete {
+impl<S: teams_request_builder::State + teams_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamsRequestBuilder<S> {
 	type Built = TeamsRequest;
 }
 

@@ -14,7 +14,9 @@ use std::fmt::{Debug, Display, Formatter};
 use std::iter::Sum;
 use std::ops::Add;
 
-/// Within regards to attendance, the term frequently used is "Opening" over "Game"; this is for reasons including but not limited to: single ticket double headers, and partially cancelled/rescheduled games.
+/// Within regards to attendance, the term frequently used is "Opening" over "Game";
+/// this is for reasons including but not limited to: single ticket double headers,
+/// and rescheduled games.
 ///
 /// Averages are calculated with respect to the # of openings on the sample, not the number of games the team played as either "home" or "away".
 ///
@@ -88,6 +90,7 @@ impl Add for AttendanceRecord {
 }
 
 impl Default for AttendanceRecord {
+	#[allow(clippy::cast_sign_loss, reason = "jesus is not alive")]
 	fn default() -> Self {
 		Self {
 			total_openings: HomeAwaySplits::new(0, 0),
@@ -110,7 +113,7 @@ impl Sum for AttendanceRecord {
 
 impl AttendanceRecord {
 	#[must_use]
-	pub fn average_attendance(&self) -> HomeAwaySplits<u32> {
+	pub const fn average_attendance(&self) -> HomeAwaySplits<u32> {
 		let HomeAwaySplits { home, away } = self.attendance_totals;
 		let HomeAwaySplits { home: num_at_home, away: num_at_away } = self.total_openings;
 		HomeAwaySplits::new((home + num_at_home / 2) / num_at_home, (away + num_at_away / 2) / num_at_away)
@@ -212,21 +215,11 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 	}
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct DatedAttendance {
 	pub value: u32,
 	pub date: NaiveDate,
 	pub game: Game,
-}
-
-impl Default for DatedAttendance {
-	fn default() -> Self {
-		Self {
-			value: 0,
-			date: NaiveDate::default(),
-			game: Game::default(),
-		}
-	}
 }
 
 impl PartialOrd<Self> for DatedAttendance {
@@ -255,7 +248,7 @@ pub struct AttendanceRequest {
 	game_type: GameType,
 }
 
-impl<S: State> crate::requests::links::StatsAPIRequestUrlBuilderExt for AttendanceRequestBuilder<S> where S: attendance_request_builder::IsComplete {
+impl<S: State + attendance_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for AttendanceRequestBuilder<S> {
     type Built = AttendanceRequest;
 }
 
@@ -285,7 +278,7 @@ impl Display for AttendanceRequest {
 		write!(
 			f,
 			"http://statsapi.mlb.com/api/v1/attendance{}",
-			gen_params! { "teamId"?: self.id.clone().left(), "leagueId"?: self.id.clone().right(), "season"?: self.season, "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)), "gameType": format!("{:?}", self.game_type) }
+			gen_params! { "teamId"?: self.id.left(), "leagueId"?: self.id.right(), "season"?: self.season, "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)), "gameType": format!("{:?}", self.game_type) }
 		)
 	}
 }

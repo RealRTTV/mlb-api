@@ -120,7 +120,7 @@ pub struct VenuesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: venues_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for VenuesRequestBuilder<S> where S: venues_request_builder::IsComplete {
+impl<S: venues_request_builder::State + venues_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for VenuesRequestBuilder<S> {
 	type Built = VenuesRequest;
 }
 
@@ -150,7 +150,7 @@ impl RequestEntryCache for Venue {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		VenuesRequest::builder().venue_ids(vec![id.clone()]).build()
+		VenuesRequest::builder().venue_ids(vec![*id]).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>

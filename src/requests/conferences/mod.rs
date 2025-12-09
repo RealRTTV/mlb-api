@@ -100,7 +100,7 @@ pub struct ConferencesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: conferences_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for ConferencesRequestBuilder<S> where S: conferences_request_builder::IsComplete {
+impl<S: conferences_request_builder::State + conferences_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for ConferencesRequestBuilder<S> {
     type Built = ConferencesRequest;
 }
 
@@ -130,7 +130,7 @@ impl RequestEntryCache for Conference {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		ConferencesRequest::builder().conference_id(id.clone()).build()
+		ConferencesRequest::builder().conference_id(*id).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>

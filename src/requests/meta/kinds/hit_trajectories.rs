@@ -42,13 +42,13 @@ impl TryFrom<__HitTrajectoryStruct> for HitTrajectory {
 
 	fn try_from(value: __HitTrajectoryStruct) -> Result<Self, Self::Error> {
 		Ok(match &*value.code {
-			"bunt_grounder" => HitTrajectory::BuntGrounder,
-			"bunt_popup" => HitTrajectory::BuntPopup,
-			"bunt_line_drive" => HitTrajectory::BuntLineDrive,
-			"line_drive" => HitTrajectory::LineDrive,
-			"ground_ball" => HitTrajectory::GroundBall,
-			"fly_ball" => HitTrajectory::FlyBall,
-			"popup" => HitTrajectory::Popup,
+			"bunt_grounder" => Self::BuntGrounder,
+			"bunt_popup" => Self::BuntPopup,
+			"bunt_line_drive" => Self::BuntLineDrive,
+			"line_drive" => Self::LineDrive,
+			"ground_ball" => Self::GroundBall,
+			"fly_ball" => Self::FlyBall,
+			"popup" => Self::Popup,
 			_ => return Err("unknown hit trajectory"),
 		})
 	}
@@ -61,8 +61,8 @@ impl MetaKind for HitTrajectory {
 static CACHE: RwLock<HydratedCacheTable<HitTrajectory>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for HitTrajectory {
-	type HydratedVariant = HitTrajectory;
-	type Identifier = HitTrajectory;
+	type HydratedVariant = Self;
+	type Identifier = Self;
 	type URL = MetaRequest<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {

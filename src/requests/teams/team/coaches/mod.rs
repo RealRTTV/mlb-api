@@ -18,7 +18,7 @@ pub struct CoachesRequest {
     date: Option<NaiveDate>,
 }
 
-impl<S: coaches_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for CoachesRequestBuilder<S> where S: coaches_request_builder::IsComplete {
+impl<S: coaches_request_builder::State + coaches_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for CoachesRequestBuilder<S> {
     type Built = CoachesRequest;
 }
 

@@ -16,6 +16,7 @@ pub struct IdentifiableSituationCode {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
 pub struct SituationCodeId(String);
 
+#[allow(clippy::struct_excessive_bools, reason = "false positive")]
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct HydratedSituationCode {
 	#[serde(rename = "navigationMenu")]

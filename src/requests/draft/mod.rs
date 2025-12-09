@@ -58,7 +58,7 @@ pub struct DraftProspectsResponse {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftPick {
-	/// PlayerId on the EBIS System
+	/// a `PlayerId` on the EBIS System
 	#[serde(rename = "bisPlayerId")]
 	pub ebis_player_id: Option<EBISPersonId>,
 	#[serde(default, rename = "pickRound")]
@@ -148,7 +148,7 @@ impl TryFrom<__DraftTypeStruct> for DraftType {
 
 	fn try_from(value: __DraftTypeStruct) -> Result<Self, Self::Error> {
 		Ok(match &*value.code {
-			"JR" => DraftType::JR,
+			"JR" => Self::JR,
 			_ => return Err(DraftTypeParseError::InvalidCode(value.code)),
 		})
 	}
@@ -213,8 +213,7 @@ pub struct DraftRequest {
 	player_id: Option<PersonId>,
 }
 
-impl<S: draft_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for DraftRequestBuilder<S> where S: draft_request_builder::IsComplete
-{
+impl<S: draft_request_builder::State + draft_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for DraftRequestBuilder<S> {
 	type Built = DraftRequest;
 }
 
@@ -304,7 +303,7 @@ pub struct DraftProspectsRequest {
 	player_id: Option<PersonId>,
 }
 
-impl<S: draft_prospects_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for DraftProspectsRequestBuilder<S> where S: draft_prospects_request_builder::IsComplete {
+impl<S: draft_prospects_request_builder::State + draft_prospects_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for DraftProspectsRequestBuilder<S> {
     type Built = DraftProspectsRequest;
 }
 

@@ -19,7 +19,7 @@ pub struct TeamHistoryRequest {
 	end_season: Option<SeasonId>,
 }
 
-impl<S: team_history_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamHistoryRequestBuilder<S> where S: team_history_request_builder::IsComplete {
+impl<S: team_history_request_builder::State + team_history_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamHistoryRequestBuilder<S> {
 	type Built = TeamHistoryRequest;
 }
 

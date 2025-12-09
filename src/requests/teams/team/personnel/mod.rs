@@ -18,7 +18,7 @@ pub struct PersonnelRequest {
     date: Option<NaiveDate>,
 }
 
-impl<S: personnel_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for PersonnelRequestBuilder<S> where S: personnel_request_builder::IsComplete {
+impl<S: personnel_request_builder::State + personnel_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for PersonnelRequestBuilder<S> {
     type Built = PersonnelRequest;
 }
 

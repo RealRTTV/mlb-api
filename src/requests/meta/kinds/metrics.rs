@@ -65,7 +65,7 @@ units! {
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HydratedMetric {
-	#[serde(deserialize_with = "crate::types::deserialize_comma_seperated_vec")]
+	#[serde(deserialize_with = "crate::types::deserialize_comma_separated_vec")]
 	pub group: Vec<StatGroup>,
 	pub unit: Unit,
 

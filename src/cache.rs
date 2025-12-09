@@ -31,6 +31,7 @@ pub trait RequestEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
         if let Some(hydrated_entry) = cache.get(id).cloned() {
             return Ok(hydrated_entry);
         }
+        drop(cache);
 
         let mut cache = cache_lock.write().await;
         cache.request_and_add(id).await?;
@@ -80,7 +81,7 @@ impl<T: RequestEntryCache> HydratedCacheTable<T> {
 
     // make this unionize hydrations when those are eventually implemented
     pub fn insert(&mut self, id: T::Identifier, value: T::HydratedVariant) {
-        self.cached_values.insert(id.clone(), Arc::new(value));
+        self.cached_values.insert(id, Arc::new(value));
     }
     
     pub fn clear(&mut self) {
@@ -96,10 +97,13 @@ impl<T: RequestEntryCache> HydratedCacheTable<T> {
         }
     }
 
+    /// # Errors
+    /// See variants of [`crate::request::Error`]
     #[cfg(feature = "reqwest")]
     pub async fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as RequestEntryCache>::url_for_id(&id);
-        let response = url.get().await?;
+        let url = <T as RequestEntryCache>::url_for_id(id);
+        let url = url.to_string();
+        let response = crate::request::get::<<<T as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url).await?;
         self.try_add_entries(<T as RequestEntryCache>::get_entries(response));
         Ok(())
     }

@@ -15,7 +15,7 @@ pub struct AlumniRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: alumni_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for AlumniRequestBuilder<S> where S: alumni_request_builder::IsComplete {
+impl<S: alumni_request_builder::State + alumni_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for AlumniRequestBuilder<S> {
 	type Built = AlumniRequest;
 }
 

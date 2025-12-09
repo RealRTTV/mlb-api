@@ -48,7 +48,7 @@ pub struct FreeAgent {
 
 impl From<__FreeAgentStruct> for FreeAgent {
 	fn from(value: __FreeAgentStruct) -> Self {
-		FreeAgent {
+		Self {
 			player: value.player,
 			original_team: value.original_team.unwrap_or_else(Team::unknown_team),
 			new_team: value.new_team.unwrap_or_else(Team::unknown_team),
@@ -67,7 +67,7 @@ pub struct FreeAgentsRequest {
 	season: SeasonId,
 }
 
-impl<S: free_agents_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for FreeAgentsRequestBuilder<S> where S: free_agents_request_builder::IsComplete {
+impl<S: free_agents_request_builder::State + free_agents_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for FreeAgentsRequestBuilder<S> {
 	type Built = FreeAgentsRequest;
 }
 

@@ -46,7 +46,7 @@ impl TryFrom<__StatLeadersStruct> for StatLeaders {
 	type Error = <StatGroup as FromStr>::Err;
 
 	fn try_from(value: __StatLeadersStruct) -> Result<Self, Self::Error> {
-		Ok(StatLeaders {
+		Ok(Self {
 			category: BaseballStat::Identifiable(IdentifiableBaseballStat {
 				id: BaseballStatId::new(value.leader_category),
 			}),
@@ -99,10 +99,7 @@ pub struct StatLeadersRequest {
 	game_types: Option<Vec<GameType>>,
 }
 
-impl<S: stat_leaders_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for StatLeadersRequestBuilder<S>
-where
-	S: stat_leaders_request_builder::IsComplete,
-{
+impl<S: stat_leaders_request_builder::State + stat_leaders_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for StatLeadersRequestBuilder<S> {
 	type Built = StatLeadersRequest;
 }
 

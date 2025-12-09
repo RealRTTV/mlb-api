@@ -34,7 +34,7 @@ struct RegularTeamRaw {
 	name: TeamNameRaw,
 	location_name: Option<String>,
 	#[serde(default, deserialize_with = "crate::types::try_from_str")]
-	first_year_of_play: Option<u16>,
+	first_year_of_play: Option<u32>,
 	#[serde_as(deserialize_as = "DefaultOnError")]
 	#[serde(default)]
 	league: NamedLeague,
@@ -55,7 +55,7 @@ pub struct RegularTeam {
 	pub venue: NamedVenue,
 	pub name: TeamName,
 	pub location_name: Option<String>,
-	pub first_year_of_play: u16,
+	pub first_year_of_play: u32,
 	pub league: NamedLeague,
 	pub division: Option<NamedDivision>,
 	pub sport: NamedSport,
@@ -84,14 +84,14 @@ impl From<RegularTeamRaw> for RegularTeam {
 			inner,
 		} = value;
 
-		RegularTeam {
+		Self {
 			all_star_status,
 			active,
 			season,
 			venue,
 			name: name.initialize(inner.id),
 			location_name,
-			first_year_of_play: first_year_of_play.unwrap_or(*season as _),
+			first_year_of_play: first_year_of_play.unwrap_or(*season),
 			league,
 			division,
 			sport,
@@ -339,7 +339,7 @@ impl Deref for Organization {
 impl DerefMut for Organization {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		match self {
-			Organization::NamedOrganization(inner) => inner,
+			Self::NamedOrganization(inner) => inner,
 		}
 	}
 }

@@ -27,16 +27,10 @@ impl GameId {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
 pub struct IdentifiableGame {
 	#[serde(rename = "gamePk")]
 	pub id: GameId,
-}
-
-impl Default for IdentifiableGame {
-	fn default() -> Self {
-		Self { id: GameId::default() }
-	}
 }
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
@@ -91,6 +85,7 @@ pub enum DoubleHeaderKind {
 }
 
 impl DoubleHeaderKind {
+	#[must_use]
 	pub const fn is_double_header(self) -> bool {
 		matches!(self, Self::FirstGame | Self::SecondGame)
 	}

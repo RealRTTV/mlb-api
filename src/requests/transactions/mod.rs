@@ -309,63 +309,65 @@ pub enum Transaction {
 impl Deref for Transaction {
 	type Target = TransactionCommon;
 
+	#[rustfmt::skip]
 	fn deref(&self) -> &Self::Target {
 		match self {
-			Self::Assigned { common, .. } => common,
-			Self::StatusChange { common, .. } => common,
-			Self::SignedAsFreeAgent { common, .. } => common,
-			Self::DesignatedForAssignment { common, .. } => common,
-			Self::Trade { common, .. } => common,
-			Self::NumberChange { common, .. } => common,
-			Self::Outrighted { common, .. } => common,
-			Self::ClaimedOffWaivers { common, .. } => common,
-			Self::Signed { common, .. } => common,
-			Self::Released { common, .. } => common,
-			Self::DeclaredFreeAgency { common, .. } => common,
-			Self::Optioned { common, .. } => common,
-			Self::Returned { common, .. } => common,
-			Self::Selected { common, .. } => common,
-			Self::Recalled { common, .. } => common,
-			Self::Suspension { common, .. } => common,
-			Self::Retired { common, .. } => common,
-			Self::Purchase { common, .. } => common,
-			Self::RuleFiveDraft { common, .. } => common,
-			Self::Reinstated { common, .. } => common,
-			Self::Loan { common, .. } => common,
-			Self::ContractPurchased { common, .. } => common,
-			Self::Drafted { common, .. } => common,
-			Self::DeclaredIneligible { common, .. } => common,
+			Self::Assigned { common, .. }
+			| Self::StatusChange { common, .. }
+			| Self::SignedAsFreeAgent { common, .. }
+			| Self::DesignatedForAssignment { common, .. }
+			| Self::Trade { common, .. }
+			| Self::NumberChange { common, .. }
+			| Self::Outrighted { common, .. }
+			| Self::ClaimedOffWaivers { common, .. }
+			| Self::Signed { common, .. }
+			| Self::Released { common, .. }
+			| Self::DeclaredFreeAgency { common, .. }
+			| Self::Optioned { common, .. }
+			| Self::Returned { common, .. }
+			| Self::Selected { common, .. }
+			| Self::Recalled { common, .. }
+			| Self::Suspension { common, .. }
+			| Self::Retired { common, .. }
+			| Self::Purchase { common, .. }
+			| Self::RuleFiveDraft { common, .. }
+			| Self::Reinstated { common, .. }
+			| Self::Loan { common, .. }
+			| Self::ContractPurchased { common, .. }
+			| Self::Drafted { common, .. }
+			| Self::DeclaredIneligible { common, .. } => common,
 		}
 	}
 }
 
 impl DerefMut for Transaction {
+	#[rustfmt::skip]
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		match self {
-			Self::Assigned { common, .. } => common,
-			Self::StatusChange { common, .. } => common,
-			Self::SignedAsFreeAgent { common, .. } => common,
-			Self::DesignatedForAssignment { common, .. } => common,
-			Self::Trade { common, .. } => common,
-			Self::NumberChange { common, .. } => common,
-			Self::Outrighted { common, .. } => common,
-			Self::ClaimedOffWaivers { common, .. } => common,
-			Self::Signed { common, .. } => common,
-			Self::Released { common, .. } => common,
-			Self::DeclaredFreeAgency { common, .. } => common,
-			Self::Optioned { common, .. } => common,
-			Self::Returned { common, .. } => common,
-			Self::Selected { common, .. } => common,
-			Self::Recalled { common, .. } => common,
-			Self::Suspension { common, .. } => common,
-			Self::Retired { common, .. } => common,
-			Self::Purchase { common, .. } => common,
-			Self::RuleFiveDraft { common, .. } => common,
-			Self::Reinstated { common, .. } => common,
-			Self::Loan { common, .. } => common,
-			Self::ContractPurchased { common, .. } => common,
-			Self::Drafted { common, .. } => common,
-			Self::DeclaredIneligible { common, .. } => common,
+			Self::Assigned { common, .. }
+			| Self::StatusChange { common, .. }
+			| Self::SignedAsFreeAgent { common, .. }
+			| Self::DesignatedForAssignment { common, .. }
+			| Self::Trade { common, .. }
+			| Self::NumberChange { common, .. }
+			| Self::Outrighted { common, .. }
+			| Self::ClaimedOffWaivers { common, .. }
+			| Self::Signed { common, .. }
+			| Self::Released { common, .. }
+			| Self::DeclaredFreeAgency { common, .. }
+			| Self::Optioned { common, .. }
+			| Self::Returned { common, .. }
+			| Self::Selected { common, .. }
+			| Self::Recalled { common, .. }
+			| Self::Suspension { common, .. }
+			| Self::Retired { common, .. }
+			| Self::Purchase { common, .. }
+			| Self::RuleFiveDraft { common, .. }
+			| Self::Reinstated { common, .. }
+			| Self::Loan { common, .. }
+			| Self::ContractPurchased { common, .. }
+			| Self::Drafted { common, .. }
+			| Self::DeclaredIneligible { common, .. } => common,
 		}
 	}
 }
@@ -405,9 +407,9 @@ impl Display for TransactionsRequestKind {
 	}
 }
 
-/// This API request is rather unreliable. For an example of what I mean: http://statsapi.mlb.com/api/v1/transactions?transactionIds=477955 \
-/// Vladimir Guerrero Jr.'s `.` in his name causes the API to be super confused and generate 5 players, four of which don't exist.\
-/// Of course putting `[Option<Person>]` for the `person` field is needlessly overkill since mostly all situations will not cause this, but the transactions shouldn't be discarded.\
+/// This API request is rather unreliable. For an example of what I mean: <http://statsapi.mlb.com/api/v1/transactions?transactionIds=477955>
+/// Vladimir Guerrero Jr.'s `.` in his name causes the API to be super confused and generate 5 players, four of which don't exist.
+/// Of course putting [`Option<Person>`] for the `person` field is needlessly overkill since mostly all situations will not cause this, but the transactions shouldn't be discarded.
 /// Instead, these values (no team, no date, no player) are given default values such that they are valid, but any further API requests with them return an error, such as a person with ID 0.
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -423,26 +425,23 @@ use transactions_request_builder::SetKind;
 
 impl TransactionsRequest {
 	pub fn for_team(team_id: impl Into<TeamId>) -> TransactionsRequestBuilder<SetKind> {
-		TransactionsRequest::__builder_internal().__kind_internal(TransactionsRequestKind::Team(team_id.into()))
+		Self::__builder_internal().__kind_internal(TransactionsRequestKind::Team(team_id.into()))
 	}
 
 	pub fn for_player(person_id: impl Into<PersonId>) -> TransactionsRequestBuilder<SetKind> {
-		TransactionsRequest::__builder_internal().__kind_internal(TransactionsRequestKind::Player(person_id.into()))
+		Self::__builder_internal().__kind_internal(TransactionsRequestKind::Player(person_id.into()))
 	}
 
 	pub fn for_ids(transactions: Vec<TransactionId>) -> TransactionsRequestBuilder<SetKind> {
-		TransactionsRequest::__builder_internal().__kind_internal(TransactionsRequestKind::Transactions(transactions))
+		Self::__builder_internal().__kind_internal(TransactionsRequestKind::Transactions(transactions))
 	}
 
 	pub fn for_date_range(range: NaiveDateRange) -> TransactionsRequestBuilder<SetKind> {
-		TransactionsRequest::__builder_internal().__kind_internal(TransactionsRequestKind::DateRange(range))
+		Self::__builder_internal().__kind_internal(TransactionsRequestKind::DateRange(range))
 	}
 }
 
-impl<S: transactions_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for TransactionsRequestBuilder<S>
-where
-	S: transactions_request_builder::IsComplete,
-{
+impl<S: transactions_request_builder::State + transactions_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TransactionsRequestBuilder<S> {
 	type Built = TransactionsRequest;
 }
 

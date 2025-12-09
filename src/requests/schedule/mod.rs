@@ -36,6 +36,7 @@ pub struct ScheduleDate {
 	pub games: Vec<ScheduleGame>,
 }
 
+#[allow(clippy::struct_excessive_bools, reason = "false positive")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__ScheduleGameStruct")]
 pub struct ScheduleGame {
@@ -206,7 +207,7 @@ impl Standings {
 
 	#[must_use]
 	pub fn pct(self) -> f64 {
-		self.wins as f64 / self.games_played() as f64
+		f64::from(self.wins) / f64::from(self.games_played())
 	}
 }
 
@@ -235,7 +236,7 @@ pub struct ScheduleRequest {
 }
 
 
-impl<S: schedule_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for ScheduleRequestBuilder<S> where S: schedule_request_builder::IsComplete {
+impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for ScheduleRequestBuilder<S> {
     type Built = ScheduleRequest;
 }
 
