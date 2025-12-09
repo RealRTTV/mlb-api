@@ -1,0 +1,48 @@
+use crate::gen_params;
+use crate::seasons::season::SeasonId;
+use crate::teams::team::TeamId;
+use crate::teams::TeamsResponse;
+use crate::StatsAPIRequestUrl;
+use bon::Builder;
+use std::fmt::{Display, Formatter};
+
+/// History of a [`TeamId`] throughout the years.
+/// For example, the team history of the Los Angeles Dodgers would include those of the Brooklyn Dodgers.
+#[derive(Builder)]
+#[builder(derive(Into))]
+pub struct TeamHistoryRequest {
+	#[builder(into)]
+	team_id: TeamId,
+	#[builder(into)]
+	start_season: Option<SeasonId>,
+	#[builder(into)]
+	end_season: Option<SeasonId>,
+}
+
+impl<S: team_history_request_builder::State> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamHistoryRequestBuilder<S> where S: team_history_request_builder::IsComplete {
+	type Built = TeamHistoryRequest;
+}
+
+impl Display for TeamHistoryRequest {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "http://statsapi.mlb.com/api/v1/teams/{}/history{params}", self.team_id, params = gen_params! { "startSeason"?: self.start_season, "endSeason"?: self.end_season })
+	}
+}
+
+impl StatsAPIRequestUrl for TeamHistoryRequest {
+	type Response = TeamsResponse;
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::teams::history::TeamHistoryRequest;
+	use crate::teams::TeamsRequest;
+	use crate::StatsAPIRequestUrlBuilderExt;
+
+	#[tokio::test]
+	async fn all_mlb_teams() {
+		for team in TeamsRequest::builder().build_and_get().await.unwrap().teams {
+			let _history = TeamHistoryRequest::builder().team_id(team.id).build_and_get().await.unwrap();
+		}
+	}
+}

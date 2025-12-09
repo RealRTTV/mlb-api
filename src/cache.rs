@@ -1,5 +1,5 @@
 use crate::RwLock;
-use crate::StatsAPIEndpointUrl;
+use crate::StatsAPIRequestUrl;
 use fxhash::FxBuildHasher;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -8,10 +8,10 @@ use std::hash::Hash;
 use std::sync::Arc;
 use thiserror::Error;
 
-pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
+pub trait RequestEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
     type HydratedVariant;
     type Identifier: Clone + Eq + Hash + Display;
-    type URL: StatsAPIEndpointUrl;
+    type URL: StatsAPIRequestUrl;
     
     fn into_hydrated_variant(self) -> Option<Self::HydratedVariant>;
     
@@ -19,7 +19,7 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
 
     fn url_for_id(id: &Self::Identifier) -> Self::URL;
 
-    fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
+    fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
 
     fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>> where Self: Sized;
 
@@ -52,19 +52,20 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
     }
 }
 
-pub struct HydratedCacheTable<T: EndpointEntryCache> {
+pub struct HydratedCacheTable<T: RequestEntryCache> {
     cached_values: HashMap<T::Identifier, Arc<T::HydratedVariant>, FxBuildHasher>,
 }
 
 #[derive(Debug, Error)]
-pub enum Error<T: EndpointEntryCache> {
+pub enum Error<T: RequestEntryCache> {
     #[error(transparent)]
     Url(#[from] crate::request::Error),
     #[error("No matching entry was found for id {0}")]
     NoMatchingVariant(T::Identifier),
 }
 
-impl<T: EndpointEntryCache> HydratedCacheTable<T> {
+impl<T: RequestEntryCache> HydratedCacheTable<T> {
+    #[allow(clippy::new_without_default, reason = "needs to be const")]
     #[must_use]
     pub const fn new() -> Self {
         Self {
@@ -97,17 +98,17 @@ impl<T: EndpointEntryCache> HydratedCacheTable<T> {
 
     #[cfg(feature = "reqwest")]
     pub async fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as EndpointEntryCache>::url_for_id(&id);
+        let url = <T as RequestEntryCache>::url_for_id(&id);
         let response = url.get().await?;
-        self.try_add_entries(<T as EndpointEntryCache>::get_entries(response));
+        self.try_add_entries(<T as RequestEntryCache>::get_entries(response));
         Ok(())
     }
 
     #[cfg(feature = "ureq")]
     pub fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as EndpointEntryCache>::url_for_id(&id);
+        let url = <T as RequestEntryCache>::url_for_id(&id);
         let response = url.get()?;
-        self.try_add_entries(<T as EndpointEntryCache>::get_entries(response));
+        self.try_add_entries(<T as RequestEntryCache>::get_entries(response));
         Ok(())
     }
 }

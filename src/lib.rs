@@ -11,8 +11,8 @@ pub mod hydrations;
 pub mod request;
 pub mod types;
 pub mod cache;
-mod endpoints;
-pub use endpoints::*;
+mod requests;
+pub use requests::*;
 
 #[cfg(feature = "reqwest")]
 pub(crate) type RwLock<T> = tokio::sync::RwLock<T>;
@@ -31,7 +31,7 @@ pub(crate) const fn rwlock_const_new<T>(t: T) -> RwLock<T> {
 }
 
 #[cfg(test)]
-pub(crate) async fn serde_path_to_error_parse<T: StatsAPIEndpointUrl>(url: T) -> T::Response {
+pub(crate) async fn serde_path_to_error_parse<T: StatsAPIRequestUrl>(url: T) -> T::Response {
     let url = url.to_string();
     let bytes = reqwest::get(url).await.unwrap().bytes().await.unwrap();
     let mut de = serde_json::Deserializer::from_slice(&bytes);
