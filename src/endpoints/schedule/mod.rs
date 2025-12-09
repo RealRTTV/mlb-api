@@ -1,19 +1,21 @@
-use serde_with::DefaultOnError;
 use crate::game::{DoubleHeaderKind, GameId};
+use crate::gen_params;
 use crate::league::LeagueId;
+use crate::seasons::season::SeasonId;
 use crate::sports::SportId;
 use crate::teams::team::{Team, TeamId};
+use crate::types::{Copyright, HomeAwaySplits, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::venue::{Venue, VenueId};
 use crate::{GameStatus, GameType, Sky, StatsAPIEndpointUrl};
-use crate::gen_params;
-use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT, NaiveDateRange};
+use bon::Builder;
 use chrono::{NaiveDate, Utc};
+use either::Either;
 use itertools::Itertools;
 use serde::Deserialize;
 use serde_with::serde_as;
+use serde_with::DefaultOnError;
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
-use crate::seasons::season::SeasonId;
 
 pub mod postseason;
 pub mod tied;
@@ -206,29 +208,51 @@ impl Standings {
 	}
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct ScheduleEndpoint {
-	pub sport_id: SportId,
-	pub game_ids: Option<Vec<GameId>>,
-	pub team_id: Option<TeamId>,
-	pub league_id: Option<LeagueId>,
-	pub venue_ids: Option<Vec<VenueId>>,
-	pub date: Result<NaiveDate, NaiveDateRange>,
-	pub opponent_id: Option<TeamId>,
-	pub season: Option<u32>,
+	#[builder(into)]
+	#[builder(default)]
+	sport_id: SportId,
+	#[builder(setters(vis = "", name = __game_ids_internal))]
+	game_ids: Option<Vec<GameId>>,
+	#[builder(into)]
+	team_id: Option<TeamId>,
+	#[builder(into)]
+	league_id: Option<LeagueId>,
+	#[builder(setters(vis = "", name = __venue_ids_internal))]
+	venue_ids: Option<Vec<VenueId>>,
+	#[builder(default = Either::Left(Utc::now().date_naive()))]
+	#[builder(setters(vis = "", name = __date_internal))]
+	date: Either<NaiveDate, NaiveDateRange>,
+	#[builder(into)]
+	opponent_id: Option<TeamId>,
+	#[builder(into)]
+	season: Option<SeasonId>,
 }
 
-impl Default for ScheduleEndpoint {
-	fn default() -> Self {
-		Self {
-			sport_id: SportId::MLB,
-			game_ids: None,
-			team_id: None,
-			league_id: None,
-			venue_ids: None,
-			date: Ok(Utc::now().date_naive()),
-			opponent_id: None,
-			season: None,
-		}
+
+impl<S: schedule_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for ScheduleEndpointBuilder<S> where S: schedule_endpoint_builder::IsComplete {
+    type Built = ScheduleEndpoint;
+}
+
+use schedule_endpoint_builder::{IsUnset, SetDate, SetGameIds, SetVenueIds, State};
+
+impl<S: State> ScheduleEndpointBuilder<S> {
+	pub fn game_ids(self, game_ids: Vec<impl Into<GameId>>) -> ScheduleEndpointBuilder<SetGameIds<S>> where S::GameIds: IsUnset {
+		self.__game_ids_internal(game_ids.into_iter().map(Into::into).collect())
+	}
+
+	pub fn venue_ids(self, venue_ids: Vec<impl Into<VenueId>>) -> ScheduleEndpointBuilder<SetVenueIds<S>> where S::VenueIds: IsUnset {
+		self.__venue_ids_internal(venue_ids.into_iter().map(Into::into).collect())
+	}
+
+	pub fn date(self, date: NaiveDate) -> ScheduleEndpointBuilder<SetDate<S>> where S::Date: IsUnset {
+		self.__date_internal(Either::Left(date))
+	}
+
+	pub fn date_range(self, range: NaiveDateRange) -> ScheduleEndpointBuilder<SetDate<S>> where S::Date: IsUnset {
+		self.__date_internal(Either::Right(range))
 	}
 }
 
@@ -243,9 +267,9 @@ impl Display for ScheduleEndpoint {
 				"teamId"?: self.team_id,
 				"leagueId"?: self.league_id,
 				"venueIds"?: self.venue_ids.as_ref().map(|ids| ids.iter().map(ToString::to_string).join(",")),
-				"date"?: self.date.as_ref().ok().map(|x| x.format(MLB_API_DATE_FORMAT)),
-				"startDate"?: self.date.as_ref().err().map(|range| range.start().format(MLB_API_DATE_FORMAT)),
-				"endDate"?: self.date.as_ref().err().map(|range| range.end().format(MLB_API_DATE_FORMAT)),
+				"date"?: self.date.as_ref().left().map(|x| x.format(MLB_API_DATE_FORMAT)),
+				"startDate"?: self.date.as_ref().right().map(|range| range.start().format(MLB_API_DATE_FORMAT)),
+				"endDate"?: self.date.as_ref().right().map(|range| range.end().format(MLB_API_DATE_FORMAT)),
 				"opponentId"?; self.opponent_id,
 				"season"?: self.season,
 			}
@@ -259,23 +283,20 @@ impl StatsAPIEndpointUrl for ScheduleEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
 	use crate::schedule::ScheduleEndpoint;
+	use crate::{StatsAPIEndpointUrl, StatsAPIEndpointUrlBuilderExt};
 	use chrono::{Datelike, Local, NaiveDate};
 
 	#[tokio::test]
 	async fn test_one_date() {
 		let date = NaiveDate::from_ymd_opt(2020, 8, 2).expect("Valid date");
-		let _ = ScheduleEndpoint { date: Ok(date), ..Default::default() }.get().await.unwrap();
+		let _ = ScheduleEndpoint::builder().date(date).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
 	async fn test_all_dates_current_year() {
 		let current_date = Local::now().naive_local().date();
-		let request = ScheduleEndpoint {
-			date: Err(current_date.with_ordinal0(0).unwrap()..=current_date.with_month(12).unwrap().with_day(31).unwrap()),
-			..Default::default()
-		};
+		let request = ScheduleEndpoint::builder().date_range(current_date.with_ordinal0(0).unwrap()..=current_date.with_month(12).unwrap().with_day(31).unwrap()).build();
 		let _ = request.get().await.unwrap();
 	}
 
@@ -284,11 +305,8 @@ mod tests {
 	async fn test_all_dates_all_years() {
 		for year in 1876..=Local::now().year() as _ {
 			dbg!(year);
-			let _ = ScheduleEndpoint {
-				date: Err(NaiveDate::from_ymd_opt(year, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(year, 12, 31).unwrap()),
-				..Default::default()
-			}
-			.get()
+			let _ = ScheduleEndpoint::builder().date_range(NaiveDate::from_ymd_opt(year, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(year, 12, 31).unwrap())
+			.build_and_get()
 			.await
 			.unwrap();
 		}

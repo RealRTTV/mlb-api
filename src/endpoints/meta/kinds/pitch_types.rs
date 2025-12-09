@@ -1,11 +1,11 @@
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::meta::{MetaEndpoint, MetaKind};
+use crate::StatsAPIEndpointUrl;
+use crate::{rwlock_const_new, RwLock};
 use derive_more::{Deref, DerefMut, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
-use crate::{rwlock_const_new, RwLock};
-use crate::StatsAPIEndpointUrl;
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct HydratedPitchType {
@@ -99,10 +99,10 @@ impl EndpointEntryCache for PitchType {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
-	use crate::meta::MetaEndpoint;
+    use crate::meta::MetaEndpoint;
+    use crate::StatsAPIEndpointUrl;
 
-	#[tokio::test]
+    #[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaEndpoint::<super::PitchType>::new().get().await.unwrap();
 	}

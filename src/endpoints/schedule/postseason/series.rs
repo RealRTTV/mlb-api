@@ -1,15 +1,16 @@
-use std::fmt::{Display, Formatter};
-use chrono::{Datelike, Local};
-use itertools::Itertools;
-use serde::{Deserialize, Deserializer};
-use serde::de::Error;
-use crate::{GameType, StatsAPIEndpointUrl};
+use crate::gen_params;
 use crate::schedule::ScheduleGame;
 use crate::seasons::season::SeasonId;
 use crate::sports::SportId;
 use crate::teams::team::TeamId;
-use crate::gen_params;
 use crate::types::Copyright;
+use crate::{GameType, StatsAPIEndpointUrl};
+use bon::Builder;
+use chrono::Datelike;
+use itertools::Itertools;
+use serde::de::Error;
+use serde::{Deserialize, Deserializer};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -42,24 +43,21 @@ pub fn series_number_from_id<'de, D: Deserializer<'de>>(deserializer: D) -> Resu
     Ok(series_number)
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct SchedulePostseasonSeriesEndpoint {
-    pub season: SeasonId,
-    pub sport_id: Option<SportId>,
-    pub team_id: Option<TeamId>,
-    pub game_types: Option<Vec<GameType>>,
-    pub series_number: Option<u32>,
+    #[builder(into)]
+    season: SeasonId,
+    #[builder(into)]
+    sport_id: Option<SportId>,
+    #[builder(into)]
+    team_id: Option<TeamId>,
+    game_types: Option<Vec<GameType>>,
+    series_number: Option<u32>,
 }
 
-impl Default for SchedulePostseasonSeriesEndpoint {
-    fn default() -> Self {
-        Self {
-            season: (Local::now().year() as u32).into(),
-            sport_id: None,
-            team_id: None,
-            game_types: None,
-            series_number: None,
-        }
-    }
+impl<S: schedule_postseason_series_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for SchedulePostseasonSeriesEndpointBuilder<S> where S: schedule_postseason_series_endpoint_builder::IsComplete {
+    type Built = SchedulePostseasonSeriesEndpoint;
 }
 
 impl Display for SchedulePostseasonSeriesEndpoint {

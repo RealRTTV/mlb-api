@@ -1,11 +1,12 @@
-use std::fmt::{Display, Formatter};
-use chrono::NaiveDate;
-use serde::Deserialize;
-use crate::{JobTypeId, StatsAPIEndpointUrl};
+use crate::gen_params;
 use crate::person::Person;
 use crate::sports::SportId;
-use crate::gen_params;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use crate::{JobTypeId, StatsAPIEndpointUrl};
+use bon::Builder;
+use chrono::NaiveDate;
+use serde::Deserialize;
+use std::fmt::{Display, Formatter};
 
 pub mod datacasters; // done
 pub mod official_scorers; // done
@@ -29,10 +30,18 @@ pub struct EmployedPerson {
     #[serde(rename = "title")] pub job_title: String,
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct JobsEndpoint {
-    pub job_type: JobTypeId,
-    pub sport_id: Option<SportId>,
-    pub date: Option<NaiveDate>,
+    #[builder(into)]
+    job_type: JobTypeId,
+    #[builder(into)]
+    sport_id: Option<SportId>,
+    date: Option<NaiveDate>,
+}
+
+impl<S: jobs_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for JobsEndpointBuilder<S> where S: jobs_endpoint_builder::IsComplete {
+    type Built = JobsEndpoint;
 }
 
 impl Display for JobsEndpoint {
@@ -51,15 +60,15 @@ impl StatsAPIEndpointUrl for JobsEndpoint {
 
 #[cfg(test)]
 mod tests {
-    use crate::{JobType, StatsAPIEndpointUrl};
     use crate::jobs::JobsEndpoint;
     use crate::meta::MetaEndpoint;
+    use crate::{JobType, StatsAPIEndpointUrl, StatsAPIEndpointUrlBuilderExt};
 
     #[tokio::test]
     async fn parse_all_job_types() {
         let job_types = MetaEndpoint::<JobType>::new().get().await.unwrap().entries;
         for job_type in job_types.into_iter() {
-            let _response = JobsEndpoint { job_type: job_type.id.clone(), sport_id: None, date: None }.get().await.unwrap();
+            let _response = JobsEndpoint::builder().job_type(job_type.id.clone()).build_and_get().await.unwrap();
         }
     }
 }

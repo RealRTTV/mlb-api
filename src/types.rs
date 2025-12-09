@@ -1,4 +1,5 @@
 use chrono::{Datelike, Local, NaiveDate};
+use compact_str::CompactString;
 use derive_more::{Display, FromStr};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
@@ -6,7 +7,6 @@ use std::fmt::{Debug, Display, Formatter};
 use std::num::{ParseFloatError, ParseIntError};
 use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
-use compact_str::CompactString;
 use thiserror::Error;
 
 /// Shared types across multiple endpoints

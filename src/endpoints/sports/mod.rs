@@ -1,14 +1,15 @@
 pub mod players;
 
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::types::Copyright;
 use crate::StatsAPIEndpointUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::types::Copyright;
+use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -37,8 +38,15 @@ impl Default for SportId {
 	}
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct SportsEndpoint {
-	pub id: Option<SportId>,
+	#[builder(into)]
+	id: Option<SportId>,
+}
+
+impl<S: sports_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for SportsEndpointBuilder<S> where S: sports_endpoint_builder::IsComplete {
+	type Built = SportsEndpoint;
 }
 
 impl Display for SportsEndpoint {
@@ -134,9 +142,7 @@ impl EndpointEntryCache for Sport {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		SportsEndpoint {
-			id: Some(id.clone()),
-		}
+		SportsEndpoint::builder().id(id.clone()).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
@@ -157,10 +163,10 @@ impl EndpointEntryCache for Sport {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::StatsAPIEndpointUrl;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 
 	#[tokio::test]
 	async fn parse_all_sports() {
-		let _result = SportsEndpoint { id: None }.get().await.unwrap();
+		let _result = SportsEndpoint::builder().build_and_get().await.unwrap();
 	}
 }

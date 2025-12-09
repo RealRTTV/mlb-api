@@ -1,16 +1,18 @@
+use crate::gen_params;
 use crate::jobs::JobsResponse;
 use crate::sports::SportId;
-use crate::StatsAPIEndpointUrl;
-use crate::gen_params;
 use crate::types::MLB_API_DATE_FORMAT;
+use crate::StatsAPIEndpointUrl;
+use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
-
 // pub mod games; // needs private mlb-only api key -- absolutely not going to implement this.
 
+#[derive(Builder)]
 pub struct JobsUmpiresEndpoint {
-    pub sport_id: Option<SportId>,
-    pub date: Option<NaiveDate>,
+    #[builder(into)]
+    sport_id: Option<SportId>,
+    date: Option<NaiveDate>,
 }
 
 impl Display for JobsUmpiresEndpoint {

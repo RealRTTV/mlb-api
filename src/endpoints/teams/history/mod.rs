@@ -1,15 +1,26 @@
-use std::fmt::{Display, Formatter};
-use crate::StatsAPIEndpointUrl;
+use crate::gen_params;
+use crate::seasons::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::teams::TeamsResponse;
-use crate::gen_params;
+use crate::StatsAPIEndpointUrl;
+use bon::Builder;
+use std::fmt::{Display, Formatter};
 
 /// History of a [`TeamId`] throughout the years.
 /// For example, the team history of the Los Angeles Dodgers would include those of the Brooklyn Dodgers.
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct TeamHistoryEndpoint {
-	pub team_id: TeamId,
-	pub start_season: Option<u16>,
-	pub end_season: Option<u16>,
+	#[builder(into)]
+	team_id: TeamId,
+	#[builder(into)]
+	start_season: Option<SeasonId>,
+	#[builder(into)]
+	end_season: Option<SeasonId>,
+}
+
+impl<S: team_history_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for TeamHistoryEndpointBuilder<S> where S: team_history_endpoint_builder::IsComplete {
+	type Built = TeamHistoryEndpoint;
 }
 
 impl Display for TeamHistoryEndpoint {
@@ -24,15 +35,14 @@ impl StatsAPIEndpointUrl for TeamHistoryEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::sports::SportId;
-	use crate::StatsAPIEndpointUrl;
 	use crate::teams::history::TeamHistoryEndpoint;
 	use crate::teams::TeamsEndpoint;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 
 	#[tokio::test]
 	async fn all_mlb_teams() {
-		for team in (TeamsEndpoint { sport_id: Some(SportId::MLB), season: None }).get().await.unwrap().teams {
-			let _history = TeamHistoryEndpoint { team_id: team.id, start_season: None, end_season: None }.get().await.unwrap();
+		for team in TeamsEndpoint::builder().build_and_get().await.unwrap().teams {
+			let _history = TeamHistoryEndpoint::builder().team_id(team.id).build_and_get().await.unwrap();
 		}
 	}
 }

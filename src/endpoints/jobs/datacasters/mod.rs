@@ -1,12 +1,15 @@
-use crate::sports::SportId;
 use crate::gen_params;
+use crate::sports::SportId;
 use crate::types::MLB_API_DATE_FORMAT;
+use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
 
+#[derive(Builder)]
 pub struct JobsDatacastersEndpoint {
-    pub sport_id: Option<SportId>,
-    pub date: Option<NaiveDate>,
+    #[builder(into)]
+    sport_id: Option<SportId>,
+    date: Option<NaiveDate>,
 }
 
 impl Display for JobsDatacastersEndpoint {

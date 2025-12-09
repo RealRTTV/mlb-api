@@ -1,14 +1,16 @@
-use crate::StatsAPIEndpointUrl;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::league::League;
+use crate::seasons::season::SeasonId;
 use crate::sports::Sport;
-use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
+use crate::StatsAPIEndpointUrl;
+use crate::{gen_params, rwlock_const_new, RwLock};
+use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::cache::{HydratedCacheTable, EndpointEntryCache};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -89,10 +91,17 @@ impl PartialEq for Conference {
 	}
 }
 
-#[derive(Default)]
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct ConferencesEndpoint {
-	pub conference_id: Option<ConferenceId>,
-	pub season: Option<u16>,
+	#[builder(into)]
+	conference_id: Option<ConferenceId>,
+	#[builder(into)]
+	season: Option<SeasonId>,
+}
+
+impl<S: conferences_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for ConferencesEndpointBuilder<S> where S: conferences_endpoint_builder::IsComplete {
+    type Built = ConferencesEndpoint;
 }
 
 impl Display for ConferencesEndpoint {
@@ -121,10 +130,7 @@ impl EndpointEntryCache for Conference {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		ConferencesEndpoint {
-			conference_id: Some(id.clone()),
-			season: None,
-		}
+		ConferencesEndpoint::builder().conference_id(id.clone()).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
@@ -144,11 +150,11 @@ impl EndpointEntryCache for Conference {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
 	use crate::conferences::ConferencesEndpoint;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 
 	#[tokio::test]
 	async fn parse_all_conferences() {
-		let _response = ConferencesEndpoint { ..ConferencesEndpoint::default() }.get().await.unwrap();
+		let _response = ConferencesEndpoint::builder().build_and_get().await.unwrap();
 	}
 }

@@ -1,23 +1,21 @@
-use std::fmt::{Display, Formatter};
-use chrono::{Datelike, Local};
-use itertools::Itertools;
-use crate::{GameType, StatsAPIEndpointUrl};
+use crate::gen_params;
 use crate::schedule::ScheduleResponse;
 use crate::seasons::season::SeasonId;
-use crate::gen_params;
+use crate::{GameType, StatsAPIEndpointUrl};
+use bon::Builder;
+use itertools::Itertools;
+use std::fmt::{Display, Formatter};
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct ScheduleTiedEndpoint {
-    pub season: SeasonId,
-    pub game_types: Option<Vec<GameType>>,
+    #[builder(into)]
+    season: SeasonId,
+    game_types: Option<Vec<GameType>>,
 }
 
-impl Default for ScheduleTiedEndpoint {
-    fn default() -> Self {
-        Self {
-            season: (Local::now().year() as u32).into(),
-            game_types: None,
-        }
-    }
+impl<S: schedule_tied_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for ScheduleTiedEndpointBuilder<S> where S: schedule_tied_endpoint_builder::IsComplete {
+    type Built = ScheduleTiedEndpoint;
 }
 
 impl Display for ScheduleTiedEndpoint {
@@ -35,28 +33,23 @@ impl StatsAPIEndpointUrl for ScheduleTiedEndpoint {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Datelike, Local};
     use crate::schedule::tied::ScheduleTiedEndpoint;
-    use crate::StatsAPIEndpointUrl;
+    use crate::StatsAPIEndpointUrlBuilderExt;
+    use chrono::{Datelike, Local};
 
     #[tokio::test]
     async fn test_one_season() {
-        let request = ScheduleTiedEndpoint {
-            season: 1961.into(),
-            game_types: None,
-        };
-        let _ = request.get().await.unwrap();
+        let _ = ScheduleTiedEndpoint::builder().season(2025).build_and_get().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_all_seasons() {
         for season in 1876..=Local::now().year() as _ {
-            let request = ScheduleTiedEndpoint {
-                season: season.into(),
-                game_types: None,
-            };
-            let _ = request.get().await.unwrap();
+            let _ = ScheduleTiedEndpoint::builder()
+                .season(season)
+                .build_and_get()
+                .await.unwrap();
         }
     }
 }

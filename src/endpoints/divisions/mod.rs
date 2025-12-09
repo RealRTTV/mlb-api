@@ -1,15 +1,16 @@
-use crate::StatsAPIEndpointUrl;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::league::{IdentifiableLeague, LeagueId};
+use crate::seasons::season::SeasonId;
 use crate::sports::{IdentifiableSport, SportId};
-use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
+use crate::StatsAPIEndpointUrl;
+use crate::{gen_params, rwlock_const_new, RwLock};
+use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
-use crate::seasons::season::SeasonId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -93,12 +94,21 @@ impl DerefMut for Division {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct DivisionId(u32);
 
-#[derive(Default)]
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct DivisionsEndpoint {
-	pub division_id: Option<DivisionId>,
-	pub league_id: Option<LeagueId>,
-	pub sport_id: Option<SportId>,
-	pub season: Option<u16>,
+	#[builder(into)]
+	division_id: Option<DivisionId>,
+	#[builder(into)]
+	league_id: Option<LeagueId>,
+	#[builder(into)]
+	sport_id: Option<SportId>,
+	#[builder(into)]
+	season: Option<SeasonId>,
+}
+
+impl<S: divisions_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for DivisionsEndpointBuilder<S> where S: divisions_endpoint_builder::IsComplete {
+    type Built = DivisionsEndpoint;
 }
 
 impl Display for DivisionsEndpoint {
@@ -131,12 +141,7 @@ impl EndpointEntryCache for Division {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		DivisionsEndpoint {
-			division_id: Some(id.clone()),
-			league_id: None,
-			sport_id: None,
-			season: None,
-		}
+		DivisionsEndpoint::builder().division_id(id.clone()).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
@@ -156,11 +161,11 @@ impl EndpointEntryCache for Division {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
 	use crate::divisions::DivisionsEndpoint;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 
 	#[tokio::test]
 	async fn all_divisions_this_season() {
-		let _response = DivisionsEndpoint::default().get().await.unwrap();
+		let _response = DivisionsEndpoint::builder().build_and_get().await.unwrap();
 	}
 }

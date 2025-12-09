@@ -1,14 +1,16 @@
-use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::seasons::season::SeasonId;
+use crate::teams::team::TeamId;
+use crate::types::Copyright;
+use crate::StatsAPIEndpointUrl;
+use crate::{gen_params, rwlock_const_new, RwLock};
+use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
 use itertools::Itertools;
-use serde::Deserialize;
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::StatsAPIEndpointUrl;
-use crate::teams::team::TeamId;
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
-use crate::types::Copyright;
+use serde::Deserialize;
+use std::fmt::{Display, Formatter};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct UniformsResponse {
@@ -103,9 +105,16 @@ impl DerefMut for UniformAsset {
     }
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct UniformsEndpoint {
-    pub teams: Vec<TeamId>,
-    pub season: Option<u16>,
+    teams: Vec<TeamId>,
+    #[builder(into)]
+    season: Option<SeasonId>,
+}
+
+impl<S: uniforms_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for UniformsEndpointBuilder<S> where S: uniforms_endpoint_builder::IsComplete {
+    type Built = UniformsEndpoint;
 }
 
 impl Display for UniformsEndpoint {
@@ -158,9 +167,9 @@ impl EndpointEntryCache for UniformAsset {
 #[cfg(test)]
 mod tests {
     use crate::sports::SportId;
-    use crate::StatsAPIEndpointUrl;
     use crate::teams::team::uniforms::UniformsEndpoint;
     use crate::teams::TeamsEndpoint;
+    use crate::StatsAPIEndpointUrl;
 
     #[tokio::test]
     async fn parse_all_mlb_teams_this_season() {

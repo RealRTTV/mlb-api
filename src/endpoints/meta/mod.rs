@@ -1,7 +1,7 @@
 use crate::{MetaKind, StatsAPIEndpointUrl};
 use derive_more::{Deref, DerefMut};
 use serde::de::{Error, MapAccess, SeqAccess};
-use serde::{Deserialize, Deserializer, de};
+use serde::{de, Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 

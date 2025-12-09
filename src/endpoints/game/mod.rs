@@ -1,7 +1,7 @@
 use derive_more::{Deref, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 
 pub mod boxscore;
 pub mod changes;

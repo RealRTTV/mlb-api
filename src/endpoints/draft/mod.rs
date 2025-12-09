@@ -1,13 +1,14 @@
-use crate::person::{Person, PersonId};
-use crate::teams::team::{Team, TeamId};
-use crate::{Position, StatsAPIEndpointUrl};
 use crate::gen_params;
+use crate::person::{Person, PersonId};
+use crate::seasons::season::SeasonId;
+use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, Location};
+use crate::{Position, StatsAPIEndpointUrl};
+use bon::Builder;
 use derive_more::{Deref, Display, From};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
-use crate::seasons::season::SeasonId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -153,69 +154,96 @@ impl TryFrom<__DraftTypeStruct> for DraftType {
 	}
 }
 
+#[derive(Builder)]
+#[builder(start_fn = __latest)]
+pub struct DraftEndpointLatest {
+	/// Year of the draft.
+	#[builder(into)]
+	year: Option<SeasonId>,
+}
+
+impl Display for DraftEndpointLatest {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "http://statsapi.mlb.com/api/v1/draft/{year}/latest", year = self.year.map_or(String::new(), |x| x.to_string()))
+	}
+}
+
+impl StatsAPIEndpointUrl for DraftEndpointLatest {
+	type Response = DraftResponse;
+}
+
 /// This endpoint sorts into rounds
-#[derive(Clone)]
+#[derive(Builder)]
+#[builder(start_fn = regular)]
+#[builder(derive(Into))]
 pub struct DraftEndpoint {
 	/// Year of the draft.
-	pub year: Option<u32>,
-	/// Kind of request to make.
-	pub kind: DraftEndpointKind,
-}
-
-#[derive(Clone)]
-pub enum DraftEndpointKind {
-	/// Gets the latest draft pick.\
-	/// During the draft, this is the most recent draft pick, however when the draft has ended, this is the last draft pick.
-	Latest,
-	/// A regular draft pick endpoint request.
-	Regular(DraftEndpointData),
-}
-
-#[derive(Clone)]
-pub struct DraftEndpointData {
+	#[builder(into)]
+	year: Option<SeasonId>,
 	/// Number of results to return.
-	pub limit: Option<u32>,
+	#[builder(into)]
+	limit: Option<u32>,
 	/// Offset in the results (used for pagination).
-	pub offset: Option<u32>,
+	#[builder(into)]
+	offset: Option<u32>,
 	/// Draft round.
-	pub round: Option<u32>,
+	#[builder(into)]
+	round: Option<u32>,
 
 	/// Include only successfully drafted players
-	pub drafted_only: Option<bool>,
+	#[builder(into)]
+	drafted_only: Option<bool>,
 	/// Filter players by the first character of their last name.
-	pub last_name: Option<char>,
+	#[builder(into)]
+	last_name: Option<char>,
 	/// Filter players by the first character of their school they were drafted from.
-	pub school: Option<char>,
+	#[builder(into)]
+	school: Option<char>,
 	/// Filter players by their position.
-	pub position: Option<Position>,
+	#[builder(into)]
+	position: Option<Position>,
 	/// Filter players by the team they were drafted by.
-	pub team_id: Option<TeamId>,
+	#[builder(into)]
+	team_id: Option<TeamId>,
 	/// Filter players by their home country.
-	pub home_country: Option<String>,
+	#[builder(into)]
+	home_country: Option<String>,
 	/// Filter for a specific player id.
-	pub player_id: Option<PersonId>,
+	#[builder(into)]
+	player_id: Option<PersonId>,
+}
+
+impl<S: draft_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for DraftEndpointBuilder<S> where S: draft_endpoint_builder::IsComplete
+{
+	type Built = DraftEndpoint;
+}
+
+impl DraftEndpoint {
+	pub fn latest() -> DraftEndpointLatestBuilder {
+		DraftEndpointLatest::__latest()
+	}
 }
 
 impl Display for DraftEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		match self.kind.clone() {
-			DraftEndpointKind::Latest => write!(f, "http://statsapi.mlb.com/api/v1/draft/{year}/latest", year = self.year.map_or(String::new(), |x| x.to_string())),
-			DraftEndpointKind::Regular(DraftEndpointData {
-				                              limit,
-				                              offset,
-				                              round,
-				                              drafted_only,
-				                              last_name,
-				                              school,
-				                              position,
-				                              team_id,
-				                              home_country,
-				                              player_id,
-			                              }) => write!(
-				f,
-				"http://statsapi.mlb.com/api/v1/draft/{year}{params}",
-				year = self.year.map_or(String::new(), |x| x.to_string()),
-				params = gen_params! {
+		let Self {
+			year,
+			limit,
+			offset,
+			round,
+			drafted_only,
+			last_name,
+			school,
+			position,
+			team_id,
+			home_country,
+			player_id,
+		} = self;
+		write!(
+			f,
+			"http://statsapi.mlb.com/api/v1/draft/{year}{params}",
+			year = year.map_or(String::new(), |x| x.to_string()),
+			params = gen_params! {
 					"limit"?: limit,
 					"offset"?: offset,
 					"round"?: round,
@@ -227,8 +255,7 @@ impl Display for DraftEndpoint {
 					"homeCountry"?: home_country,
 					"playerId"?: player_id,
 				}
-			),
-		}
+		)
 	}
 }
 
@@ -236,18 +263,55 @@ impl StatsAPIEndpointUrl for DraftEndpoint {
 	type Response = DraftResponse;
 }
 
-// todo: make type system allow for only the `Regular` variant here
 /// This endpoint gives a list of prospects.
+#[derive(Builder)]
+#[builder(start_fn = regular)]
+#[builder(derive(Into))]
 pub struct DraftProspectsEndpoint {
 	/// Year of the draft.
-	pub year: Option<u32>,
-	/// Kind of request to make.
-	pub kind: DraftEndpointData,
+	#[builder(into)]
+	year: Option<SeasonId>,
+	/// Number of results to return.
+	#[builder(into)]
+	limit: Option<u32>,
+	/// Offset in the results (used for pagination).
+	#[builder(into)]
+	offset: Option<u32>,
+	/// Draft round.
+	#[builder(into)]
+	round: Option<u32>,
+
+	/// Include only successfully drafted players
+	#[builder(into)]
+	drafted_only: Option<bool>,
+	/// Filter players by the first character of their last name.
+	#[builder(into)]
+	last_name: Option<char>,
+	/// Filter players by the first character of their school they were drafted from.
+	#[builder(into)]
+	school: Option<char>,
+	/// Filter players by their position.
+	#[builder(into)]
+	position: Option<Position>,
+	/// Filter players by the team they were drafted by.
+	#[builder(into)]
+	team_id: Option<TeamId>,
+	/// Filter players by their home country.
+	#[builder(into)]
+	home_country: Option<String>,
+	/// Filter for a specific player id.
+	#[builder(into)]
+	player_id: Option<PersonId>,
+}
+
+impl<S: draft_prospects_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for DraftProspectsEndpointBuilder<S> where S: draft_prospects_endpoint_builder::IsComplete {
+    type Built = DraftProspectsEndpoint;
 }
 
 impl Display for DraftProspectsEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		let DraftEndpointData {
+		let Self {
+			year,
 			limit,
 			offset,
 			round,
@@ -258,11 +322,11 @@ impl Display for DraftProspectsEndpoint {
 			team_id,
 			home_country,
 			player_id,
-		} = &self.kind;
+		} = self;
 		write!(
 			f,
 			"http://statsapi.mlb.com/api/v1/draft/prospects/{year}{params}",
-			year = self.year.map_or(String::new(), |x| x.to_string()),
+			year = year.map_or(String::new(), |x| x.to_string()),
 			params = gen_params! {
 						"limit"?: limit,
 						"offset"?: offset,
@@ -285,86 +349,22 @@ impl StatsAPIEndpointUrl for DraftProspectsEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
-	use crate::draft::{DraftEndpoint, DraftEndpointKind, DraftProspectsEndpoint, DraftEndpointData};
+	use crate::draft::{DraftEndpoint, DraftProspectsEndpoint};
+	use crate::StatsAPIEndpointUrlBuilderExt;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	async fn draft_2025() {
-		let _ = DraftEndpoint {
-			year: Some(2025),
-			kind: DraftEndpointKind::Regular(DraftEndpointData {
-				limit: None,
-				offset: None,
-				round: None,
-				drafted_only: None,
-				last_name: None,
-				school: None,
-				position: None,
-				team_id: None,
-				home_country: None,
-				player_id: None,
-			}),
-		}
-			.get()
-			.await
-			.unwrap();
-
-		let _ = DraftProspectsEndpoint {
-			year: Some(2025),
-			kind: DraftEndpointData {
-				limit: None,
-				offset: None,
-				round: None,
-				drafted_only: None,
-				last_name: None,
-				school: None,
-				position: None,
-				team_id: None,
-				home_country: None,
-				player_id: None,
-			},
-		}
-			.get()
-			.await
-			.unwrap();
+		let _ = DraftEndpoint::regular().year(2025).build_and_get().await.unwrap();
+		let _ = DraftProspectsEndpoint::regular().year(2025).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn draft_all_years() {
 		for year in 1965..=Local::now().year() as _ {
-			let _ = crate::serde_path_to_error_parse(DraftEndpoint {
-				year: Some(year),
-				kind: DraftEndpointKind::Regular(DraftEndpointData {
-					limit: None,
-					offset: None,
-					round: None,
-					drafted_only: None,
-					last_name: None,
-					school: None,
-					position: None,
-					team_id: None,
-					home_country: None,
-					player_id: None,
-				}),
-			}).await;
-
-			let _ = crate::serde_path_to_error_parse(DraftProspectsEndpoint {
-				year: Some(year),
-				kind: DraftEndpointData {
-					limit: None,
-					offset: None,
-					round: None,
-					drafted_only: None,
-					last_name: None,
-					school: None,
-					position: None,
-					team_id: None,
-					home_country: None,
-					player_id: None,
-				},
-			}).await;
+			let _ = crate::serde_path_to_error_parse(DraftEndpoint::regular().year(year).build()).await;
+			let _ = crate::serde_path_to_error_parse(DraftProspectsEndpoint::regular().year(year).build()).await;
 		}
 	}
 }

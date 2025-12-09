@@ -1,17 +1,27 @@
+use crate::gen_params;
+use crate::seasons::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::teams::TeamsResponse;
 use crate::StatsAPIEndpointUrl;
-use crate::gen_params;
+use bon::Builder;
 use std::fmt::{Display, Formatter};
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct TeamAffiliatesEndpoint {
-	pub id: TeamId,
-	pub season: Option<u16>,
+	#[builder(into)]
+	team_id: TeamId,
+	#[builder(into)]
+	season: Option<SeasonId>,
+}
+
+impl<S: team_affiliates_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for TeamAffiliatesEndpointBuilder<S> where S: team_affiliates_endpoint_builder::IsComplete {
+	type Built = TeamAffiliatesEndpoint;
 }
 
 impl Display for TeamAffiliatesEndpoint {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/teams/{}/affiliates{params}", self.id, params = gen_params! { "season"?: self.season })
+		write!(f, "http://statsapi.mlb.com/api/v1/teams/{}/affiliates{params}", self.team_id, params = gen_params! { "season"?: self.season })
 	}
 }
 
@@ -21,17 +31,16 @@ impl StatsAPIEndpointUrl for TeamAffiliatesEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::sports::SportId;
+	use crate::request::Error as EndpointError;
 	use crate::teams::affiliates::TeamAffiliatesEndpoint;
 	use crate::teams::TeamsEndpoint;
-	use crate::StatsAPIEndpointUrl;
-	use crate::request::Error as EndpointError;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	async fn all_mlb_teams() {
-		for team in (TeamsEndpoint { sport_id: Some(SportId::MLB), season: None }).get().await.unwrap().teams {
-			let _affiliates = TeamAffiliatesEndpoint { id: team.id, season: None }.get().await.unwrap();
+		for team in TeamsEndpoint::builder().build_and_get().await.unwrap().teams {
+			let _affiliates = TeamAffiliatesEndpoint::builder().team_id(team.id).build_and_get().await.unwrap();
 		}
 	}
 
@@ -39,10 +48,10 @@ mod tests {
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn all_mlb_teams_all_seasons() {
 		for season in 1876..=Local::now().year() as _ {
-			for team in (TeamsEndpoint { sport_id: Some(SportId::MLB), season: Some(season) }).get().await.unwrap().teams {
+			for team in TeamsEndpoint::builder().build_and_get().await.unwrap().teams {
 				dbg!(team.id);
 				dbg!(&*team.try_as_named().unwrap().name);
-				let affiliates_result = TeamAffiliatesEndpoint { id: team.id, season: Some(season) }.get().await;
+				let affiliates_result = TeamAffiliatesEndpoint::builder().team_id(team.id).season(season).build_and_get().await;
 				match affiliates_result {
 					Ok(_) => {}
 					Err(EndpointError::StatsAPI(_)) => {},

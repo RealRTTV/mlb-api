@@ -1,16 +1,25 @@
-
-use crate::StatsAPIEndpointUrl;
-use crate::teams::team::TeamId;
 use crate::gen_params;
-use std::fmt::{Display, Formatter};
-use chrono::NaiveDate;
 use crate::people::PeopleResponse;
+use crate::seasons::season::SeasonId;
+use crate::teams::team::TeamId;
 use crate::types::MLB_API_DATE_FORMAT;
+use crate::StatsAPIEndpointUrl;
+use bon::Builder;
+use chrono::NaiveDate;
+use std::fmt::{Display, Formatter};
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct PersonnelEndpoint {
+    #[builder(into)]
     team_id: TeamId,
-    season: Option<u16>,
+    #[builder(into)]
+    season: Option<SeasonId>,
     date: Option<NaiveDate>,
+}
+
+impl<S: personnel_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for PersonnelEndpointBuilder<S> where S: personnel_endpoint_builder::IsComplete {
+    type Built = PersonnelEndpoint;
 }
 
 impl Display for PersonnelEndpoint {
@@ -25,18 +34,18 @@ impl StatsAPIEndpointUrl for PersonnelEndpoint {
 
 #[cfg(test)]
 mod tests {
-    use crate::StatsAPIEndpointUrl;
-    use crate::teams::TeamsEndpoint;
     use crate::teams::team::personnel::PersonnelEndpoint;
+    use crate::teams::TeamsEndpoint;
+    use crate::StatsAPIEndpointUrlBuilderExt;
     use chrono::{Datelike, Local};
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_heavy() {
-        let season = Local::now().year() as _;
-        let teams = TeamsEndpoint { sport_id: None, season: Some(season) }.get().await.unwrap();
+        let season = Local::now().year() as u32;
+        let teams = TeamsEndpoint::builder().season(season).build_and_get().await.unwrap();
         for team in teams.teams {
-            let _ = crate::serde_path_to_error_parse(PersonnelEndpoint { team_id: team.id, season: Some(season), date: None }).await;
+            let _ = crate::serde_path_to_error_parse(PersonnelEndpoint::builder().team_id(team.id).season(season).build()).await;
         }
     }
 }

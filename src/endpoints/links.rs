@@ -24,6 +24,25 @@ pub trait StatsAPIEndpointUrl: ToString {
 	}
 }
 
+pub trait StatsAPIEndpointUrlBuilderExt where Self: Sized {
+    type Built: StatsAPIEndpointUrl + From<Self>;
+    
+    #[cfg(feature = "ureq")]
+    fn build_and_get(self) -> request::Result<<T as StatsAPIEndpointUrl>::Response> {
+        let built = T::from(self);
+        request::get(&built)
+    }
+
+    #[cfg(feature = "reqwest")]
+    fn build_and_get(self) -> impl Future<Output = request::Result<<Self::Built as StatsAPIEndpointUrl>::Response>> {
+        async {
+            let built = Self::Built::from(self);
+            let str = built.to_string();
+            request::get::<<Self::Built as StatsAPIEndpointUrl>::Response>(&str).await
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! gen_params {
     (@ $builder:ident $key:literal: $value:expr $(, $($rest:tt)*)?) => {
@@ -43,7 +62,7 @@ macro_rules! gen_params {
         let _ = write!(&mut $builder, "{prefix}{value}", value = $value, prefix = if is_empty { '?' } else { '&' });
         gen_params!(@ $builder $($($rest)*)?);
     };
-    (@ $($args:tt)*) => {};
+    (@ $builder:ident $($args:tt)*) => {};
     ($($args:tt)*) => {{
         use ::core::fmt::Write;
 

@@ -930,6 +930,7 @@ dependencies = [
  "chrono",
  "compact_str",
  "derive_more",
+ "either",
  "fxhash",
  "itertools",
  "mlb-api-proc",

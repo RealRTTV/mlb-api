@@ -1,8 +1,8 @@
-use std::fmt::Formatter;
 use crate::types::NaiveDateRange;
 use chrono::NaiveDate;
 use derive_more::{Deref, Display, From};
 use serde::{Deserialize, Deserializer};
+use std::fmt::Formatter;
 
 #[repr(transparent)]
 #[derive(Debug, Default, Deref, Display, From, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]

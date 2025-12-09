@@ -1,15 +1,16 @@
-use crate::StatsAPIEndpointUrl;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::seasons::season::SeasonId;
 use crate::sports::SportId;
-use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
+use crate::StatsAPIEndpointUrl;
+use crate::{gen_params, rwlock_const_new, RwLock};
+use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
+use itertools::Itertools;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use itertools::Itertools;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
-use crate::seasons::season::SeasonId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -109,11 +110,18 @@ impl DerefMut for Venue {
 	}
 }
 
-#[derive(Default)]
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct VenuesEndpoint {
-	pub sport_id: Option<SportId>,
-	pub venue_ids: Option<Vec<VenueId>>,
-	pub season: Option<u16>,
+	#[builder(into)]
+	sport_id: Option<SportId>,
+	venue_ids: Option<Vec<VenueId>>,
+	#[builder(into)]
+	season: Option<SeasonId>,
+}
+
+impl<S: venues_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for VenuesEndpointBuilder<S> where S: venues_endpoint_builder::IsComplete {
+	type Built = VenuesEndpoint;
 }
 
 impl Display for VenuesEndpoint {
@@ -142,11 +150,7 @@ impl EndpointEntryCache for Venue {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		VenuesEndpoint {
-			sport_id: None,
-			venue_ids: Some(vec![id.clone()]),
-			season: None,
-		}
+		VenuesEndpoint::builder().venue_ids(vec![id.clone()]).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
@@ -166,20 +170,20 @@ impl EndpointEntryCache for Venue {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
 	use crate::venue::VenuesEndpoint;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_venues_all_seasons() {
 		for season in 1876..=Local::now().year() as _ {
-			let _response = VenuesEndpoint { sport_id: None, season: Some(season), venue_ids: None }.get().await.unwrap();
+			let _response = VenuesEndpoint::builder().season(season).build_and_get().await.unwrap();
 		}
 	}
 
 	#[tokio::test]
 	async fn parse_all_venues() {
-		let _response = VenuesEndpoint { sport_id: None, season: None, venue_ids: None }.get().await.unwrap();
+		let _response = VenuesEndpoint::builder().build_and_get().await.unwrap();
 	}
 }

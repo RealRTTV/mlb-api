@@ -1,10 +1,11 @@
 pub mod season;
 
-use crate::StatsAPIEndpointUrl;
-use crate::seasons::season::Season;
-use crate::sports::SportId;
 use crate::gen_params;
+use crate::seasons::season::{Season, SeasonId};
+use crate::sports::SportId;
 use crate::types::Copyright;
+use crate::StatsAPIEndpointUrl;
+use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 
@@ -15,9 +16,18 @@ pub struct SeasonsResponse {
 	pub seasons: Vec<Season>,
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct SeasonsEndpoint {
+	#[builder(into)]
+	#[builder(default)]
 	sport_id: SportId,
-	season: Option<u16>,
+	#[builder(into)]
+	season: Option<SeasonId>,
+}
+
+impl<S: seasons_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for SeasonsEndpointBuilder<S> where S: seasons_endpoint_builder::IsComplete {
+	type Built = SeasonsEndpoint;
 }
 
 impl Display for SeasonsEndpoint {
@@ -32,25 +42,25 @@ impl StatsAPIEndpointUrl for SeasonsEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
 	use crate::seasons::SeasonsEndpoint;
-	use crate::sports::{SportId, SportsEndpoint};
+	use crate::sports::SportsEndpoint;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parses_all_seasons() {
-		let all_sport_ids = SportsEndpoint { id: None }.get().await.unwrap().sports.into_iter().map(|sport| sport.id).collect::<Vec<_>>();
+		let all_sport_ids = SportsEndpoint::builder().build_and_get().await.unwrap().sports.into_iter().map(|sport| sport.id).collect::<Vec<_>>();
 
 		for season in 1871..=Local::now().year() as _ {
 			for id in all_sport_ids.iter().copied() {
-				let _response = SeasonsEndpoint { sport_id: id, season: Some(season) }.get().await.unwrap();
+				let _response = SeasonsEndpoint::builder().sport_id(id).season(season).build_and_get().await.unwrap();
 			}
 		}
 	}
 
 	#[tokio::test]
 	async fn parse_this_season_mlb() {
-		let _response = SeasonsEndpoint { sport_id: SportId::default(), season: None }.get().await.unwrap();
+		let _response = SeasonsEndpoint::builder().build_and_get().await.unwrap();
 	}
 }

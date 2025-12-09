@@ -1,9 +1,10 @@
 use crate::StatsAPIEndpointUrl;
+use crate::gen_params;
 use crate::person::{Person, PersonId};
 use crate::sports::SportId;
 use crate::teams::team::{Team, TeamId};
-use crate::gen_params;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT, NaiveDateRange};
+use bon::Builder;
 use chrono::NaiveDate;
 use derive_more::{Deref, Display, From};
 use itertools::Itertools;
@@ -302,7 +303,7 @@ pub enum Transaction {
 		#[serde(default = "Team::unknown_team")]
 		#[serde(rename = "toTeam")]
 		team: Team,
-	}
+	},
 }
 
 impl Deref for Transaction {
@@ -408,9 +409,41 @@ impl Display for TransactionsEndpointKind {
 /// Vladimir Guerrero Jr.'s `.` in his name causes the API to be super confused and generate 5 players, four of which don't exist.\
 /// Of course putting `[Option<Person>]` for the `person` field is needlessly overkill since mostly all situations will not cause this, but the transactions shouldn't be discarded.\
 /// Instead, these values (no team, no date, no player) are given default values such that they are valid, but any further API requests with them return an error, such as a person with ID 0.
+#[derive(Builder)]
+#[builder(derive(Into))]
+#[builder(start_fn(vis = "", name = "__builder_internal"))]
 pub struct TransactionsEndpoint {
-	pub kind: TransactionsEndpointKind,
-	pub sport_id: Option<SportId>,
+	#[builder(setters(vis = "", name = __kind_internal))]
+	kind: TransactionsEndpointKind,
+	#[builder(into)]
+	sport_id: Option<SportId>,
+}
+
+use transactions_endpoint_builder::SetKind;
+
+impl TransactionsEndpoint {
+	pub fn for_team(team_id: impl Into<TeamId>) -> TransactionsEndpointBuilder<SetKind> {
+		TransactionsEndpoint::__builder_internal().__kind_internal(TransactionsEndpointKind::Team(team_id.into()))
+	}
+
+	pub fn for_player(person_id: impl Into<PersonId>) -> TransactionsEndpointBuilder<SetKind> {
+		TransactionsEndpoint::__builder_internal().__kind_internal(TransactionsEndpointKind::Player(person_id.into()))
+	}
+
+	pub fn for_ids(transactions: Vec<TransactionId>) -> TransactionsEndpointBuilder<SetKind> {
+		TransactionsEndpoint::__builder_internal().__kind_internal(TransactionsEndpointKind::Transactions(transactions))
+	}
+
+	pub fn for_date_range(range: NaiveDateRange) -> TransactionsEndpointBuilder<SetKind> {
+		TransactionsEndpoint::__builder_internal().__kind_internal(TransactionsEndpointKind::DateRange(range))
+	}
+}
+
+impl<S: transactions_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for TransactionsEndpointBuilder<S>
+where
+	S: transactions_endpoint_builder::IsComplete,
+{
+	type Built = TransactionsEndpoint;
 }
 
 impl Display for TransactionsEndpoint {
@@ -432,39 +465,39 @@ impl StatsAPIEndpointUrl for TransactionsEndpoint {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
+	use crate::person::Person;
 	use crate::sports::SportId;
 	use crate::sports::players::SportsPlayersEndpoint;
 	use crate::teams::TeamsEndpoint;
 	use crate::teams::team::Team;
 	use crate::transactions::{TransactionsEndpoint, TransactionsEndpointKind};
+	use crate::{StatsAPIEndpointUrl, StatsAPIEndpointUrlBuilderExt};
 	use chrono::NaiveDate;
-	use crate::person::Person;
 
 	#[tokio::test]
 	async fn parse_2025() {
 		let _ = crate::serde_path_to_error_parse(TransactionsEndpoint {
 			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
 			sport_id: Some(SportId::MLB),
-		}).await;
+		})
+		.await;
 	}
 
 	#[tokio::test]
 	async fn parse_all_endpoints() {
-		let blue_jays = TeamsEndpoint {
-			sport_id: Some(SportId::MLB),
-			season: Some(2025),
-		}
-		.get()
-		.await
-		.unwrap()
-		.teams
-		.into_iter()
-		.filter_map(Team::try_into_named)
-		.find(|team| team.name.as_str() == "Toronto Blue Jays")
-		.unwrap();
-		let bo_bichette = SportsPlayersEndpoint { id: SportId::MLB, season: Some(2024) }
-			.get()
+		let blue_jays = TeamsEndpoint::builder()
+			.season(2025)
+			.build_and_get()
+			.await
+			.unwrap()
+			.teams
+			.into_iter()
+			.filter_map(Team::try_into_named)
+			.find(|team| team.name.as_str() == "Toronto Blue Jays")
+			.unwrap();
+		let bo_bichette = SportsPlayersEndpoint::builder()
+			.season(2024)
+			.build_and_get()
 			.await
 			.unwrap()
 			.people
@@ -473,34 +506,13 @@ mod tests {
 			.find(|person| person.full_name == "Bo Bichette")
 			.unwrap();
 
-		let response = TransactionsEndpoint {
-			kind: TransactionsEndpointKind::DateRange(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
-			sport_id: Some(SportId::MLB),
-		}
-		.get()
-		.await
-		.unwrap();
+		let response = TransactionsEndpoint::for_date_range(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap())
+			.build_and_get()
+			.await
+			.unwrap();
 		let transaction_ids = response.transactions.into_iter().take(1).map(|transaction| transaction.id).collect::<Vec<_>>();
-		let _response = TransactionsEndpoint {
-			kind: TransactionsEndpointKind::Team(blue_jays.id),
-			sport_id: Some(SportId::MLB),
-		}
-		.get()
-		.await
-		.unwrap();
-		let _response = TransactionsEndpoint {
-			kind: TransactionsEndpointKind::Player(bo_bichette.id),
-			sport_id: Some(SportId::MLB),
-		}
-		.get()
-		.await
-		.unwrap();
-		let _response = TransactionsEndpoint {
-			kind: TransactionsEndpointKind::Transactions(transaction_ids),
-			sport_id: Some(SportId::MLB),
-		}
-		.get()
-		.await
-		.unwrap();
+		let _response = TransactionsEndpoint::for_team(blue_jays.id).build_and_get().await.unwrap();
+		let _response = TransactionsEndpoint::for_player(bo_bichette.id).build_and_get().await.unwrap();
+		let _response = TransactionsEndpoint::for_ids(transaction_ids).build_and_get().await.unwrap();
 	}
 }

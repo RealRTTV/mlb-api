@@ -1,12 +1,13 @@
-
-use crate::{Position, RosterTypeId, StatsAPIEndpointUrl};
-use crate::teams::team::{Team, TeamId};
 use crate::gen_params;
-use std::fmt::{Display, Formatter};
+use crate::person::Person;
+use crate::seasons::season::SeasonId;
+use crate::teams::team::{Team, TeamId};
+use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use crate::{Position, RosterTypeId, StatsAPIEndpointUrl};
+use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
-use crate::person::Person;
-use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -79,11 +80,20 @@ impl TryFrom<__RosterStatusStruct> for RosterStatus {
     }
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct RosterEndpoint {
+    #[builder(into)]
     team_id: TeamId,
-    season: Option<u16>,
+    #[builder(into)]
+    season: Option<SeasonId>,
     date: Option<NaiveDate>,
+    #[builder(into)]
     roster_type: RosterTypeId,
+}
+
+impl<S: roster_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for RosterEndpointBuilder<S> where S: roster_endpoint_builder::IsComplete {
+    type Built = RosterEndpoint;
 }
 
 impl Display for RosterEndpoint {
@@ -111,22 +121,21 @@ pub struct RosterEntry {
 
 #[cfg(test)]
 mod tests {
-    use crate::{RosterType, StatsAPIEndpointUrl};
-    use crate::teams::TeamsEndpoint;
-    use crate::teams::team::roster::RosterEndpoint;
-    use chrono::{Datelike, Local};
     use crate::meta::MetaEndpoint;
-    use crate::sports::SportId;
+    use crate::teams::team::roster::RosterEndpoint;
+    use crate::teams::TeamsEndpoint;
+    use crate::{RosterType, StatsAPIEndpointUrl, StatsAPIEndpointUrlBuilderExt};
+    use chrono::{Datelike, Local};
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_this_year_all_mlb_teams_all_roster_types() {
-        let season = Local::now().year() as _;
-        let teams = TeamsEndpoint { sport_id: Some(SportId::MLB), season: Some(season) }.get().await.unwrap().teams;
+        let season = Local::now().year() as u32;
+        let teams = TeamsEndpoint::builder().season(season).build_and_get().await.unwrap().teams;
         let roster_types = MetaEndpoint::<RosterType>::new().get().await.unwrap().entries;
         for team in teams {
             for roster_type in &roster_types {
-                let _ = crate::serde_path_to_error_parse(RosterEndpoint { team_id: team.id, season: Some(season), date: None, roster_type: roster_type.id.clone() }).await;
+                let _ = crate::serde_path_to_error_parse(RosterEndpoint::builder().team_id(team.id).season(season).roster_type(roster_type.id.clone()).build()).await;
             }
         }
     }

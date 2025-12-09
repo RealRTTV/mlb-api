@@ -2,17 +2,18 @@ pub mod all_star_ballot;
 pub mod all_star_final_vote;
 pub mod all_star_write_ins;
 
-use std::fmt::{Display, Formatter};
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::seasons::season::{Season, SeasonState};
 use crate::sports::{NamedSport, SportId};
-use derive_more::{Deref, DerefMut, Display, From};
-use serde::Deserialize;
-use std::ops::{Deref, DerefMut};
-use itertools::Itertools;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::StatsAPIEndpointUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use bon::Builder;
+use derive_more::{Deref, DerefMut, Display, From};
+use itertools::Itertools;
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use serde::Deserialize;
+use std::fmt::{Display, Formatter};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -153,9 +154,21 @@ impl DerefMut for League {
 	}
 }
 
+#[derive(Builder)]
 pub struct LeagueEndpoint {
-	pub sport_id: Option<SportId>,
-	pub league_ids: Option<Vec<LeagueId>>,
+	#[builder(into)]
+	sport_id: Option<SportId>,
+	#[builder(setters(vis = "", name = league_ids_internal))]
+	league_ids: Option<Vec<LeagueId>>,
+}
+
+use league_endpoint_builder::{IsUnset, SetLeagueIds, State};
+
+impl<S: State> LeagueEndpointBuilder<S> {
+	#[allow(dead_code)]
+	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeagueEndpointBuilder<SetLeagueIds<S>> where S::LeagueIds: IsUnset {
+		self.league_ids_internal(league_ids.into_iter().map(|x| x.into()).collect::<Vec<_>>())
+	}
 }
 
 impl Display for LeagueEndpoint {
@@ -187,10 +200,7 @@ impl EndpointEntryCache for League {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		LeagueEndpoint {
-			sport_id: None,
-			league_ids: Some(vec![id.clone()]),
-		}
+		LeagueEndpoint::builder().league_ids_internal(vec![id.clone()]).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>

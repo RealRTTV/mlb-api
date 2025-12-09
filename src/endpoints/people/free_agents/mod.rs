@@ -1,14 +1,15 @@
-use serde_with::DefaultOnError;
-use crate::person::Person;
-use crate::teams::team::Team;
-use crate::{Position, StatsAPIEndpointUrl};
 use crate::gen_params;
+use crate::person::Person;
+use crate::seasons::season::SeasonId;
+use crate::teams::team::Team;
 use crate::types::Copyright;
+use crate::{Position, StatsAPIEndpointUrl};
+use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
-use std::fmt::{Display, Formatter};
 use serde_with::serde_as;
-use crate::seasons::season::SeasonId;
+use serde_with::DefaultOnError;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -59,8 +60,15 @@ impl From<__FreeAgentStruct> for FreeAgent {
 	}
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct FreeAgentsEndpoint {
-	pub season: SeasonId,
+	#[builder(into)]
+	season: SeasonId,
+}
+
+impl<S: free_agents_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for FreeAgentsEndpointBuilder<S> where S: free_agents_endpoint_builder::IsComplete {
+	type Built = FreeAgentsEndpoint;
 }
 
 impl Display for FreeAgentsEndpoint {
@@ -76,18 +84,18 @@ impl StatsAPIEndpointUrl for FreeAgentsEndpoint {
 #[cfg(test)]
 mod tests {
 	use crate::people::free_agents::FreeAgentsEndpoint;
-	use crate::StatsAPIEndpointUrl;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 	use chrono::{Datelike, Local};
 
 	#[tokio::test]
 	async fn test_2025() {
-		let _response = FreeAgentsEndpoint { season: 2025.into() }.get().await.unwrap();
+		let _response = FreeAgentsEndpoint::builder().season(2025).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
 	async fn test_all_seasons() {
 		for season in 2001..=Local::now().year() as _ {
-			let _response = FreeAgentsEndpoint { season: season.into() }.get().await.unwrap();
+			let _response = FreeAgentsEndpoint::builder().season(season).build_and_get().await.unwrap();
 		}
 	}
 }

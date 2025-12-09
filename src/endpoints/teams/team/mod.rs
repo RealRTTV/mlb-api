@@ -8,15 +8,15 @@ pub mod uniforms; // done
 
 use crate::divisions::NamedDivision;
 use crate::league::NamedLeague;
+use crate::seasons::season::SeasonId;
 use crate::sports::NamedSport;
 use crate::venue::NamedVenue;
 use derive_more::{Deref, DerefMut, Display, From};
-use serde::Deserialize;
-use serde_with::DefaultOnError;
-use serde_with::serde_as;
-use std::ops::{Deref, DerefMut};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::seasons::season::SeasonId;
+use serde::Deserialize;
+use serde_with::serde_as;
+use serde_with::DefaultOnError;
+use std::ops::{Deref, DerefMut};
 
 #[serde_as]
 #[derive(Deserialize)]

@@ -1,11 +1,11 @@
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::meta::{MetaEndpoint, MetaKind};
+use crate::StatsAPIEndpointUrl;
+use crate::{rwlock_const_new, RwLock};
 use derive_more::{Deref, DerefMut, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
-use crate::{rwlock_const_new, RwLock};
-use crate::StatsAPIEndpointUrl;
 
 #[repr(transparent)]
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
@@ -114,8 +114,8 @@ impl EndpointEntryCache for RosterType {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
 	use crate::meta::MetaEndpoint;
+	use crate::StatsAPIEndpointUrl;
 
 	#[tokio::test]
 	async fn parse_meta() {

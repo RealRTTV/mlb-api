@@ -1,22 +1,24 @@
 pub mod stats;
 
-use std::fmt::{Display, Formatter};
-use std::marker::PhantomData;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
+use crate::draft::School;
+use crate::hydrations::Hydrations;
+use crate::people::PeopleResponse;
 use crate::positions::Position;
+use crate::seasons::season::SeasonId;
+use crate::teams::team::Team;
 use crate::types::{Gender, Handedness, HeightMeasurement};
+use crate::StatsAPIEndpointUrl;
+use crate::{rwlock_const_new, RwLock};
+use bon::Builder;
 use chrono::NaiveDate;
 use derive_more::{Deref, DerefMut, Display, From};
-use serde::{Deserialize, Deserializer};
-use std::ops::{Deref, DerefMut};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::de::Error;
-use crate::cache::{EndpointEntryCache, HydratedCacheTable};
-use crate::{rwlock_const_new, RwLock};
-use crate::draft::School;
-use crate::people::PeopleResponse;
-use crate::StatsAPIEndpointUrl;
-use crate::teams::team::Team;
-use crate::hydrations::Hydrations;
+use serde::{Deserialize, Deserializer};
+use std::fmt::{Display, Formatter};
+use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -248,16 +250,12 @@ impl<H: PersonHydrations> DerefMut for Person<H> {
 	}
 }
 
+#[derive(Builder)]
 pub struct PersonEndpoint<H: PersonHydrations> {
+	#[builder(start_fn)]
 	id: PersonId,
+	#[builder(skip)]
 	_marker: PhantomData<H>,
-}
-
-impl<H: PersonHydrations> PersonEndpoint<H> {
-	#[must_use]
-	pub const fn new(id: PersonId) -> Self {
-		Self { id, _marker: PhantomData }
-	}
 }
 
 impl<H: PersonHydrations> Display for PersonEndpoint<H> {
@@ -305,8 +303,7 @@ pub struct ExternalReference {
 	pub id: String,
 	#[serde(rename = "xrefType")]
 	pub xref_type: String,
-	#[serde(default, deserialize_with = "crate::types::try_from_str")]
-	pub season: Option<u32>,
+	pub season: Option<SeasonId>,
 }
 
 pub trait PersonHydrations: Hydrations {
@@ -458,7 +455,7 @@ impl EndpointEntryCache for Person<()> {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		PersonEndpoint::new(id.clone())
+		PersonEndpoint::builder(*id).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>

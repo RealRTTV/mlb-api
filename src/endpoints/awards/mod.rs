@@ -1,14 +1,16 @@
-use crate::StatsAPIEndpointUrl;
+use crate::cache::{EndpointEntryCache, HydratedCacheTable};
 use crate::league::{League, LeagueId};
+use crate::seasons::season::SeasonId;
 use crate::sports::{Sport, SportId};
-use crate::{gen_params, rwlock_const_new, RwLock};
 use crate::types::Copyright;
+use crate::StatsAPIEndpointUrl;
+use crate::{gen_params, rwlock_const_new, RwLock};
+use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
-use crate::cache::{HydratedCacheTable, EndpointEntryCache};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct AwardsResponse {
@@ -63,12 +65,21 @@ impl Deref for Award {
 	}
 }
 
-#[derive(Default)]
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct AwardEndpoint {
-	pub award_id: Option<AwardId>,
-	pub sport_id: Option<SportId>,
-	pub league_id: Option<LeagueId>,
-	pub season: Option<u16>,
+	#[builder(into)]
+	award_id: Option<AwardId>,
+	#[builder(into)]
+	sport_id: Option<SportId>,
+	#[builder(into)]
+	league_id: Option<LeagueId>,
+	#[builder(into)]
+	season: Option<SeasonId>,
+}
+
+impl<S: award_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for AwardEndpointBuilder<S> where S: award_endpoint_builder::IsComplete {
+    type Built = AwardEndpoint;
 }
 
 impl Display for AwardEndpoint {
@@ -101,12 +112,7 @@ impl EndpointEntryCache for Award {
 	}
 
 	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		AwardEndpoint {
-			award_id: Some(id.clone()),
-			sport_id: None,
-			league_id: None,
-			season: None,
-		}
+		AwardEndpoint::builder().award_id(id.clone()).build()
 	}
 
 	fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item=Self>
@@ -126,11 +132,11 @@ impl EndpointEntryCache for Award {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
 	use crate::awards::AwardEndpoint;
+	use crate::StatsAPIEndpointUrlBuilderExt;
 
 	#[tokio::test]
 	async fn parse_this_season() {
-		let _response = AwardEndpoint::default().get().await.unwrap();
+		let _response = AwardEndpoint::builder().build_and_get().await.unwrap();
 	}
 }

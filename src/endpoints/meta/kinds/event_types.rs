@@ -1,11 +1,11 @@
-use std::ops::{Deref, DerefMut};
-use crate::meta::{MetaEndpoint, MetaKind};
-use derive_more::{Deref, DerefMut, Display, From};
-use serde::Deserialize;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use crate::cache::{EndpointEntryCache, HydratedCacheTable};
-use crate::{rwlock_const_new, RwLock};
+use crate::meta::{MetaEndpoint, MetaKind};
 use crate::StatsAPIEndpointUrl;
+use crate::{rwlock_const_new, RwLock};
+use derive_more::{Deref, DerefMut, Display, From};
+use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use serde::Deserialize;
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -104,10 +104,10 @@ impl EndpointEntryCache for EventType {
 
 #[cfg(test)]
 mod tests {
-	use crate::StatsAPIEndpointUrl;
-	use crate::meta::MetaEndpoint;
+    use crate::meta::MetaEndpoint;
+    use crate::StatsAPIEndpointUrl;
 
-	#[tokio::test]
+    #[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaEndpoint::<super::EventType>::new().get().await.unwrap();
 	}

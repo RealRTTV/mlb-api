@@ -1,33 +1,32 @@
 pub mod series;
 
-use std::fmt::{Display, Formatter};
-use chrono::{Datelike, Local};
-use itertools::Itertools;
-use crate::{GameType, StatsAPIEndpointUrl};
+use crate::gen_params;
 use crate::schedule::ScheduleResponse;
 use crate::seasons::season::SeasonId;
 use crate::sports::SportId;
 use crate::teams::team::TeamId;
-use crate::gen_params;
+use crate::{GameType, StatsAPIEndpointUrl};
+use bon::Builder;
+use chrono::Datelike;
+use itertools::Itertools;
+use std::fmt::{Display, Formatter};
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct SchedulePostseasonEndpoint {
-    pub season: SeasonId,
-    pub sport_id: SportId,
-    pub team_id: Option<TeamId>,
-    pub game_types: Option<Vec<GameType>>,
-    pub series_number: Option<u32>,
+    #[builder(into)]
+    season: SeasonId,
+    #[builder(into)]
+    #[builder(default)]
+    sport_id: SportId,
+    #[builder(into)]
+    team_id: Option<TeamId>,
+    game_types: Option<Vec<GameType>>,
+    series_number: Option<u32>,
 }
 
-impl Default for SchedulePostseasonEndpoint {
-    fn default() -> Self {
-        Self {
-            season: (Local::now().year() as u32).into(),
-            sport_id: SportId::MLB,
-            team_id: None,
-            game_types: None,
-            series_number: None,
-        }
-    }
+impl<S: schedule_postseason_endpoint_builder::State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for SchedulePostseasonEndpointBuilder<S> where S: schedule_postseason_endpoint_builder::IsComplete {
+    type Built = SchedulePostseasonEndpoint;
 }
 
 impl Display for SchedulePostseasonEndpoint {
@@ -47,28 +46,20 @@ impl StatsAPIEndpointUrl for SchedulePostseasonEndpoint {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Datelike, Local};
     use crate::schedule::postseason::SchedulePostseasonEndpoint;
-    use crate::StatsAPIEndpointUrl;
+    use crate::StatsAPIEndpointUrlBuilderExt;
+    use chrono::{Datelike, Local};
 
     #[tokio::test]
     async fn test_one_season() {
-        let request = SchedulePostseasonEndpoint {
-            season: 2025.into(),
-            ..Default::default()
-        };
-        let _ = request.get().await.unwrap();
+        let _ = SchedulePostseasonEndpoint::builder().season(2025).build_and_get().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_all_seasons() {
         for season in 1876..=Local::now().year() as _ {
-            let request = SchedulePostseasonEndpoint {
-                season: season.into(),
-                ..Default::default()
-            };
-            let _ = request.get().await.unwrap();
+            let _ = SchedulePostseasonEndpoint::builder().season(season).build_and_get().await.unwrap();
         }
     }
 }

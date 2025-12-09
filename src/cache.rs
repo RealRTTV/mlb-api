@@ -1,12 +1,12 @@
+use crate::RwLock;
+use crate::StatsAPIEndpointUrl;
+use fxhash::FxBuildHasher;
+use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::sync::Arc;
-use fxhash::FxBuildHasher;
-use serde::de::DeserializeOwned;
 use thiserror::Error;
-use crate::StatsAPIEndpointUrl;
-use crate::RwLock;
 
 pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
     type HydratedVariant;

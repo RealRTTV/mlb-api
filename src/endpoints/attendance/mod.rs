@@ -1,16 +1,18 @@
 use crate::game::Game;
-use crate::league::LeagueId;
-use crate::teams::team::TeamId;
-use crate::{GameType, StatsAPIEndpointUrl};
 use crate::gen_params;
+use crate::league::LeagueId;
+use crate::seasons::season::SeasonId;
+use crate::teams::team::TeamId;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
+use crate::{GameType, StatsAPIEndpointUrl};
+use bon::Builder;
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
+use either::Either;
 use serde::Deserialize;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::iter::Sum;
 use std::ops::Add;
-use crate::seasons::season::SeasonId;
 
 /// Within regards to attendance, the term frequently used is "Opening" over "Game"; this is for reasons including but not limited to: single ticket double headers, and partially cancelled/rescheduled games.
 ///
@@ -239,11 +241,43 @@ impl Ord for DatedAttendance {
 	}
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct AttendanceEndpoint {
-	pub id: Result<TeamId, LeagueId>,
-	pub season: Option<u16>,
-	pub date: Option<NaiveDate>,
-	pub game_type: GameType,
+	#[doc(hidden)]
+	#[builder(setters(vis = "", name = __id_internal))]
+	id: Either<TeamId, LeagueId>,
+	#[builder(into)]
+	season: Option<SeasonId>,
+	#[builder(into)]
+	date: Option<NaiveDate>,
+	#[builder(default)]
+	game_type: GameType,
+}
+
+impl<S: State> crate::endpoints::links::StatsAPIEndpointUrlBuilderExt for AttendanceEndpointBuilder<S> where S: attendance_endpoint_builder::IsComplete {
+    type Built = AttendanceEndpoint;
+}
+
+use attendance_endpoint_builder::{IsUnset, SetId, State};
+
+#[allow(dead_code)]
+impl<S: State> AttendanceEndpointBuilder<S> {
+	#[doc = "_**Required.**_\n\n"]
+	pub fn team_id(self, id: impl Into<TeamId>) -> AttendanceEndpointBuilder<SetId<S>>
+	where
+		S::Id: IsUnset,
+	{
+		self.__id_internal(Either::Left(id.into()))
+	}
+
+	#[doc = "_**Required.**_\n\n"]
+	pub fn league_id(self, id: impl Into<LeagueId>) -> AttendanceEndpointBuilder<SetId<S>>
+	where
+		S::Id: IsUnset,
+	{
+		self.__id_internal(Either::Right(id.into()))
+	}
 }
 
 impl Display for AttendanceEndpoint {
@@ -251,41 +285,36 @@ impl Display for AttendanceEndpoint {
 		write!(
 			f,
 			"http://statsapi.mlb.com/api/v1/attendance{}",
-			gen_params! { "teamId"?: self.id.clone().ok(), "leagueId"?: self.id.clone().err(), "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)), "gameType": format!("{:?}", self.game_type) }
+			gen_params! { "teamId"?: self.id.clone().left(), "leagueId"?: self.id.clone().right(), "season"?: self.season, "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)), "gameType": format!("{:?}", self.game_type) }
 		)
 	}
 }
 
-impl StatsAPIEndpointUrl for AttendanceEndpoint { type Response = AttendanceResponse; }
+impl StatsAPIEndpointUrl for AttendanceEndpoint {
+	type Response = AttendanceResponse;
+}
 
 #[cfg(test)]
 mod tests {
 	use crate::attendance::AttendanceEndpoint;
-	use crate::sports::SportId;
 	use crate::teams::TeamsEndpoint;
-	use crate::{GameType, StatsAPIEndpointUrl};
+	use crate::StatsAPIEndpointUrlBuilderExt;
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_mlb_teams_2025() {
-		let mlb_teams = TeamsEndpoint {
-			sport_id: Some(SportId::MLB),
-			season: Some(2025),
-		}
-		.get()
+		let mlb_teams = TeamsEndpoint::builder()
+			.season(2025)
+			.build_and_get()
 		.await
 		.unwrap()
 		.teams;
 		for team in mlb_teams {
-			let _response = AttendanceEndpoint {
-				id: Ok(team.id),
-				season: None,
-				date: None,
-				game_type: GameType::RegularSeason,
-			}
-			.get()
-			.await
-			.unwrap();
+			let _response = AttendanceEndpoint::builder()
+				.team_id(team.id)
+				.build_and_get()
+				.await
+				.unwrap();
 		}
 	}
 }
