@@ -3,7 +3,7 @@
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 use serde_with::serde_as;
-use crate::endpoints::stats::units::InningsPitched;
+use crate::requests::stats::units::InningsPitched;
 
 macro_rules! piece {
     (
@@ -284,7 +284,7 @@ piece! {
 piece! {
 	#[derive(Add, AddAssign)]
 	struct GIDPData: GIDPPiece {
-		#[serde(rename = "groundedIntoDoublePlay", alias = "gidp")]
+		#[serde(rename = "groundedIntoDoublePlay", alias = "gidp", alias = "groundIntoDoublePlay")]
 		pub ground_into_double_play: u32,
 	}
 }
@@ -300,7 +300,7 @@ piece! {
 piece! {
 	#[derive(Add, AddAssign)]
 	struct GITPData: GITPPiece {
-		#[serde(rename = "groundedIntoTriplePlay")]
+		#[serde(rename = "groundedIntoTriplePlay", alias = "groundIntoTriplePlay")]
 		pub ground_into_triple_play: u32,
 	}
 }

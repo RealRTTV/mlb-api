@@ -1,6 +1,6 @@
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
-use crate::endpoints::stats::units::{ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use crate::requests::stats::units::{ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Add, AddAssign, Default)]
 #[serde(rename_all = "camelCase")]

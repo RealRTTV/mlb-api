@@ -1,5 +1,5 @@
-use crate::endpoints::stats::pieces::{AtBatPiece, ExtraBaseHitsPiece, HitByPitchPiece, IntentionalWalksPiece, PlateAppearancePiece, SacrificeHitsPiece, HitsPiece, StealingPiece, StrikeoutsPiece, TotalBasesPiece, BaseOnBallsPiece, SwingDataPiece, StrikesPiece, PitchQuantityPiece, EarnedRunsPiece, InningsPitchedPiece, DecisionsPiece, RunsPiece, GamesPitchedPiece};
-use crate::endpoints::stats::units::{PercentageStat, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use crate::requests::stats::pieces::{AtBatPiece, ExtraBaseHitsPiece, HitByPitchPiece, IntentionalWalksPiece, PlateAppearancePiece, SacrificeHitsPiece, HitsPiece, StealingPiece, StrikeoutsPiece, TotalBasesPiece, BaseOnBallsPiece, SwingDataPiece, StrikesPiece, PitchQuantityPiece, EarnedRunsPiece, InningsPitchedPiece, DecisionsPiece, RunsPiece, GamesPitchedPiece};
+use crate::requests::stats::units::{PercentageStat, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 
 pub trait AVGPiece {
 	/// # Batting Average

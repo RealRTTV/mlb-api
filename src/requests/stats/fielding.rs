@@ -2,7 +2,7 @@ use serde_with::DisplayFromStr;
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 use serde_with::serde_as;
-use crate::endpoints::stats::units::{InningsPitched, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use crate::requests::stats::units::{InningsPitched, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 
 #[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Add, AddAssign, Default)]

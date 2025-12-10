@@ -12,14 +12,14 @@ use serde::de::{DeserializeOwned, Error, Visitor};
 use serde_json::Value;
 use serde_with::serde_as;
 use thiserror::Error;
-use crate::endpoints::{GameType, StatGroup, StatType};
-use crate::endpoints::person::Person;
-use crate::endpoints::stats::catching::CatchingStats;
-use crate::endpoints::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingStats};
-use crate::endpoints::stats::hitting::{AdvancedHittingStats, HittingStats, SabermetricsHittingStats, SimplifiedGameLogHittingStats, VsPlayerHittingStats};
-use crate::endpoints::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
-use crate::endpoints::stats::units::PercentageStat;
-use crate::endpoints::teams::team::Team;
+use crate::requests::{GameType, StatGroup, StatType};
+use crate::requests::person::Person;
+use crate::requests::stats::catching::CatchingStats;
+use crate::requests::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingStats};
+use crate::requests::stats::hitting::{AdvancedHittingStats, HittingStats, SabermetricsHittingStats, SimplifiedGameLogHittingStats, VsPlayerHittingStats};
+use crate::requests::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
+use crate::requests::stats::units::PercentageStat;
+use crate::requests::teams::team::Team;
 use crate::types::{RGBAColor, SimpleTemperature};
 
 pub mod pieces;
@@ -234,11 +234,11 @@ impl BaseStat for () {}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Deref, DerefMut)]
 pub struct Multiple<T: Stat + DeserializeOwned> {
-	pub entries: Vec<Game<T>>,
+	pub entries: Vec<T>,
 }
 
 impl<T: Stat + DeserializeOwned> Stat for Multiple<T> {
-	type SplitWrappedVariant = Game<T>;
+	type SplitWrappedVariant = T;
 	type TryFromSplitWrappedVariantError = Infallible;
 
 	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>

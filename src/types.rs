@@ -9,7 +9,7 @@ use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
 use thiserror::Error;
 
-/// Shared types across multiple endpoints
+/// Shared types across multiple requests
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__CopyrightStruct")]
 pub enum Copyright {

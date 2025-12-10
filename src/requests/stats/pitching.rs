@@ -1,9 +1,9 @@
 use derive_more::{Add, AddAssign, AsRef};
 use serde::Deserialize;
-use crate::endpoints::PitchType;
-use crate::endpoints::stats::units::PercentageStat;
-use crate::endpoints::stats::BaseStat;
-use crate::endpoints::stats::pieces::{bWARData, fWARData, xFIPData, AtBatData, BalksData, BaseOnBallsData, BattersFacedData, CatchersInterferenceData, CompleteGamesData, DecisionsData, ERAMinusData, EarnedRunsData, ExtraBaseHitsData, FIPData, FIPMinusData, FlyoutsData, GIDPData, GamesFinishedData, GamesPitchedData, GamesPlayedData, GamesStartedData, HitByPitchData, InheritedRunnersData, IntentionalWalksData, InningsPitchedData, PassedBallData, PickoffsData, PitchQuantityData, RARData, RBIData, RunsData, SacrificeHitsData, ShutdownsAndMeltdownsData, FieldOutsData, HitsData, StealingData, StrikeoutsData, StrikesData, WildPitchData};
+use crate::requests::PitchType;
+use crate::requests::stats::units::PercentageStat;
+use crate::requests::stats::BaseStat;
+use crate::requests::stats::pieces::{bWARData, fWARData, xFIPData, AtBatData, BalksData, BaseOnBallsData, BattersFacedData, CatchersInterferenceData, CompleteGamesData, DecisionsData, ERAMinusData, EarnedRunsData, ExtraBaseHitsData, FIPData, FIPMinusData, FlyoutsData, GIDPData, GamesFinishedData, GamesPitchedData, GamesPlayedData, GamesStartedData, HitByPitchData, InheritedRunnersData, IntentionalWalksData, InningsPitchedData, PassedBallData, PickoffsData, PitchQuantityData, RARData, RBIData, RunsData, SacrificeHitsData, ShutdownsAndMeltdownsData, FieldOutsData, HitsData, StealingData, StrikeoutsData, StrikesData, WildPitchData};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Add, AddAssign, Default, AsRef)]
 #[serde(rename_all = "camelCase")]

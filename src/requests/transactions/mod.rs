@@ -37,6 +37,7 @@ pub struct TransactionDates {
 	pub resolution_date: Option<NaiveDate>,
 }
 
+//noinspection DuplicatedCode
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "typeCode")]
 pub enum Transaction {
@@ -304,6 +305,18 @@ pub enum Transaction {
 		#[serde(rename = "toTeam")]
 		team: Team,
 	},
+	#[serde(rename = "R5M", rename_all = "camelCase")]
+	RuleFiveDraftMinors {
+		#[serde(flatten)]
+		common: TransactionCommon,
+		#[serde(default = "Person::unknown_person")]
+		person: Person,
+		#[serde(rename = "fromTeam")]
+		source_team: Team,
+		#[serde(default = "Team::unknown_team")]
+		#[serde(rename = "toTeam")]
+		destination_team: Team,
+	},
 }
 
 impl Deref for Transaction {
@@ -335,7 +348,8 @@ impl Deref for Transaction {
 			| Self::Loan { common, .. }
 			| Self::ContractPurchased { common, .. }
 			| Self::Drafted { common, .. }
-			| Self::DeclaredIneligible { common, .. } => common,
+			| Self::DeclaredIneligible { common, .. }
+			| Self::RuleFiveDraftMinors { common, .. } => common,
 		}
 	}
 }
@@ -367,7 +381,8 @@ impl DerefMut for Transaction {
 			| Self::Loan { common, .. }
 			| Self::ContractPurchased { common, .. }
 			| Self::Drafted { common, .. }
-			| Self::DeclaredIneligible { common, .. } => common,
+			| Self::DeclaredIneligible { common, .. }
+			| Self::RuleFiveDraftMinors { common, .. } => common,
 		}
 	}
 }
@@ -486,7 +501,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn parse_all_requests() {
+	async fn parse_sample_requests() {
 		let blue_jays = TeamsRequest::builder()
 			.season(2025)
 			.build_and_get()
