@@ -64,7 +64,7 @@ impl ToTokens for StatsInput {
 				let snake_case_name = format_ident!("{}", pascal_or_camel_case_to_snake_case(stat_group.to_string()));
 				let stat_type_stats = format_ident!("{}Stats", stat_type);
 				quote! {
-					#snake_case_name: Box<<#crate_name::stats::#stat_type_stats as #crate_name::stats::StatTypeStats>::#stat_group>,
+					#snake_case_name: Box<<#crate_name::requests::stats::#stat_type_stats as #crate_name::requests::stats::StatTypeStats>::#stat_group>,
 				}
 			}).collect::<TokenStream>();
 			quote! {
@@ -91,7 +91,7 @@ impl ToTokens for StatsInput {
 				let stat_type_stats = format_ident!("{}Stats", stat_type);
 				let stat_type_str_lit = LitStr::new(&to_mlb_api_stat_type(stat_type.to_string().into()), stat_type.span());
 				quote! {
-					#snake_case_name: Box::new(#crate_name::stats::make_stat_split::<<#crate_name::stats::#stat_type_stats as #crate_name::stats::StatTypeStats>::#stat_group>(&mut value, #stat_type_str_lit, #crate_name::StatGroup::#stat_group).map_err(|e| e.to_string())?),
+					#snake_case_name: Box::new(#crate_name::requests::stats::make_stat_split::<<#crate_name::requests::stats::#stat_type_stats as #crate_name::requests::stats::StatTypeStats>::#stat_group>(&mut value, #stat_type_str_lit, #crate_name::requests::stat_groups::StatGroup::#stat_group).map_err(|e| e.to_string())?),
 				}
 			}).collect::<TokenStream>();
 			quote! {
@@ -119,20 +119,20 @@ impl ToTokens for StatsInput {
 				where
 					D: ::serde::Deserializer<'de>
 				{
-					::core::result::Result::and_then(<#crate_name::stats::__ParsedStats as ::serde::Deserialize>::deserialize(deserializer), |v| ::core::convert::TryFrom::try_from(v).map_err(::serde::de::Error::custom))
+					::core::result::Result::and_then(<#crate_name::requests::stats::__ParsedStats as ::serde::Deserialize>::deserialize(deserializer), |v| ::core::convert::TryFrom::try_from(v).map_err(::serde::de::Error::custom))
 				}
 			}
 
-			impl #crate_name::stats::Stats for #name {
+			impl #crate_name::requests::stats::Stats for #name {
 				fn request_text() -> &'static str {
 					#request_text_lit
 				}
 			}
 
-			impl ::core::convert::TryFrom<#crate_name::stats::__ParsedStats> for #name {
+			impl ::core::convert::TryFrom<#crate_name::requests::stats::__ParsedStats> for #name {
 				type Error = ::std::string::String;
 
-				fn try_from(mut value: #crate_name::stats::__ParsedStats) -> ::core::result::Result<Self, Self::Error> {
+				fn try_from(mut value: #crate_name::requests::stats::__ParsedStats) -> ::core::result::Result<Self, Self::Error> {
 					::core::result::Result::Ok(Self {
 						#stat_type_fields_try_from
 					})

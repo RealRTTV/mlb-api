@@ -950,8 +950,6 @@ dependencies = [
 [[package]]
 name = "mlb-api-proc"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f66d80b5a3cf06d43e7f95a3c75cdd974f22ddf8b40a9c7551a09f45f759590"
 dependencies = [
  "anyhow",
  "derive-syn-parse",

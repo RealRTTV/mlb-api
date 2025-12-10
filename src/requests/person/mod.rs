@@ -1,11 +1,15 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
 
 pub mod stats;
+pub mod free_agents;
+// done
+pub mod people;
+pub mod players;
 
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::draft::School;
 use crate::hydrations::Hydrations;
-use crate::people::PeopleResponse;
+use people::PeopleResponse;
 use crate::positions::Position;
 use crate::seasons::season::SeasonId;
 use crate::teams::team::Team;
@@ -237,19 +241,25 @@ impl<H: PersonHydrations> DerefMut for Person<H> {
 }
 
 #[derive(Builder)]
+#[builder(derive(Into))]
 pub struct PersonRequest<H: PersonHydrations> {
 	#[builder(start_fn)]
+	#[builder(into)]
 	id: PersonId,
 	#[builder(skip)]
 	_marker: PhantomData<H>,
 }
 
+impl<H: PersonHydrations, S: person_request_builder::State + person_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for PersonRequestBuilder<H, S> {
+	type Built = PersonRequest<H>;
+}
+
 impl<H: PersonHydrations> Display for PersonRequest<H> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		if let Some(request_text) = H::request_text() {
-			write!(f, "http://statsapimlb.com/api/v1/people/{}?hydrate={request_text}", self.id)
+			write!(f, "http://statsapi.mlb.com/api/v1/people/{}?hydrate={request_text}", self.id)
 		} else {
-			write!(f, "http://statsapimlb.com/api/v1/people/{}", self.id)
+			write!(f, "http://statsapi.mlb.com/api/v1/people/{}", self.id)
 		}
 	}
 }
@@ -348,12 +358,11 @@ macro_rules! person_hydrations {
 		    #[serde(default)]
 		    pub roster_entries: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
 		    #[serde(default, rename = "jobEntries")]
-		    jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
+		    pub jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
 		    #[serde(default)]
 		    pub relatives: ::std::vec::Vec<$crate::person::Relative>,
 		    #[serde(default)]
 		    pub transactions: ::std::vec::Vec<$crate::transactions::Transaction>,
-		    // possibly add a specific type? likely not as socials can always add more over time
 		    #[serde(default)]
 		    pub social: ::std::collections::HashMap<String, Vec<String>>,
 		    #[serde(default)]
@@ -371,7 +380,7 @@ macro_rules! person_hydrations {
 	    impl $crate::hydrations::Hydrations for $hydrations_name {
 		    fn request_text() -> ::core::option::Option<::std::borrow::Cow<'static, str>> {
 			    let base = ::mlb_api_proc::concat_camel_case!($($hydration)*);
-			    Some(::std::borrow::Cow::Owned(::std::string::String::from(base) + <$stats as $crate::stats::Stats>::request_text()))
+			    Some(::std::borrow::Cow::Owned(::std::string::String::from(base) + "stats(" + <$stats as $crate::stats::Stats>::request_text() + ")"))
             }
 	    }
 
@@ -395,12 +404,11 @@ macro_rules! person_hydrations {
 		    #[serde(default)]
 		    pub roster_entries: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
 		    #[serde(default, rename = "jobEntries")]
-		    jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
+		    pub jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
 		    #[serde(default)]
 		    pub relatives: ::std::vec::Vec<$crate::person::Relative>,
 		    #[serde(default)]
 		    pub transactions: ::std::vec::Vec<$crate::transactions::Transaction>,
-		    // possibly add a specific type? likely not as socials can always add more over time
 		    #[serde(default)]
 		    pub social: ::std::collections::HashMap<String, Vec<String>>,
 		    #[serde(default)]
@@ -457,5 +465,92 @@ impl RequestEntryCache for Person<()> {
 		Self: Sized
 	{
 		&CACHE
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::sports::SportId;
+	use crate::{RosterType, StatsAPIRequestUrlBuilderExt};
+	use crate::teams::team::roster::RosterRequest;
+	use crate::teams::TeamsRequest;
+	use super::*;
+
+	#[tokio::test]
+	async fn no_hydrations() {
+		let _ = PersonRequest::<()>::builder(665489).build_and_get().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn all_but_stats_hydrations() {
+		person_hydrations! {
+			pub struct AllButStatHydrations {
+				awards,
+				current_team,
+				preferred_team,
+				roster_entries,
+				relatives,
+				transactions,
+				social,
+				education,
+				draft,
+				xref_id,
+				nicknames,
+				depth_charts,
+			}
+		}
+
+		let _ = PersonRequest::<AllButStatHydrations>::builder(665489).build_and_get().await.unwrap();
+	}
+
+	#[rustfmt::skip]
+	#[tokio::test]
+	async fn only_stats_hydrations() {
+		stats! {
+			pub struct BasicStats {
+				[Career] = [Hitting]
+			}
+		}
+
+		person_hydrations! {
+			pub struct StatOnlyHydrations {
+				stats: BasicStats,
+			}
+		}
+
+		let toronto_blue_jays = TeamsRequest::builder()
+			.season(2025)
+			.sport_id(SportId::MLB)
+			.build_and_get()
+			.await
+			.unwrap()
+			.teams
+			.into_iter()
+			.find(|team| team.try_as_named().is_some_and(|team| team.name.name == "Toronto Blue Jays"))
+			.unwrap();
+
+		let roster = RosterRequest::builder()
+			.team_id(toronto_blue_jays.id)
+			.roster_type(RosterType::AllTime)
+			.build_and_get()
+			.await
+			.unwrap();
+
+		let bautista = roster
+			.roster
+			.into_iter()
+			.find(|player| player.person.try_as_named().is_some_and(|person| person.full_name.rsplit_once(' ').is_some_and(|(_, last_name)| last_name == "Bautista")))
+			.unwrap();
+
+		let player = PersonRequest::<StatOnlyHydrations>::builder(bautista.person.id)
+			.build_and_get()
+			.await
+			.unwrap()
+			.people
+			.into_iter()
+			.next()
+			.unwrap();
+
+		dbg!(&player.stats);
 	}
 }

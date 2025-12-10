@@ -1,76 +1,70 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
-use derive_more::{Deref, DerefMut, Display, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use derive_more::Display;
 use serde::Deserialize;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
-pub struct RosterTypeId(String);
-
-impl RosterTypeId {
-	#[must_use]
-	pub const fn new(id: String) -> Self {
-		Self(id)
-	}
-}
-
-impl Default for RosterTypeId {
-	fn default() -> Self {
-		Self::new("active".to_owned())
-	}
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct IdentifiableRosterType {
-	#[serde(rename = "lookupName")]
-	pub id: RosterTypeId,
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-pub struct HydratedRosterType {
-	pub parameter: String,
-	pub description: String,
-
-	#[deref]
-	#[deref_mut]
-	#[serde(flatten)]
-	inner: IdentifiableRosterType,
-}
-
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
-#[serde(untagged)]
+#[derive(Debug, Deserialize, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[serde(try_from = "__RosterTypeStruct")]
 pub enum RosterType {
-	Hydrated(HydratedRosterType),
-	Identifiable(IdentifiableRosterType),
+	#[display("40Man")]
+	FourtyMan,
+	#[display("fullSeason")]
+	FullSeason,
+	#[display("fullRoster")]
+	FullRoster,
+	#[display("nonRosterInvitees")]
+	NonRosterInvitees,
+	#[display("active")]
+	Active,
+	#[display("allTime")]
+	AllTime,
+	#[display("depthChart")]
+	DepthChart,
+	#[display("gameday")]
+	GameDay,
+	#[display("coach")]
+	Coach,
 }
 
-impl PartialEq for RosterType {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
+#[derive(Deserialize)]
+#[doc(hidden)]
+#[serde(untagged)]
+enum __RosterTypeStruct {
+	Wrapped {
+		#[serde(rename = "parameter")]
+		id: String,
+	},
+	Inline(String),
 }
 
-impl Deref for RosterType {
-	type Target = IdentifiableRosterType;
+impl Deref for __RosterTypeStruct {
+	type Target = str;
 
 	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
+		let (__RosterTypeStruct::Wrapped { id } | __RosterTypeStruct::Inline(id)) = self;
+		id
 	}
 }
 
-impl DerefMut for RosterType {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
+impl TryFrom<__RosterTypeStruct> for RosterType {
+	type Error = String;
+
+	fn try_from(value: __RosterTypeStruct) -> Result<Self, Self::Error> {
+		Ok(match &*value {
+			"40Man" => Self::FourtyMan,
+			"fullSeason" => Self::FullSeason,
+			"fullRoster" => Self::FullRoster,
+			"nonRosterInvitees" => Self::NonRosterInvitees,
+			"active" => Self::Active,
+			"allTime" => Self::AllTime,
+			"depthChart" => Self::DepthChart,
+			"gameday" => Self::GameDay,
+			"coach" => Self::Coach,
+			str => return Err(str.to_owned()),
+		})
 	}
 }
 
@@ -81,16 +75,16 @@ impl MetaKind for RosterType {
 static CACHE: RwLock<HydratedCacheTable<RosterType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for RosterType {
-	type HydratedVariant = HydratedRosterType;
-	type Identifier = RosterTypeId;
+	type HydratedVariant = RosterType;
+	type Identifier = RosterType;
 	type URL = MetaRequest<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated()
+		Some(self)
 	}
 
 	fn id(&self) -> &Self::Identifier {
-		&self.id
+		self
 	}
 
 	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
