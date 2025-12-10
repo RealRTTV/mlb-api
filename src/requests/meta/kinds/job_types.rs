@@ -38,7 +38,7 @@ pub struct HydratedJobType {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum JobType {
-	Hydrated(Box<HydratedJobType>),
+	Hydrated(HydratedJobType),
 	Identifiable(IdentifiableJobType),
 }
 
@@ -75,7 +75,7 @@ impl MetaKind for JobType {
 static CACHE: RwLock<HydratedCacheTable<JobType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for JobType {
-	type HydratedVariant = Box<HydratedJobType>;
+	type HydratedVariant = HydratedJobType;
 	type Identifier = JobTypeId;
 	type URL = MetaRequest<Self>;
 

@@ -29,7 +29,7 @@ pub struct PitchTypeId(String);
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum PitchType {
-	Hydrated(Box<HydratedPitchType>),
+	Hydrated(HydratedPitchType),
 	Identifiable(IdentifiablePitchType),
 }
 
@@ -66,7 +66,7 @@ impl MetaKind for PitchType {
 static CACHE: RwLock<HydratedCacheTable<PitchType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for PitchType {
-	type HydratedVariant = Box<HydratedPitchType>;
+	type HydratedVariant = HydratedPitchType;
 	type Identifier = PitchTypeId;
 	type URL = MetaRequest<Self>;
 

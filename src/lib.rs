@@ -1,4 +1,5 @@
-#![warn(clippy::pedantic, clippy::nursery)]
+#![warn(clippy::pedantic, clippy::nursery, clippy::complexity, clippy::cargo, clippy::perf, clippy::style)]
+#![allow(clippy::multiple_crate_versions)]
 
 #[macro_export]
 macro_rules! stats {

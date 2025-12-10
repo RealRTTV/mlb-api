@@ -44,7 +44,7 @@ pub struct HydratedRosterType {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum RosterType {
-	Hydrated(Box<HydratedRosterType>),
+	Hydrated(HydratedRosterType),
 	Identifiable(IdentifiableRosterType),
 }
 
@@ -81,7 +81,7 @@ impl MetaKind for RosterType {
 static CACHE: RwLock<HydratedCacheTable<RosterType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for RosterType {
-	type HydratedVariant = Box<HydratedRosterType>;
+	type HydratedVariant = HydratedRosterType;
 	type Identifier = RosterTypeId;
 	type URL = MetaRequest<Self>;
 

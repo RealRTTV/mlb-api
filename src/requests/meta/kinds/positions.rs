@@ -48,7 +48,7 @@ pub struct PositionCode(String);
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Position {
-	Hydrated(Box<HydratedPosition>),
+	Hydrated(HydratedPosition),
 	Named(NamedPosition),
 }
 
@@ -85,7 +85,7 @@ impl MetaKind for Position {
 static CACHE: RwLock<HydratedCacheTable<Position>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Position {
-	type HydratedVariant = Box<HydratedPosition>;
+	type HydratedVariant = HydratedPosition;
 	type Identifier = PositionCode;
 	type URL = MetaRequest<Self>;
 

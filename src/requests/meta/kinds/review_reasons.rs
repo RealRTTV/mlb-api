@@ -29,7 +29,7 @@ pub struct HydratedReviewReason {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum ReviewReason {
-	Hydrated(Box<HydratedReviewReason>),
+	Hydrated(HydratedReviewReason),
 	Identifiable(IdentifiableReviewReason),
 }
 
@@ -66,7 +66,7 @@ impl MetaKind for ReviewReason {
 static CACHE: RwLock<HydratedCacheTable<ReviewReason>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for ReviewReason {
-	type HydratedVariant = Box<HydratedReviewReason>;
+	type HydratedVariant = HydratedReviewReason;
 	type Identifier = ReviewReasonId;
 	type URL = MetaRequest<Self>;
 

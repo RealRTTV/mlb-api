@@ -109,6 +109,7 @@ struct __ScheduleGameStruct {
 }
 
 impl From<__ScheduleGameStruct> for ScheduleGame {
+	#[allow(clippy::cast_possible_wrap, reason = "not gonna happen")]
 	fn from(
 		__ScheduleGameStruct {
 			game_id,

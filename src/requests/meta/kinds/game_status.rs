@@ -139,7 +139,7 @@ pub struct HydratedGameStatus {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum GameStatus {
-	Hydrated(Box<HydratedGameStatus>),
+	Hydrated(HydratedGameStatus),
 	Identifiable(IdentifiableGameStatus),
 }
 
@@ -176,7 +176,7 @@ impl MetaKind for GameStatus {
 static CACHE: RwLock<HydratedCacheTable<GameStatus>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for GameStatus {
-	type HydratedVariant = Box<HydratedGameStatus>;
+	type HydratedVariant = HydratedGameStatus;
 	type Identifier = GameStatusId;
 	type URL = MetaRequest<Self>;
 

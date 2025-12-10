@@ -407,9 +407,12 @@ impl Display for TransactionsRequestKind {
 	}
 }
 
-/// This API request is rather unreliable. For an example of what I mean: <http://statsapi.mlb.com/api/v1/transactions?transactionIds=477955>
-/// Vladimir Guerrero Jr.'s `.` in his name causes the API to be super confused and generate 5 players, four of which don't exist.
+/// Sends a request to get the relevant transactions for a player.
+///
+/// This API request is somewhat unreliable. For an example of what I mean: <http://statsapi.mlb.com/api/v1/transactions?transactionIds=477955>. Vladimir Guerrero Jr.'s `.` in his name causes the API to be super confused and generate 5 players, four of which don't exist.
+///
 /// Of course putting [`Option<Person>`] for the `person` field is needlessly overkill since mostly all situations will not cause this, but the transactions shouldn't be discarded.
+///
 /// Instead, these values (no team, no date, no player) are given default values such that they are valid, but any further API requests with them return an error, such as a person with ID 0.
 #[derive(Builder)]
 #[builder(derive(Into))]

@@ -43,7 +43,7 @@ impl LanguageId {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Language {
-	Hydrated(Box<HydratedLanguage>),
+	Hydrated(HydratedLanguage),
 	Identifiable(IdentifiableLanguage),
 }
 
@@ -90,7 +90,7 @@ impl MetaKind for Language {
 static CACHE: RwLock<HydratedCacheTable<Language>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Language {
-	type HydratedVariant = Box<HydratedLanguage>;
+	type HydratedVariant = HydratedLanguage;
 	type Identifier = LanguageId;
 	type URL = MetaRequest<Self>;
 

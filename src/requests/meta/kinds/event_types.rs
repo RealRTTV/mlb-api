@@ -34,7 +34,7 @@ pub struct HydratedEventType {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum EventType {
-	Hydrated(Box<HydratedEventType>),
+	Hydrated(HydratedEventType),
 	Identifiable(IdentifiableEventType),
 }
 
@@ -71,7 +71,7 @@ impl MetaKind for EventType {
 static CACHE: RwLock<HydratedCacheTable<EventType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for EventType {
-	type HydratedVariant = Box<HydratedEventType>;
+	type HydratedVariant = HydratedEventType;
 	type Identifier = EventTypeId;
 	type URL = MetaRequest<Self>;
 

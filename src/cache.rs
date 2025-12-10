@@ -9,8 +9,8 @@ use std::sync::Arc;
 use thiserror::Error;
 
 pub trait RequestEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
-    type HydratedVariant;
-    type Identifier: Clone + Eq + Hash + Display;
+    type HydratedVariant: Send + Sync;
+    type Identifier: Clone + Eq + Hash + Display + Sync;
     type URL: StatsAPIRequestUrl;
     
     fn into_hydrated_variant(self) -> Option<Self::HydratedVariant>;
@@ -101,8 +101,7 @@ impl<T: RequestEntryCache> HydratedCacheTable<T> {
     /// See variants of [`crate::request::Error`]
     #[cfg(feature = "reqwest")]
     pub async fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as RequestEntryCache>::url_for_id(id);
-        let url = url.to_string();
+        let url = <T as RequestEntryCache>::url_for_id(id).to_string();
         let response = crate::request::get::<<<T as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url).await?;
         self.try_add_entries(<T as RequestEntryCache>::get_entries(response));
         Ok(())
@@ -110,8 +109,8 @@ impl<T: RequestEntryCache> HydratedCacheTable<T> {
 
     #[cfg(feature = "ureq")]
     pub fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as RequestEntryCache>::url_for_id(&id);
-        let response = url.get()?;
+        let url = <T as RequestEntryCache>::url_for_id(id).to_string();
+        let response = crate::request::get::<<<T as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url)?;
         self.try_add_entries(<T as RequestEntryCache>::get_entries(response));
         Ok(())
     }

@@ -40,7 +40,7 @@ pub struct HydratedSituationCode {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum SituationCode {
-	Hydrated(Box<HydratedSituationCode>),
+	Hydrated(HydratedSituationCode),
 	Identifiable(IdentifiableSituationCode),
 }
 
@@ -77,7 +77,7 @@ impl MetaKind for SituationCode {
 static CACHE: RwLock<HydratedCacheTable<SituationCode>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for SituationCode {
-	type HydratedVariant = Box<HydratedSituationCode>;
+	type HydratedVariant = HydratedSituationCode;
 	type Identifier = SituationCodeId;
 	type URL = MetaRequest<Self>;
 

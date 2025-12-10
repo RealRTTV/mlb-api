@@ -48,7 +48,7 @@ pub struct Ballplayer<H> where H: PersonHydrations {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inner: HydratedPerson<H>,
+	inner: Box<HydratedPerson<H>>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -193,8 +193,8 @@ impl<'de> Deserialize<'de> for JerseyNumber {
 #[serde(untagged)]
 #[serde(bound = "H: PersonHydrations")]
 pub enum Person<H: PersonHydrations = ()> {
-	Ballplayer(Ballplayer<H>),
-	Hydrated(HydratedPerson<H>),
+	Ballplayer(Box<Ballplayer<H>>),
+	Hydrated(Box<HydratedPerson<H>>),
 	Named(NamedPerson<H>),
 	Identifiable(IdentifiablePerson<H>),
 }
@@ -429,7 +429,7 @@ macro_rules! person_hydrations {
 static CACHE: RwLock<HydratedCacheTable<Person<()>>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Person<()> {
-	type HydratedVariant = HydratedPerson<()>;
+	type HydratedVariant = Box<HydratedPerson<()>>;
 	type Identifier = PersonId;
 	type URL = PersonRequest<()>;
 

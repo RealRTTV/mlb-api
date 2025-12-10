@@ -41,7 +41,7 @@ pub struct HydratedSkyDescription {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum SkyDescription {
-	Hydrated(Box<HydratedSkyDescription>),
+	Hydrated(HydratedSkyDescription),
 	Identifiable(IdentifiableSkyDescription),
 }
 
@@ -78,7 +78,7 @@ impl MetaKind for SkyDescription {
 static CACHE: RwLock<HydratedCacheTable<SkyDescription>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for SkyDescription {
-	type HydratedVariant = Box<HydratedSkyDescription>;
+	type HydratedVariant = HydratedSkyDescription;
 	type Identifier = SkyDescriptionId;
 	type URL = MetaRequest<Self>;
 
