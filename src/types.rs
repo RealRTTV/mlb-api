@@ -1,4 +1,5 @@
 use chrono::{Datelike, Local, NaiveDate};
+use compact_str::CompactString;
 use derive_more::{Display, FromStr};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
@@ -6,7 +7,6 @@ use std::fmt::{Debug, Display, Formatter};
 use std::num::{ParseFloatError, ParseIntError};
 use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
-use compact_str::CompactString;
 use thiserror::Error;
 
 /// Shared types across multiple endpoints
@@ -44,15 +44,21 @@ impl Display for Copyright {
 }
 
 impl Default for Copyright {
+	#[allow(clippy::cast_sign_loss, reason = "jesus is not alive")]
 	fn default() -> Self {
 		Self::Typical { year: Local::now().year() as _ }
 	}
 }
 
+/// # Errors
+/// If a string cannot be parsed from the deserializer.
 pub fn try_from_str<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Option<T>, D::Error> {
 	Ok(String::deserialize(deserializer)?.parse::<T>().ok())
 }
 
+/// # Errors
+/// 1. If a string cannot be parsed from the deserializer.
+/// 2. If the type cannot be parsed from the string.
 pub fn from_str<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<T, D::Error>
 where
 	<T as FromStr>::Err: Debug,
@@ -60,13 +66,16 @@ where
 	String::deserialize(deserializer)?.parse::<T>().map_err(|e| Error::custom(format!("{e:?}")))
 }
 
+/// # Errors
+/// If the type cannot be parsed into a Y or N string
 pub fn from_yes_no<'de, D: Deserializer<'de>>(deserializer: D) -> Result<bool, D::Error> {
 	#[derive(Deserialize)]
+	#[repr(u8)]
 	enum Boolean {
 		#[serde(rename = "Y")]
-		Yes,
+		Yes = 1,
 		#[serde(rename = "N")]
-		No,
+		No = 0,
 	}
 
 	Ok(match Boolean::deserialize(deserializer)? {
@@ -85,20 +94,25 @@ impl FromStr for HeightMeasurement {
 	type Err = HeightMeasurementParseError;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s.split_once("' ").map(|(feet, rest)| (feet, rest.split_once(r#"""#))) {
-			Some((feet, Some((inches, "")))) => {
-				let feet = feet.parse::<u8>()?;
-				let inches = inches.parse::<u8>()?;
-				Ok(Self::FeetAndInches { feet, inches })
-			}
-			_ => match s.split_once("cm") {
-				Some((cm, "")) => {
-					let cm = cm.parse::<u16>()?;
-					Ok(Self::Centimeters { cm })
-				}
-				_ => Err(HeightMeasurementParseError::UnknownSpec(s.to_owned())),
-			},
+		if let Some((feet, Some((inches, "")))) = s.split_once("' ").map(|(feet, rest)| (feet, rest.split_once('"'))) {
+			let feet = feet.parse::<u8>()?;
+			let inches = inches.parse::<u8>()?;
+			Ok(Self::FeetAndInches { feet, inches })
+		} else if let Some((cm, "")) = s.split_once("cm") {
+			let cm = cm.parse::<u16>()?;
+			Ok(Self::Centimeters { cm })
+		} else {
+			Err(HeightMeasurementParseError::UnknownSpec(s.to_owned()))
 		}
+	}
+}
+
+impl<'de> Deserialize<'de> for HeightMeasurement {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		String::deserialize(deserializer)?.parse().map_err(D::Error::custom)
 	}
 }
 
@@ -180,7 +194,10 @@ pub type NaiveDateRange = RangeInclusive<NaiveDate>;
 
 pub(crate) const MLB_API_DATE_FORMAT: &str = "%m/%d/%Y";
 
-pub fn deserialize_comma_seperated_vec<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Vec<T>, D::Error>
+/// # Errors
+/// 1. If a string cannot be deserialized
+/// 2. If the data does not appear in the format of `/(?:<t parser here>,)*<t parser here>?/g`
+pub fn deserialize_comma_separated_vec<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
 	<T as FromStr>::Err: Debug,
 {
@@ -233,6 +250,7 @@ pub struct Location {
 
 impl Eq for Location {}
 
+// todo: replace these with stat types like percentage, two decimal place, three decimal place, etc.
 #[derive(Debug, Copy, Clone)]
 pub enum IntegerOrFloatStat {
 	Integer(i64),
@@ -245,9 +263,12 @@ impl PartialEq for IntegerOrFloatStat {
 			(Self::Integer(lhs), Self::Integer(rhs)) => lhs == rhs,
 			(Self::Float(lhs), Self::Float(rhs)) => lhs == rhs,
 
+			#[allow(clippy::cast_precision_loss, reason = "we checked if it's perfectly representable")]
+			#[allow(clippy::cast_possible_truncation, reason = "we checked if it's perfectly representable")]
 			(Self::Integer(int), Self::Float(float)) | (Self::Float(float), Self::Integer(int)) => {
 				// fast way to check if the float is representable perfectly as an integer and if it's within range of `i64`
-				if float.floor() == float && (i64::MIN as f64..=i64::MAX as f64).contains(&float) {
+				// we inline the f64 casts of i64::MIN and i64::MAX, and change the upper bound to be < as i64::MAX is not perfectly representable.
+				if float.is_normal() && float.floor() == float && (-9_223_372_036_854_775_808.0..9_223_372_036_854_775_808.0).contains(&float) {
 					float as i64 == int
 				} else {
 					false
@@ -266,11 +287,25 @@ impl<'de> Deserialize<'de> for IntegerOrFloatStat {
 	{
 		struct Visitor;
 
-		impl<'de> serde::de::Visitor<'de> for Visitor {
+		impl serde::de::Visitor<'_> for Visitor {
 			type Value = IntegerOrFloatStat;
 
 			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
 				formatter.write_str("integer, float, or string that can be parsed to either")
+			}
+
+			fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				Ok(IntegerOrFloatStat::Integer(v))
+			}
+
+			fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				Ok(IntegerOrFloatStat::Float(v))
 			}
 
 			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -286,20 +321,6 @@ impl<'de> Deserialize<'de> for IntegerOrFloatStat {
 				} else {
 					Err(E::invalid_value(serde::de::Unexpected::Str(v), &self))
 				}
-			}
-
-			fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
-			where
-				E: Error,
-			{
-				Ok(IntegerOrFloatStat::Integer(v))
-			}
-
-			fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
-			where
-				E: Error,
-			{
-				Ok(IntegerOrFloatStat::Float(v))
 			}
 		}
 
@@ -351,6 +372,8 @@ impl<'a> TryFrom<&'a str> for RGBAColor {
 impl FromStr for RGBAColor {
 	type Err = RGBAColorFromStrError;
 
+	#[allow(clippy::single_char_pattern, reason = "other patterns are strings, the choice to make that one a char does not denote any special case")]
+	#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "intended behaviour with alpha channel")]
 	fn from_str(mut s: &str) -> Result<Self, Self::Err> {
 		s = s.strip_suffix("rgba(").ok_or(Self::Err::InvalidFormat)?;
 		let (red, s) = s.split_once(", ").ok_or(Self::Err::InvalidFormat)?;
@@ -362,7 +385,7 @@ impl FromStr for RGBAColor {
 		let (alpha, s) = s.split_once(")").ok_or(Self::Err::InvalidFormat)?;
 		let alpha = (alpha.parse::<f32>()? * 255.0).round() as u8;
 		if !s.is_empty() { return Err(Self::Err::InvalidFormat); }
-		Ok(RGBAColor {
+		Ok(Self {
 			red,
 			green,
 			blue,

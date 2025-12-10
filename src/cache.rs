@@ -1,17 +1,17 @@
+use crate::RwLock;
+use crate::StatsAPIRequestUrl;
+use fxhash::FxBuildHasher;
+use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::sync::Arc;
-use fxhash::FxBuildHasher;
-use serde::de::DeserializeOwned;
 use thiserror::Error;
-use crate::endpoints::StatsAPIEndpointUrl;
-use crate::RwLock;
 
-pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
-    type HydratedVariant;
-    type Identifier: Clone + Eq + Hash + Display;
-    type URL: StatsAPIEndpointUrl;
+pub trait RequestEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
+    type HydratedVariant: Send + Sync;
+    type Identifier: Clone + Eq + Hash + Display + Sync;
+    type URL: StatsAPIRequestUrl;
     
     fn into_hydrated_variant(self) -> Option<Self::HydratedVariant>;
     
@@ -19,7 +19,7 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
 
     fn url_for_id(id: &Self::Identifier) -> Self::URL;
 
-    fn get_entries(response: <Self::URL as StatsAPIEndpointUrl>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
+    fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
 
     fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>> where Self: Sized;
 
@@ -31,6 +31,7 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
         if let Some(hydrated_entry) = cache.get(id).cloned() {
             return Ok(hydrated_entry);
         }
+        drop(cache);
 
         let mut cache = cache_lock.write().await;
         cache.request_and_add(id).await?;
@@ -52,19 +53,20 @@ pub trait EndpointEntryCache: 'static+ Debug + DeserializeOwned + Eq + Clone {
     }
 }
 
-pub struct HydratedCacheTable<T: EndpointEntryCache> {
+pub struct HydratedCacheTable<T: RequestEntryCache> {
     cached_values: HashMap<T::Identifier, Arc<T::HydratedVariant>, FxBuildHasher>,
 }
 
 #[derive(Debug, Error)]
-pub enum Error<T: EndpointEntryCache> {
+pub enum Error<T: RequestEntryCache> {
     #[error(transparent)]
     Url(#[from] crate::request::Error),
     #[error("No matching entry was found for id {0}")]
     NoMatchingVariant(T::Identifier),
 }
 
-impl<T: EndpointEntryCache> HydratedCacheTable<T> {
+impl<T: RequestEntryCache> HydratedCacheTable<T> {
+    #[allow(clippy::new_without_default, reason = "needs to be const")]
     #[must_use]
     pub const fn new() -> Self {
         Self {
@@ -79,7 +81,7 @@ impl<T: EndpointEntryCache> HydratedCacheTable<T> {
 
     // make this unionize hydrations when those are eventually implemented
     pub fn insert(&mut self, id: T::Identifier, value: T::HydratedVariant) {
-        self.cached_values.insert(id.clone(), Arc::new(value));
+        self.cached_values.insert(id, Arc::new(value));
     }
     
     pub fn clear(&mut self) {
@@ -95,19 +97,21 @@ impl<T: EndpointEntryCache> HydratedCacheTable<T> {
         }
     }
 
+    /// # Errors
+    /// See variants of [`crate::request::Error`]
     #[cfg(feature = "reqwest")]
     pub async fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as EndpointEntryCache>::url_for_id(&id);
-        let response = url.get().await?;
-        self.try_add_entries(<T as EndpointEntryCache>::get_entries(response));
+        let url = <T as RequestEntryCache>::url_for_id(id).to_string();
+        let response = crate::request::get::<<<T as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url).await?;
+        self.try_add_entries(<T as RequestEntryCache>::get_entries(response));
         Ok(())
     }
 
     #[cfg(feature = "ureq")]
     pub fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as EndpointEntryCache>::url_for_id(&id);
-        let response = url.get()?;
-        self.try_add_entries(<T as EndpointEntryCache>::get_entries(response));
+        let url = <T as RequestEntryCache>::url_for_id(id).to_string();
+        let response = crate::request::get::<<<T as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url)?;
+        self.try_add_entries(<T as RequestEntryCache>::get_entries(response));
         Ok(())
     }
 }
