@@ -12,6 +12,7 @@ use serde::de::{DeserializeOwned, Error, Visitor};
 use serde_json::Value;
 use serde_with::serde_as;
 use thiserror::Error;
+use crate::league::League;
 use crate::requests::{GameType, StatGroup, StatType};
 use crate::requests::person::Person;
 use crate::requests::stats::catching::CatchingStats;
@@ -20,6 +21,8 @@ use crate::requests::stats::hitting::{AdvancedHittingStats, HittingStats, Saberm
 use crate::requests::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
 use crate::requests::stats::units::PercentageStat;
 use crate::requests::teams::team::Team;
+use crate::seasons::season::SeasonId;
+use crate::sports::Sport;
 use crate::types::{RGBAColor, SimpleTemperature};
 
 pub mod pieces;
@@ -256,12 +259,29 @@ impl<T: Stat + DeserializeOwned> Stat for Multiple<T> {
 	}
 }
 
-#[serde_as]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[serde(bound = "T: Stat + DeserializeOwned")]
+#[serde(rename_all = "camelCase")]
+pub struct Career<T: Stat + DeserializeOwned> {
+	pub team: Option<Team>,
+	pub player: Person,
+	pub league: Option<League>,
+	pub sport: Option<Sport>,
+	pub game_type: GameType,
+	#[deref]
+	#[deref_mut]
+	#[serde(rename = "stat")]
+	pub stats: T,
+}
+
+impl<T: Stat + DeserializeOwned> BaseStat for Career<T> {
+
+}
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(bound = "T: Stat + DeserializeOwned")]
 pub struct Season<T: Stat + DeserializeOwned> {
-	#[serde_as(as = "DisplayFromStr")]
-	pub season: u32,
+	pub season: SeasonId,
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
@@ -274,13 +294,13 @@ impl<T: Stat + DeserializeOwned> BaseStat for Season<T> {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct MultipleSeasons<T: Stat + DeserializeOwned> {
-	pub seasons: FxHashMap<u32, Season<T>>,
+	pub seasons: FxHashMap<SeasonId, Season<T>>,
 }
 
 #[derive(Debug, Error)]
 pub enum MultipleSeasonsFromSplitWrappedVariantError {
 	#[error("Duplicate entry for season {season} found")]
-	DuplicateEntry { season: u32 },
+	DuplicateEntry { season: SeasonId },
 }
 
 impl<T: Stat + DeserializeOwned> Stat for MultipleSeasons<T> {
@@ -924,7 +944,7 @@ stat_type_stats!(YearByYearPlayoffsStats { MultipleSeasons<HittingStats>, Multip
 stat_type_stats!(SeasonStats { Season<HittingStats>, Season<PitchingStats>, Season<FieldingStats>, Season<CatchingStats> });
 // `standard`?
 // `advanced`?
-stat_type_stats!(CareerStats { HittingStats, PitchingStats, FieldingStats, CatchingStats });
+stat_type_stats!(CareerStats { Career<HittingStats>, Career<PitchingStats>, Career<FieldingStats>, Career<CatchingStats> });
 stat_type_stats!(CareerRegularSeasonStats { MultipleSeasons<HittingStats>, MultipleSeasons<PitchingStats>, MultipleSeasons<FieldingStats>, MultipleSeasons<CatchingStats> });
 stat_type_stats!(CareerAdvancedStats { AdvancedHittingStats, AdvancedPitchingStats, (), () });
 stat_type_stats!(SeasonAdvancedStats { Season<AdvancedHittingStats>, Season<AdvancedPitchingStats>, (), () });

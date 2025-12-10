@@ -3,20 +3,9 @@ use quote::ToTokens;
 use syn::parse::{Parse, ParseStream, Parser};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::token::Brace;
-use syn::{Attribute, Field, Fields, FieldsNamed, Generics, ItemStruct, Meta, Token, Visibility};
+use syn::{Attribute, Fields, FieldsNamed, ItemStruct, Meta, Token};
 
-pub(crate) struct FilterInput {
-	other_attrs: Vec<Attribute>,
-	struct_token: Token![struct],
-	vis: Visibility,
-	ident: Ident,
-	generics: Generics,
-	semi_token: Option<Token![;]>,
-
-	fields_brace_token: Brace,
-	fields: Vec<Field>,
-}
+pub(crate) struct FilterInput(pub(crate) ItemStruct);
 
 fn is_list_keep_attr(attr: &Attribute) -> bool {
 	if let Meta::List(list) = &attr.meta
@@ -54,37 +43,29 @@ impl Parse for FilterInput {
 		};
 		let (mut kept_fields, mut remaining_fields) = fields.into_iter().partition::<Vec<_>, _>(|field| field.attrs.iter().any(is_path_keep_attr));
 
-		kept_fields.retain_mut(|field| if field.ident.as_ref().is_some_and(|ident| keep_attr_list.contains(ident)) { field.attrs.retain(|attr| !is_path_keep_attr(attr)); true } else { false });
+		remaining_fields.retain_mut(|field| field.ident.as_ref().is_some_and(|ident| keep_attr_list.contains(ident)));
+		for kept_field in &mut kept_fields {
+			kept_field.attrs.retain(|attr| !is_path_keep_attr(attr))
+		}
 		kept_fields.append(&mut remaining_fields);
 
-		Ok(Self {
-			other_attrs: attrs,
-			struct_token: layout.struct_token,
+		Ok(Self(ItemStruct {
+			attrs,
 			vis: layout.vis,
+			struct_token: layout.struct_token,
 			ident: layout.ident,
 			generics: layout.generics,
+			fields: Fields::Named(FieldsNamed {
+				brace_token,
+				named: Punctuated::from_iter(kept_fields.into_iter()),
+			}),
 			semi_token: layout.semi_token,
-
-			fields_brace_token: brace_token,
-			fields: kept_fields,
-		})
+		}))
 	}
 }
 
 impl ToTokens for FilterInput {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
-		ItemStruct {
-			attrs: self.other_attrs.clone(),
-			vis: self.vis.clone(),
-			struct_token: self.struct_token.clone(),
-			ident: self.ident.clone(),
-			generics: self.generics.clone(),
-			fields: Fields::Named(FieldsNamed {
-				brace_token: self.fields_brace_token,
-				named: Punctuated::from_iter(self.fields.clone().into_iter()),
-			}),
-			semi_token: self.semi_token.clone(),
-		}
-		.to_tokens(tokens)
+		self.0.to_tokens(tokens)
 	}
 }

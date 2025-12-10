@@ -2,6 +2,7 @@ mod links;
 
 pub use links::*;
 
+pub mod all_star;
 pub mod attendance; // done
 pub mod awards; // done
 pub mod conferences; // done
@@ -12,14 +13,13 @@ pub mod high_low;
 pub mod home_run_derby;
 pub mod jobs; // done
 pub mod league; // done
-pub mod meta; // done
-pub mod people;
+pub mod meta;  // done
 pub mod person; // done
 pub mod schedule; // done
 pub mod seasons; // done
 pub mod sports; // done
 pub mod standings; // done
-pub mod stats; // done
+pub mod stats;
 pub mod teams; // done
 pub mod transactions; // done
 pub mod venue; // done

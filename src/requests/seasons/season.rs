@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer};
 use std::fmt::Formatter;
 
 #[repr(transparent)]
-#[derive(Debug, Default, Deref, Display, From, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+#[derive(Debug, Default, Deref, Display, From, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash)]
 pub struct SeasonId(u32);
 
 impl<'de> Deserialize<'de> for SeasonId {

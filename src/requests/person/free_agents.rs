@@ -83,7 +83,7 @@ impl StatsAPIRequestUrl for FreeAgentsRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::people::free_agents::FreeAgentsRequest;
+	use crate::requests::person::free_agents::FreeAgentsRequest;
 	use crate::StatsAPIRequestUrlBuilderExt;
 	use chrono::{Datelike, Local};
 

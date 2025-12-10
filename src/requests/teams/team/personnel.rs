@@ -1,5 +1,5 @@
 use crate::gen_params;
-use crate::people::PeopleResponse;
+use crate::requests::person::people::PeopleResponse;
 use crate::seasons::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::types::MLB_API_DATE_FORMAT;

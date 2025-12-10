@@ -483,7 +483,7 @@ impl StatsAPIRequestUrl for TransactionsRequest {
 #[cfg(test)]
 mod tests {
 	use crate::person::Person;
-	use crate::sports::players::SportsPlayersRequest;
+	use crate::requests::person::players::PlayersRequest;
 	use crate::sports::SportId;
 	use crate::teams::team::Team;
 	use crate::teams::TeamsRequest;
@@ -512,7 +512,7 @@ mod tests {
 			.filter_map(Team::try_into_named)
 			.find(|team| team.name.as_str() == "Toronto Blue Jays")
 			.unwrap();
-		let bo_bichette = SportsPlayersRequest::builder()
+		let bo_bichette = PlayersRequest::builder()
 			.season(2024)
 			.build_and_get()
 			.await

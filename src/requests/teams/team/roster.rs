@@ -1,9 +1,9 @@
-use crate::gen_params;
+use crate::{gen_params, RosterType};
 use crate::person::Person;
 use crate::seasons::season::SeasonId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
-use crate::{Position, RosterTypeId, StatsAPIRequestUrl};
+use crate::{Position, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
@@ -16,7 +16,7 @@ pub struct RosterResponse {
     #[serde(default)]
     pub roster: Vec<RosterPlayer>,
     pub team_id: TeamId,
-    pub roster_type: RosterTypeId,
+    pub roster_type: RosterType,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -47,6 +47,11 @@ pub enum RosterStatus {
     FreeAgent,
     RestrictedList,
     AssignedToNewTeam,
+    RehabAssignment,
+    NonRosterInvitee,
+    Waived,
+    Deceased,
+    VoluntarilyRetired,
 }
 
 #[derive(Deserialize)]
@@ -75,6 +80,11 @@ impl TryFrom<__RosterStatusStruct> for RosterStatus {
             "FA" => Self::FreeAgent,
             "RST" => Self::RestrictedList,
             "ASG" => Self::AssignedToNewTeam,
+            "RA" => Self::RehabAssignment,
+            "NRI" => Self::NonRosterInvitee,
+            "WA" => Self::Waived,
+            "DEC" => Self::Deceased,
+            "RET" => Self::VoluntarilyRetired,
             code => return Err(format!("Invalid code '{code}' (desc: {})", value.description)),
         })
     }
@@ -89,7 +99,7 @@ pub struct RosterRequest {
     season: Option<SeasonId>,
     date: Option<NaiveDate>,
     #[builder(into)]
-    roster_type: RosterTypeId,
+    roster_type: RosterType,
 }
 
 impl<S: roster_request_builder::State + roster_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for RosterRequestBuilder<S> {
@@ -115,7 +125,7 @@ pub struct RosterEntry {
     pub is_active: bool,
     pub is_active_forty_man: bool,
     pub start_date: NaiveDate,
-    pub end_date: NaiveDate,
+    pub end_date: Option<NaiveDate>,
     pub status_date: NaiveDate,
 }
 
@@ -135,7 +145,7 @@ mod tests {
         let roster_types = MetaRequest::<RosterType>::new().get().await.unwrap().entries;
         for team in teams {
             for roster_type in &roster_types {
-                let _ = crate::serde_path_to_error_parse(RosterRequest::builder().team_id(team.id).season(season).roster_type(roster_type.id.clone()).build()).await;
+                let _ = crate::serde_path_to_error_parse(RosterRequest::builder().team_id(team.id).season(season).roster_type(*roster_type).build()).await;
             }
         }
     }

@@ -1,6 +1,4 @@
-pub mod players;
-
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::types::Copyright;
 use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
