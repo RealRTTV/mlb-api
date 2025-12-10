@@ -100,7 +100,7 @@ pub struct MetricId(u32);
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Metric {
-	Hydrated(HydratedMetric),
+	Hydrated(Box<HydratedMetric>),
 	Named(NamedMetric),
 	Identifiable(IdentifiableMetric),
 }
@@ -140,7 +140,7 @@ impl MetaKind for Metric {
 static CACHE: RwLock<HydratedCacheTable<Metric>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Metric {
-	type HydratedVariant = HydratedMetric;
+	type HydratedVariant = Box<HydratedMetric>;
 	type Identifier = MetricId;
 	type URL = MetaRequest<Self>;
 

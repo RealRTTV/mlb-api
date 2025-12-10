@@ -115,7 +115,7 @@ impl LeagueId {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum League {
-	Hydrated(HydratedLeague),
+	Hydrated(Box<HydratedLeague>),
 	Named(NamedLeague),
 	Identifiable(IdentifiableLeague),
 }
@@ -188,7 +188,7 @@ impl StatsAPIRequestUrl for LeagueRequest {
 static CACHE: RwLock<HydratedCacheTable<League>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for League {
-	type HydratedVariant = HydratedLeague;
+	type HydratedVariant = Box<HydratedLeague>;
 	type Identifier = LeagueId;
 	type URL = LeagueRequest;
 

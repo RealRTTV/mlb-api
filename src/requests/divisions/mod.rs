@@ -1,7 +1,7 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::league::{IdentifiableLeague, LeagueId};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::league::{League, LeagueId};
 use crate::seasons::season::SeasonId;
-use crate::sports::{IdentifiableSport, SportId};
+use crate::sports::{Sport, SportId};
 use crate::types::Copyright;
 use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
@@ -42,8 +42,8 @@ pub struct HydratedDivision {
 	pub short_name: String,
 	pub season: SeasonId,
 	pub abbreviation: String,
-	pub league: IdentifiableLeague,
-	pub sport: IdentifiableSport,
+	pub league: League,
+	pub sport: Sport,
 	pub has_wildcard: bool,
 	pub num_playoff_teams: Option<u8>,
 	pub active: bool,
@@ -57,7 +57,7 @@ pub struct HydratedDivision {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Division {
-	Hydrated(HydratedDivision),
+	Hydrated(Box<HydratedDivision>),
 	Named(NamedDivision),
 	Identifiable(IdentifiableDivision),
 }
@@ -128,7 +128,7 @@ impl StatsAPIRequestUrl for DivisionsRequest {
 static CACHE: RwLock<HydratedCacheTable<Division>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Division {
-	type HydratedVariant = HydratedDivision;
+	type HydratedVariant = Box<HydratedDivision>;
 	type Identifier = DivisionId;
 	type URL = DivisionsRequest;
 

@@ -70,7 +70,7 @@ pub struct VenueId(u32);
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Venue {
-	Hydrated(HydratedVenue),
+	Hydrated(Box<HydratedVenue>),
 	Named(NamedVenue),
 	Identifiable(IdentifiableVenue),
 }
@@ -137,7 +137,7 @@ impl StatsAPIRequestUrl for VenuesRequest {
 static CACHE: RwLock<HydratedCacheTable<Venue>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Venue {
-	type HydratedVariant = HydratedVenue;
+	type HydratedVariant = Box<HydratedVenue>;
 	type Identifier = VenueId;
 	type URL = VenuesRequest;
 

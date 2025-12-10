@@ -44,7 +44,7 @@ pub struct AwardId(String);
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Award {
-	Hydrated(HydratedAward),
+	Hydrated(Box<HydratedAward>),
 	Identifiable(IdentifiableAward),
 }
 
@@ -99,7 +99,7 @@ impl StatsAPIRequestUrl for AwardRequest {
 static CACHE: RwLock<HydratedCacheTable<Award>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Award {
-	type HydratedVariant = HydratedAward;
+	type HydratedVariant = Box<HydratedAward>;
 	type Identifier = AwardId;
 	type URL = AwardRequest;
 

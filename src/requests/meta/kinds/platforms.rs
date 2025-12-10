@@ -30,7 +30,7 @@ pub struct PlatformId(String);
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Platform {
-	Hydrated(HydratedPlatform),
+	Hydrated(Box<HydratedPlatform>),
 	Identifiable(IdentifiablePlatform),
 }
 
@@ -67,7 +67,7 @@ impl MetaKind for Platform {
 static CACHE: RwLock<HydratedCacheTable<Platform>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Platform {
-	type HydratedVariant = HydratedPlatform;
+	type HydratedVariant = Box<HydratedPlatform>;
 	type Identifier = PlatformId;
 	type URL = MetaRequest<Self>;
 

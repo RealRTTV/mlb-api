@@ -29,7 +29,7 @@ pub struct HydratedScheduleEventType {
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum ScheduleEventType {
-	Hydrated(HydratedScheduleEventType),
+	Hydrated(Box<HydratedScheduleEventType>),
 	Identifiable(IdentifiableScheduleEventType),
 }
 
@@ -66,7 +66,7 @@ impl MetaKind for ScheduleEventType {
 static CACHE: RwLock<HydratedCacheTable<ScheduleEventType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for ScheduleEventType {
-	type HydratedVariant = HydratedScheduleEventType;
+	type HydratedVariant = Box<HydratedScheduleEventType>;
 	type Identifier = ScheduleEventTypeId;
 	type URL = MetaRequest<Self>;
 

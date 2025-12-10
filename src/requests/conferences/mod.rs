@@ -58,7 +58,7 @@ pub struct ConferenceId(u32);
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
 pub enum Conference {
-	Hydrated(HydratedConference),
+	Hydrated(Box<HydratedConference>),
 	Named(NamedConference),
 	Identifiable(IdentifiableConference),
 }
@@ -117,7 +117,7 @@ impl StatsAPIRequestUrl for ConferencesRequest {
 static CACHE: RwLock<HydratedCacheTable<Conference>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Conference {
-	type HydratedVariant = HydratedConference;
+	type HydratedVariant = Box<HydratedConference>;
 	type Identifier = ConferenceId;
 	type URL = ConferencesRequest;
 
