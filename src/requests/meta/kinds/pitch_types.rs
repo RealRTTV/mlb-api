@@ -1,8 +1,8 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
-use crate::StatsAPIRequestUrl;
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::{rwlock_const_new, RwLock};
-use derive_more::{Deref, DerefMut, Display, From};
+use crate::{string_id, StatsAPIRequestUrl};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
@@ -22,9 +22,8 @@ pub struct IdentifiablePitchType {
 	#[serde(rename = "code")] pub id: PitchTypeId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
-pub struct PitchTypeId(String);
+// even though I can recite them all in my head, in the next 5-10 years, there definitely will be a new pitch type -- deathball?
+string_id!(PitchTypeId);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
@@ -99,10 +98,10 @@ impl RequestEntryCache for PitchType {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[tokio::test]
+	#[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaRequest::<super::PitchType>::new().get().await.unwrap();
 	}

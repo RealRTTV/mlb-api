@@ -3,10 +3,10 @@ use crate::league::{League, LeagueId};
 use crate::seasons::season::SeasonId;
 use crate::sports::{Sport, SportId};
 use crate::types::Copyright;
-use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
+use crate::{integer_id, StatsAPIRequestUrl};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, Display, From};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -90,9 +90,7 @@ impl DerefMut for Division {
 	}
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct DivisionId(u32);
+integer_id!(DivisionId);
 
 #[derive(Builder)]
 #[builder(derive(Into))]

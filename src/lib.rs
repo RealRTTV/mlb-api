@@ -1,7 +1,5 @@
-#![recursion_limit = "1024"]
-
 #![warn(clippy::pedantic, clippy::nursery, clippy::complexity, clippy::cargo, clippy::perf, clippy::style)]
-#![allow(clippy::multiple_crate_versions)]
+#![allow(clippy::multiple_crate_versions, clippy::ignore_without_reason)]
 
 /// Generates stat structs to be used in requests.
 ///
@@ -22,18 +20,18 @@
 /// ---
 ///
 /// pub struct BasicStats {
-/// 	season: BasicStatsSeasonSplit,
-/// 	career: BasicStatsCareerSplit,
+///     season: BasicStatsSeasonSplit,
+///     career: BasicStatsCareerSplit,
 /// }
 ///
 /// pub struct BasicStatsSeasonSplit {
-/// 	hitting: Box<<SeasonStats as StatTypeStats>::Hitting>, // Box<Season<HittingStats>>
-/// 	pitching: Box<<SeasonStats as StatTypeStats>::Pitching>, // Box<Season<PitchingStats>>
+///     hitting: Box<<SeasonStats as StatTypeStats>::Hitting>, // Box<Season<HittingStats>>
+///     pitching: Box<<SeasonStats as StatTypeStats>::Pitching>, // Box<Season<PitchingStats>>
 /// }
 /// 
 /// pub struct BasicStatsCareerSplit {
-/// 	hitting: Box<<CareerStats as StatTypeStats>::Hitting>, // Box<HittingStats>
-/// 	pitching: Box<<CareerStats as StatTypeStats>::Pitching>, // Box<PitchingStats>
+///     hitting: Box<<CareerStats as StatTypeStats>::Hitting>, // Box<HittingStats>
+///     pitching: Box<<CareerStats as StatTypeStats>::Pitching>, // Box<PitchingStats>
 /// }
 /// ```
 #[macro_export]
@@ -45,12 +43,17 @@ macro_rules! stats {
     };
 }
 
+pub mod ids;
 pub mod hydrations;
 pub mod request;
 pub mod types;
 pub mod cache;
 mod requests;
+
 pub use requests::*;
+
+#[cfg(test)]
+pub const TEST_YEAR: u32 = 2025;
 
 #[cfg(feature = "reqwest")]
 pub(crate) type RwLock<T> = tokio::sync::RwLock<T>;
@@ -77,11 +80,7 @@ pub(crate) async fn serde_path_to_error_parse<T: StatsAPIRequestUrl>(url: T) -> 
     match result {
         Ok(x) => x,
         Err(e) => {
-            if let Ok(e) = serde_json::from_slice::<'_, types::StatsAPIError>(&bytes).map(request::Error::StatsAPI) {
-                panic!("{e}");
-            } else {
-                panic!("{e}");
-            }
+            panic!("{}", serde_json::from_slice::<'_, types::StatsAPIError>(&bytes).map(request::Error::StatsAPI).map_or_else(|_| e.to_string(), |e| e.to_string()));
         }
     }
 }

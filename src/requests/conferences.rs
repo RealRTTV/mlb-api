@@ -1,12 +1,12 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::league::League;
 use crate::seasons::season::SeasonId;
 use crate::sports::Sport;
 use crate::types::Copyright;
-use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
+use crate::{integer_id, StatsAPIRequestUrl};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, Display, From};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -51,9 +51,7 @@ pub struct IdentifiableConference {
 	pub id: ConferenceId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct ConferenceId(u32);
+integer_id!(ConferenceId);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]

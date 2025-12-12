@@ -34,8 +34,7 @@ mod tests {
 	use crate::request::Error as RequestError;
 	use crate::teams::affiliates::TeamAffiliatesRequest;
 	use crate::teams::TeamsRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
-	use chrono::{Datelike, Local};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	async fn all_mlb_teams() {
@@ -47,14 +46,11 @@ mod tests {
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn all_mlb_teams_all_seasons() {
-		for season in 1876..=Local::now().year() as _ {
+		for season in 1876..=TEST_YEAR {
 			for team in TeamsRequest::builder().build_and_get().await.unwrap().teams {
-				dbg!(team.id);
-				dbg!(&*team.try_as_named().unwrap().name);
 				let affiliates_result = TeamAffiliatesRequest::builder().team_id(team.id).season(season).build_and_get().await;
 				match affiliates_result {
-					Ok(_) => {}
-					Err(RequestError::StatsAPI(_)) => {},
+					Ok(_) | Err(RequestError::StatsAPI(_)) => {},
 					Err(e) => panic!("{e}"),
 				}
 			}

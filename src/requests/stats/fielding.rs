@@ -1,8 +1,8 @@
-use serde_with::DisplayFromStr;
+use crate::requests::stats::units::{InningsPitched, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 use serde_with::serde_as;
-use crate::requests::stats::units::{InningsPitched, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use serde_with::DisplayFromStr;
 
 #[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Add, AddAssign, Default)]

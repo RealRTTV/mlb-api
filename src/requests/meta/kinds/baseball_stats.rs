@@ -1,9 +1,9 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::stat_groups::StatGroup;
-use crate::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
-use derive_more::{Deref, DerefMut, Display, From};
+use crate::{string_id, StatsAPIRequestUrl};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
@@ -14,16 +14,7 @@ pub struct IdentifiableBaseballStat {
 	pub id: BaseballStatId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
-pub struct BaseballStatId(String);
-
-impl BaseballStatId {
-	#[must_use]
-	pub const fn new(id: String) -> Self {
-		Self(id)
-	}
-}
+string_id!(BaseballStatId);
 
 #[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]

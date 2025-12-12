@@ -1,4 +1,4 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::meta::kinds::MetaKind;
 use crate::meta::MetaRequest;
 use crate::StatsAPIRequestUrl;
@@ -94,10 +94,10 @@ impl RequestEntryCache for HitTrajectory {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[tokio::test]
+	#[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaRequest::<super::HitTrajectory>::new().get().await.unwrap();
 	}

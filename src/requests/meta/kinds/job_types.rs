@@ -1,22 +1,13 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
-use crate::StatsAPIRequestUrl;
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::{rwlock_const_new, RwLock};
-use derive_more::{Deref, DerefMut, Display, From};
+use crate::{string_id, StatsAPIRequestUrl};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
-pub struct JobTypeId(String);
-
-impl JobTypeId {
-	#[must_use]
-	pub const fn new(id: String) -> Self {
-		Self(id)
-	}
-}
+string_id!(JobTypeId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -108,10 +99,10 @@ impl RequestEntryCache for JobType {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[tokio::test]
+	#[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaRequest::<super::JobType>::new().get().await.unwrap();
 	}

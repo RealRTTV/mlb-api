@@ -1,12 +1,12 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::league::{League, LeagueId};
 use crate::seasons::season::SeasonId;
 use crate::sports::{Sport, SportId};
 use crate::types::Copyright;
-use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
+use crate::{string_id, StatsAPIRequestUrl};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, Display, From};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -37,9 +37,7 @@ pub struct IdentifiableAward {
 	pub id: AwardId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
-pub struct AwardId(String);
+string_id!(AwardId);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]

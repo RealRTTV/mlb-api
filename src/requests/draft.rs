@@ -1,11 +1,11 @@
-use crate::gen_params;
 use crate::person::{Person, PersonId};
 use crate::seasons::season::SeasonId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, Location};
+use crate::{gen_params, integer_id};
 use crate::{Position, StatsAPIRequestUrl};
 use bon::Builder;
-use derive_more::{Deref, Display, From};
+use derive_more::Display;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
@@ -32,16 +32,7 @@ pub struct DraftRound {
 	pub picks: Vec<DraftPick>,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct EBISPersonId(u32);
-
-impl EBISPersonId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-}
+integer_id!(EBISPersonId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -348,20 +339,19 @@ impl StatsAPIRequestUrl for DraftProspectsRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::draft::{DraftRequest, DraftProspectsRequest};
-	use crate::StatsAPIRequestUrlBuilderExt;
-	use chrono::{Datelike, Local};
+	use crate::draft::{DraftProspectsRequest, DraftRequest};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
-	async fn draft_2025() {
-		let _ = DraftRequest::regular().year(2025).build_and_get().await.unwrap();
-		let _ = DraftProspectsRequest::regular().year(2025).build_and_get().await.unwrap();
+	async fn draft_test_year() {
+		let _ = DraftRequest::regular().year(TEST_YEAR).build_and_get().await.unwrap();
+		let _ = DraftProspectsRequest::regular().year(TEST_YEAR).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn draft_all_years() {
-		for year in 1965..=Local::now().year() as _ {
+		for year in 1965..=TEST_YEAR {
 			let _ = crate::serde_path_to_error_parse(DraftRequest::regular().year(year).build()).await;
 			let _ = crate::serde_path_to_error_parse(DraftProspectsRequest::regular().year(year).build()).await;
 		}

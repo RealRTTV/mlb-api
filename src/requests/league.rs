@@ -1,10 +1,10 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::seasons::season::{Season, SeasonState};
 use crate::sports::{NamedSport, SportId};
-use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
+use crate::{integer_id, StatsAPIRequestUrl};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, Display, From};
+use derive_more::{Deref, DerefMut, From};
 use itertools::Itertools;
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
@@ -97,16 +97,7 @@ fn bad_league_season_schema_deserializer<'de, D: serde::Deserializer<'de>>(deser
 	Ok(rest)
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct LeagueId(u32);
-
-impl LeagueId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-}
+integer_id!(LeagueId);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]

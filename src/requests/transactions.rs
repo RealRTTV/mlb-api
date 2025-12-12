@@ -1,12 +1,11 @@
-use crate::gen_params;
 use crate::person::{Person, PersonId};
 use crate::sports::SportId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::StatsAPIRequestUrl;
+use crate::{gen_params, integer_id};
 use bon::Builder;
 use chrono::NaiveDate;
-use derive_more::{Deref, Display, From};
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -112,6 +111,7 @@ pub enum Transaction {
 		common: TransactionCommon,
 		#[serde(default = "Person::unknown_person")]
 		person: Person,
+		#[serde(default = "Team::unknown_team")]
 		#[serde(rename = "fromTeam")]
 		source_team: Team,
 		#[serde(default = "Team::unknown_team")]
@@ -166,6 +166,7 @@ pub enum Transaction {
 		common: TransactionCommon,
 		#[serde(default = "Person::unknown_person")]
 		person: Person,
+		#[serde(default = "Team::unknown_team")]
 		#[serde(rename = "fromTeam")]
 		source_team: Team,
 		#[serde(default = "Team::unknown_team")]
@@ -247,6 +248,7 @@ pub enum Transaction {
 		common: TransactionCommon,
 		#[serde(default = "Person::unknown_person")]
 		person: Person,
+		#[serde(default = "Team::unknown_team")]
 		#[serde(rename = "fromTeam")]
 		source_team: Team,
 		#[serde(default = "Team::unknown_team")]
@@ -269,6 +271,7 @@ pub enum Transaction {
 		common: TransactionCommon,
 		#[serde(default = "Person::unknown_person")]
 		person: Person,
+		#[serde(default = "Team::unknown_team")]
 		#[serde(rename = "fromTeam")]
 		source_team: Team,
 		#[serde(default = "Team::unknown_team")]
@@ -311,11 +314,22 @@ pub enum Transaction {
 		common: TransactionCommon,
 		#[serde(default = "Person::unknown_person")]
 		person: Person,
+		#[serde(default = "Team::unknown_team")]
 		#[serde(rename = "fromTeam")]
 		source_team: Team,
 		#[serde(default = "Team::unknown_team")]
 		#[serde(rename = "toTeam")]
 		destination_team: Team,
+	},
+	#[serde(rename = "RES", rename_all = "camelCase")]
+	Reserved {
+		#[serde(flatten)]
+		common: TransactionCommon,
+		#[serde(default = "Person::unknown_person")]
+		person: Person,
+		#[serde(default = "Team::unknown_team")]
+		#[serde(rename = "toTeam")]
+		team: Team,
 	},
 }
 
@@ -349,7 +363,8 @@ impl Deref for Transaction {
 			| Self::ContractPurchased { common, .. }
 			| Self::Drafted { common, .. }
 			| Self::DeclaredIneligible { common, .. }
-			| Self::RuleFiveDraftMinors { common, .. } => common,
+			| Self::RuleFiveDraftMinors { common, .. }
+			| Self::Reserved { common, .. } => common,
 		}
 	}
 }
@@ -382,7 +397,8 @@ impl DerefMut for Transaction {
 			| Self::ContractPurchased { common, .. }
 			| Self::Drafted { common, .. }
 			| Self::DeclaredIneligible { common, .. }
-			| Self::RuleFiveDraftMinors { common, .. } => common,
+			| Self::RuleFiveDraftMinors { common, .. }
+			| Self::Reserved { common, .. } => common,
 		}
 	}
 }
@@ -393,16 +409,7 @@ impl Display for Transaction {
 	}
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct TransactionId(u32);
-
-impl TransactionId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-}
+integer_id!(TransactionId);
 
 pub enum TransactionsRequestKind {
 	Team(TeamId),
@@ -488,22 +495,18 @@ mod tests {
 	use crate::teams::team::Team;
 	use crate::teams::TeamsRequest;
 	use crate::transactions::{TransactionsRequest, TransactionsRequestKind};
-	use crate::StatsAPIRequestUrlBuilderExt;
+	use crate::{serde_path_to_error_parse, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 	use chrono::NaiveDate;
 
 	#[tokio::test]
-	async fn parse_2025() {
-		let _ = crate::serde_path_to_error_parse(TransactionsRequest {
-			kind: TransactionsRequestKind::DateRange(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
-			sport_id: Some(SportId::MLB),
-		})
-		.await;
+	async fn parse_current_year() {
+		let _ = serde_path_to_error_parse(TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).unwrap()).sport_id(SportId::MLB).build()).await;
 	}
 
 	#[tokio::test]
 	async fn parse_sample_requests() {
 		let blue_jays = TeamsRequest::builder()
-			.season(2025)
+			.season(TEST_YEAR)
 			.build_and_get()
 			.await
 			.unwrap()
@@ -523,11 +526,9 @@ mod tests {
 			.find(|person| person.full_name == "Bo Bichette")
 			.unwrap();
 
-		let response = TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 12, 31).unwrap())
-			.build_and_get()
-			.await
-			.unwrap();
-		let transaction_ids = response.transactions.into_iter().take(1).map(|transaction| transaction.id).collect::<Vec<_>>();
+		let request = TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).unwrap()).build();
+		let response = serde_path_to_error_parse(request).await;
+		let transaction_ids = response.transactions.into_iter().take(20).map(|transaction| transaction.id).collect::<Vec<_>>();
 		let _response = TransactionsRequest::for_team(blue_jays.id).build_and_get().await.unwrap();
 		let _response = TransactionsRequest::for_player(bo_bichette.id).build_and_get().await.unwrap();
 		let _response = TransactionsRequest::for_ids(transaction_ids).build_and_get().await.unwrap();

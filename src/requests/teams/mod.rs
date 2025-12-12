@@ -42,10 +42,24 @@ pub struct TeamsResponse {
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct TeamsRequest {
-	#[builder(into)]
+	#[builder(setters(vis = "", name = "sport_id_internal"))]
 	sport_id: Option<SportId>,
 	#[builder(into)]
 	season: Option<SeasonId>,
+}
+
+impl TeamsRequest {
+	pub fn for_sport(sport_id: SportId) -> TeamsRequestBuilder<teams_request_builder::SetSportId> {
+		Self::builder().sport_id_internal(sport_id)
+	}
+
+	pub fn mlb_teams() -> TeamsRequestBuilder<teams_request_builder::SetSportId> {
+		Self::builder().sport_id_internal(SportId::MLB)
+	}
+
+	pub fn all_sports() -> TeamsRequestBuilder {
+		Self::builder()
+	}
 }
 
 impl<S: teams_request_builder::State + teams_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamsRequestBuilder<S> {
@@ -65,13 +79,12 @@ impl StatsAPIRequestUrl for TeamsRequest {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::StatsAPIRequestUrlBuilderExt;
-	use chrono::{Datelike, Local};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_teams_all_seasons() {
-		for season in 1871..=Local::now().year() as _ {
+		for season in 1871..=TEST_YEAR {
 			let _response = TeamsRequest::builder().season(season).build_and_get().await.unwrap();
 		}
 	}

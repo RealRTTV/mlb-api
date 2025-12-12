@@ -1,11 +1,11 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::seasons::season::SeasonId;
 use crate::sports::SportId;
 use crate::types::Copyright;
-use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
+use crate::{integer_id, StatsAPIRequestUrl};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, Display, From};
+use derive_more::{Deref, DerefMut, From};
 use itertools::Itertools;
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
@@ -63,9 +63,7 @@ pub struct HydratedVenue {
 	pub inner: NamedVenue,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct VenueId(u32);
+integer_id!(VenueId);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
@@ -113,8 +111,8 @@ impl DerefMut for Venue {
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct VenuesRequest {
-	#[builder(into)]
-	sport_id: Option<SportId>,
+	#[builder(into, default)]
+	sport_id: SportId,
 	venue_ids: Option<Vec<VenueId>>,
 	#[builder(into)]
 	season: Option<SeasonId>,
@@ -126,7 +124,7 @@ impl<S: venues_request_builder::State + venues_request_builder::IsComplete> crat
 
 impl Display for VenuesRequest {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/venues{}{}", self.sport_id.map_or(String::new(), |id| format!("/{id}")), gen_params! { "season"?: self.season, "venueIds"?: self.venue_ids.as_ref().map(|ids| ids.iter().join(",")) })
+		write!(f, "http://statsapi.mlb.com/api/v1/venues{}", gen_params! { "season"?: self.season, "sportId": self.sport_id, "venueIds"?: self.venue_ids.as_ref().map(|ids| ids.iter().join(",")) })
 	}
 }
 
@@ -171,13 +169,12 @@ impl RequestEntryCache for Venue {
 #[cfg(test)]
 mod tests {
 	use crate::venue::VenuesRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
-	use chrono::{Datelike, Local};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_venues_all_seasons() {
-		for season in 1876..=Local::now().year() as _ {
+		for season in 1876..=TEST_YEAR {
 			let _response = VenuesRequest::builder().season(season).build_and_get().await.unwrap();
 		}
 	}

@@ -1,9 +1,9 @@
+use derive_more::{Add, Deref, DerefMut, From};
+use serde::de::{Error, Visitor};
+use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Add, AddAssign};
 use std::str::FromStr;
-use derive_more::{Add, Deref, DerefMut, From};
-use serde::{Deserialize, Deserializer};
-use serde::de::{Error, Visitor};
 use thiserror::Error;
 
 #[derive(Deref, DerefMut, From, Add, Copy, Clone)]
@@ -52,6 +52,7 @@ impl<'de> Deserialize<'de> for PercentageStat {
 				Ok(PercentageStat::new(v / 100.0))
 			}
 
+			#[allow(clippy::cast_lossless, reason = "needlessly pedantic")]
 			fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
 			where
 				E: Error,
@@ -147,12 +148,15 @@ impl InningsPitched {
 }
 
 impl From<InningsPitched> for f64 {
+
+	#[allow(clippy::cast_lossless, reason = "needlessly pedantic")]
 	fn from(value: InningsPitched) -> Self {
-		value.major as f64 + value.minor as f64 / 3.0
+		value.major as Self + value.minor as Self / 3.0
 	}
 }
 
 impl From<f64> for InningsPitched {
+	#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "needlessly pedantic")]
 	fn from(value: f64) -> Self {
 		let value = value.max(0.0);
 		let integer = value.trunc();

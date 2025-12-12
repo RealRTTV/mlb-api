@@ -1,9 +1,9 @@
-use derive_more::{Add, AddAssign, AsRef};
-use serde::Deserialize;
-use crate::requests::PitchType;
+use crate::requests::stats::pieces::{bWARData, fWARData, xFIPData, AtBatData, BalksData, BaseOnBallsData, BattersFacedData, CatchersInterferenceData, CompleteGamesData, DecisionsData, ERAMinusData, EarnedRunsData, ExtraBaseHitsData, FIPData, FIPMinusData, FieldOutsData, FlyoutsData, GIDPData, GamesFinishedData, GamesPitchedData, GamesPlayedData, GamesStartedData, HitByPitchData, HitsData, InheritedRunnersData, InningsPitchedData, IntentionalWalksData, PassedBallData, PickoffsData, PitchQuantityData, RARData, RBIData, RunsData, SacrificeHitsData, ShutdownsAndMeltdownsData, StealingData, StrikeoutsData, StrikesData, WildPitchData};
 use crate::requests::stats::units::PercentageStat;
 use crate::requests::stats::BaseStat;
-use crate::requests::stats::pieces::{bWARData, fWARData, xFIPData, AtBatData, BalksData, BaseOnBallsData, BattersFacedData, CatchersInterferenceData, CompleteGamesData, DecisionsData, ERAMinusData, EarnedRunsData, ExtraBaseHitsData, FIPData, FIPMinusData, FlyoutsData, GIDPData, GamesFinishedData, GamesPitchedData, GamesPlayedData, GamesStartedData, HitByPitchData, InheritedRunnersData, IntentionalWalksData, InningsPitchedData, PassedBallData, PickoffsData, PitchQuantityData, RARData, RBIData, RunsData, SacrificeHitsData, ShutdownsAndMeltdownsData, FieldOutsData, HitsData, StealingData, StrikeoutsData, StrikesData, WildPitchData};
+use crate::requests::PitchType;
+use derive_more::{Add, AddAssign, AsRef};
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Add, AddAssign, Default, AsRef)]
 #[serde(rename_all = "camelCase")]
@@ -132,6 +132,7 @@ impl BaseStat for PitchUsage {}
 impl PitchUsage {
 	/// Percentage of total pitches that are this pitch.
 	#[must_use]
+	#[allow(clippy::cast_lossless, reason = "same as at top of piece_impls.rs")]
 	pub fn pct(&self) -> PercentageStat {
 		(self.count as f64 / self.total_pitches as f64).into()
 	}

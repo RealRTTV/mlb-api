@@ -1,4 +1,5 @@
-use derive_more::{Deref, Display, From};
+use crate::integer_id;
+use derive_more::From;
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
@@ -16,16 +17,7 @@ pub mod timestamps;
 pub mod uniforms;
 pub mod win_probability;
 
-#[repr(transparent)]
-#[derive(Debug, Default, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone)]
-pub struct GameId(u32);
-
-impl GameId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-}
+integer_id!(GameId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
 pub struct IdentifiableGame {

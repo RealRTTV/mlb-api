@@ -1,11 +1,11 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::seasons::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::types::Copyright;
-use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
+use crate::{integer_id, StatsAPIRequestUrl};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, Display, From};
+use derive_more::{Deref, DerefMut, From};
 use itertools::Itertools;
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
@@ -32,16 +32,7 @@ pub enum UniformAsset {
     Identifiable(IdentifiableUniformAsset),
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct UniformAssetId(u32);
-
-impl UniformAssetId {
-    #[must_use]
-    pub const fn new(id: u32) -> Self {
-        Self(id)
-    }
-}
+integer_id!(UniformAssetId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableUniformAsset {
@@ -68,16 +59,7 @@ pub struct UniformAssetCategory {
     #[serde(rename = "uniformAssetTypeId")] pub id: UniformAssetCategoryId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct UniformAssetCategoryId(u32);
-
-impl UniformAssetCategoryId {
-    #[must_use]
-    pub const fn new(id: u32) -> Self {
-        Self(id)
-    }
-}
+integer_id!(UniformAssetCategoryId);
 
 impl PartialEq for UniformAsset {
     fn eq(&self, other: &Self) -> bool {
@@ -143,10 +125,9 @@ impl RequestEntryCache for UniformAsset {
     }
 
     fn url_for_id(id: &Self::Identifier) -> Self::URL {
-        UniformsRequest {
-            teams: vec![TeamId::new(id.split_once('_').and_then(|(num, _)| num.parse().ok()).unwrap_or(0))],
-            season: None,
-        }
+        UniformsRequest::builder()
+            .teams(vec![TeamId::new(id.split_once('_').and_then(|(num, _)| num.parse().ok()).unwrap_or(0))])
+            .build()
     }
 
     fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
@@ -166,15 +147,14 @@ impl RequestEntryCache for UniformAsset {
 
 #[cfg(test)]
 mod tests {
-    use crate::sports::SportId;
     use crate::teams::team::uniforms::UniformsRequest;
     use crate::teams::TeamsRequest;
-    use crate::StatsAPIRequestUrl;
+    use crate::StatsAPIRequestUrlBuilderExt;
 
     #[tokio::test]
     async fn parse_all_mlb_teams_this_season() {
-        let mlb_teams = TeamsRequest { sport_id: Some(SportId::MLB), season: None }.get().await.unwrap();
+        let mlb_teams = TeamsRequest::mlb_teams().build_and_get().await.unwrap();
         let team_ids = mlb_teams.teams.into_iter().map(|team| team.id).collect::<Vec<_>>();
-        for _ in (UniformsRequest { teams: team_ids, season: None }.get().await.unwrap().teams.into_iter().flat_map(|x| x.uniform_assets).map(|x| x.try_into_hydrated().unwrap())) {}
+        let _ = UniformsRequest::builder().teams(team_ids).build_and_get().await.unwrap();
     }
 }

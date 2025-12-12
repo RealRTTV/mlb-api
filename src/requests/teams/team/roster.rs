@@ -1,8 +1,8 @@
-use crate::{gen_params, RosterType};
 use crate::person::Person;
 use crate::seasons::season::SeasonId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use crate::{gen_params, RosterType};
 use crate::{Position, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::NaiveDate;
@@ -131,16 +131,15 @@ pub struct RosterEntry {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::teams::team::roster::RosterRequest;
-    use crate::teams::TeamsRequest;
-    use crate::{RosterType, StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
-    use chrono::{Datelike, Local};
+	use crate::meta::MetaRequest;
+	use crate::teams::team::roster::RosterRequest;
+	use crate::teams::TeamsRequest;
+	use crate::{RosterType, StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
-    #[tokio::test]
+	#[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_this_year_all_mlb_teams_all_roster_types() {
-        let season = Local::now().year() as u32;
+        let season = TEST_YEAR;
         let teams = TeamsRequest::builder().season(season).build_and_get().await.unwrap().teams;
         let roster_types = MetaRequest::<RosterType>::new().get().await.unwrap().entries;
         for team in teams {

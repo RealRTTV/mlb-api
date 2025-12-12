@@ -44,7 +44,7 @@ impl Deref for __RosterTypeStruct {
 	type Target = str;
 
 	fn deref(&self) -> &Self::Target {
-		let (__RosterTypeStruct::Wrapped { id } | __RosterTypeStruct::Inline(id)) = self;
+		let (Self::Wrapped { id } | Self::Inline(id)) = self;
 		id
 	}
 }
@@ -75,8 +75,8 @@ impl MetaKind for RosterType {
 static CACHE: RwLock<HydratedCacheTable<RosterType>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for RosterType {
-	type HydratedVariant = RosterType;
-	type Identifier = RosterType;
+	type HydratedVariant = Self;
+	type Identifier = Self;
 	type URL = MetaRequest<Self>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {

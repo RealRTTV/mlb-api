@@ -35,8 +35,8 @@ pub struct EmployedPerson {
 pub struct JobsRequest {
     #[builder(into)]
     job_type: JobTypeId,
-    #[builder(into)]
-    sport_id: Option<SportId>,
+    #[builder(into, default)]
+    sport_id: SportId,
     date: Option<NaiveDate>,
 }
 
@@ -48,7 +48,7 @@ impl Display for JobsRequest {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "http://statsapi.mlb.com/api/v1/jobs{}", gen_params! {
             "jobType": self.job_type,
-            "sportId"?: self.sport_id,
+            "sportId": self.sport_id,
             "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT))
         })
     }
@@ -67,7 +67,7 @@ mod tests {
     #[tokio::test]
     async fn parse_all_job_types() {
         let job_types = MetaRequest::<JobType>::new().get().await.unwrap().entries;
-        for job_type in job_types.into_iter() {
+        for job_type in job_types {
             let _response = JobsRequest::builder().job_type(job_type.id.clone()).build_and_get().await.unwrap();
         }
     }

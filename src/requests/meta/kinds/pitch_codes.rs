@@ -1,8 +1,8 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
-use crate::StatsAPIRequestUrl;
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::{rwlock_const_new, RwLock};
-use derive_more::{Deref, DerefMut, Display, From};
+use crate::{string_id, StatsAPIRequestUrl};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
@@ -41,9 +41,7 @@ pub struct IdentifiablePitchCode {
 	#[serde(rename = "code")] pub id: PitchCodeId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
-pub struct PitchCodeId(String);
+string_id!(PitchCodeId);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
 #[serde(untagged)]
@@ -118,10 +116,10 @@ impl RequestEntryCache for PitchCode {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[tokio::test]
+	#[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaRequest::<super::PitchCode>::new().get().await.unwrap();
 	}

@@ -1,9 +1,10 @@
-use std::fmt::{Display, Formatter};
 use crate::requests::game::GameId;
 use crate::requests::person::PersonId;
 use crate::requests::StatsAPIRequestUrl;
 use crate::types::Copyright;
+use bon::Builder;
 use serde::Deserialize;
+use std::fmt::{Display, Formatter};
 
 stats! {
 	pub struct SingleGameStats {
@@ -19,9 +20,17 @@ pub struct PersonSingleGameStatsResponse {
 	pub stats: SingleGameStats,
 }
 
+#[derive(Builder)]
+#[builder(derive(Into))]
 pub struct PersonSingleGameStatsRequest {
-	pub person_id: PersonId,
-	pub game_id: GameId,
+	#[builder(into)]
+	person_id: PersonId,
+	#[builder(into)]
+	game_id: GameId,
+}
+
+impl<S: person_single_game_stats_request_builder::State + person_single_game_stats_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for PersonSingleGameStatsRequestBuilder<S> {
+	type Built = PersonSingleGameStatsRequest;
 }
 
 impl Display for PersonSingleGameStatsRequest {
@@ -36,17 +45,14 @@ impl StatsAPIRequestUrl for PersonSingleGameStatsRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::requests::game::GameId;
-	use crate::requests::person::PersonId;
 	use crate::requests::person::stats::PersonSingleGameStatsRequest;
 
 	#[tokio::test]
 	async fn single_sample() {
-		let url = PersonSingleGameStatsRequest {
-			person_id: PersonId::new(660271),
-			game_id: GameId::new(776562),
-		};
-		println!("{url}");
+		let url = PersonSingleGameStatsRequest::builder()
+			.person_id(660_271)
+			.game_id(776_562)
+			.build();
 		let _ = crate::serde_path_to_error_parse(url).await;
 	}
 }

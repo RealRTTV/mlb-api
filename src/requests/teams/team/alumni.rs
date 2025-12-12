@@ -33,16 +33,15 @@ impl StatsAPIRequestUrl for AlumniRequest {
 mod tests {
 	use crate::teams::team::alumni::AlumniRequest;
 	use crate::teams::TeamsRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
-	use chrono::{Datelike, Local};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn test_heavy() {
-		let season = Local::now().year() as u32;
+		let season = TEST_YEAR;
 		let teams = TeamsRequest::builder().season(season).build_and_get().await.unwrap();
 		for team in teams.teams {
-			let _ = crate::serde_path_to_error_parse(AlumniRequest::builder().team_id(team.id).season(season).build());
+			let _ = crate::serde_path_to_error_parse(AlumniRequest::builder().team_id(team.id).season(season).build()).await;
 		}
 	}
 }

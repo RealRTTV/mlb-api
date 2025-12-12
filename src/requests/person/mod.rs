@@ -9,17 +9,17 @@ pub mod players;
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::draft::School;
 use crate::hydrations::Hydrations;
-use people::PeopleResponse;
 use crate::positions::Position;
 use crate::seasons::season::SeasonId;
 use crate::teams::team::Team;
 use crate::types::{Gender, Handedness, HeightMeasurement};
-use crate::StatsAPIRequestUrl;
+use crate::{integer_id, StatsAPIRequestUrl};
 use crate::{rwlock_const_new, RwLock};
 use bon::Builder;
 use chrono::NaiveDate;
 use derive_more::{Deref, DerefMut, Display, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use people::PeopleResponse;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
@@ -169,16 +169,7 @@ pub struct IdentifiablePerson<H: PersonHydrations> {
 	hydrations: H
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct PersonId(u32);
-
-impl PersonId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-}
+integer_id!(PersonId);
 
 #[repr(transparent)]
 #[derive(Debug, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
@@ -470,15 +461,15 @@ impl RequestEntryCache for Person<()> {
 
 #[cfg(test)]
 mod tests {
+	use super::*;
 	use crate::sports::SportId;
-	use crate::{RosterType, StatsAPIRequestUrlBuilderExt};
 	use crate::teams::team::roster::RosterRequest;
 	use crate::teams::TeamsRequest;
-	use super::*;
+	use crate::{RosterType, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	async fn no_hydrations() {
-		let _ = PersonRequest::<()>::builder(665489).build_and_get().await.unwrap();
+		let _ = PersonRequest::<()>::builder(665_489).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
@@ -500,7 +491,7 @@ mod tests {
 			}
 		}
 
-		let _ = PersonRequest::<AllButStatHydrations>::builder(665489).build_and_get().await.unwrap();
+		let _ = PersonRequest::<AllButStatHydrations>::builder(665_489).build_and_get().await.unwrap();
 	}
 
 	#[rustfmt::skip]
@@ -518,9 +509,8 @@ mod tests {
 			}
 		}
 
-		let toronto_blue_jays = TeamsRequest::builder()
-			.season(2025)
-			.sport_id(SportId::MLB)
+		let toronto_blue_jays = TeamsRequest::mlb_teams()
+			.season(TEST_YEAR)
 			.build_and_get()
 			.await
 			.unwrap()
@@ -550,7 +540,7 @@ mod tests {
 			.into_iter()
 			.next()
 			.unwrap();
-
-		dbg!(&player.stats);
+	
+		let _ = player.stats;
 	}
 }

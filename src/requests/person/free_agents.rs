@@ -84,17 +84,16 @@ impl StatsAPIRequestUrl for FreeAgentsRequest {
 #[cfg(test)]
 mod tests {
 	use crate::requests::person::free_agents::FreeAgentsRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
-	use chrono::{Datelike, Local};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
-	async fn test_2025() {
-		let _response = FreeAgentsRequest::builder().season(2025).build_and_get().await.unwrap();
+	async fn test_one_year() {
+		let _response = FreeAgentsRequest::builder().season(TEST_YEAR).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
 	async fn test_all_seasons() {
-		for season in 2001..=Local::now().year() as _ {
+		for season in 2001..=TEST_YEAR {
 			let _response = FreeAgentsRequest::builder().season(season).build_and_get().await.unwrap();
 		}
 	}

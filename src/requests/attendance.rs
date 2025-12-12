@@ -8,10 +8,12 @@ use crate::{GameType, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use either::Either;
-use serde::Deserialize;
+use serde::de::Error;
+use serde::{Deserialize, Deserializer};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::iter::Sum;
+use std::num::NonZeroU32;
 use std::ops::Add;
 
 /// Within regards to attendance, the term frequently used is "Opening" over "Game";
@@ -55,10 +57,10 @@ pub struct AttendanceRecord {
 	pub total_openings: HomeAwaySplits<u32>,
 	pub total_openings_lost: u32,
 	pub total_games: HomeAwaySplits<u32>,
-	pub season: SeasonId,
+	pub season: SeasonWithMinorId,
 	pub attendance_totals: HomeAwaySplits<u32>,
-	pub single_opening_high: DatedAttendance,
-	pub single_opening_low: DatedAttendance,
+	/// Minimum at an opening, then maximum at an opening
+	pub single_opening_min_max: Option<(DatedAttendance, DatedAttendance)>,
 	pub game_type: GameType,
 }
 
@@ -77,13 +79,17 @@ impl Add for AttendanceRecord {
 				home: self.total_games.home + rhs.total_games.home,
 				away: self.total_games.away + rhs.total_games.away,
 			},
-			season: SeasonId::max(self.season, rhs.season),
+			season: SeasonWithMinorId::max(self.season, rhs.season),
 			attendance_totals: HomeAwaySplits {
 				home: self.attendance_totals.home + rhs.attendance_totals.home,
 				away: self.attendance_totals.away + rhs.attendance_totals.away,
 			},
-			single_opening_high: self.single_opening_high.max(rhs.single_opening_high), // ties go to rhs
-			single_opening_low: self.single_opening_low.min(rhs.single_opening_low),    // ties go to rhs
+			single_opening_min_max: match (self.single_opening_min_max, rhs.single_opening_min_max) {
+				(None, None) => None,
+				(Some(min_max), None) | (None, Some(min_max)) => Some(min_max),
+				// ties go to rhs in `min` and `max` calls
+				(Some((a_min, a_max)), Some((b_min, b_max))) => Some((b_min.min(a_min), a_max.max(b_max))),
+			},
 			game_type: rhs.game_type,
 		}
 	}
@@ -98,8 +104,7 @@ impl Default for AttendanceRecord {
 			total_games: HomeAwaySplits::new(0, 0),
 			season: (Local::now().year() as u32).into(),
 			attendance_totals: HomeAwaySplits::new(0, 0),
-			single_opening_high: DatedAttendance::default(),
-			single_opening_low: DatedAttendance::default(),
+			single_opening_min_max: None,
 			game_type: GameType::default(),
 		}
 	}
@@ -120,6 +125,74 @@ impl AttendanceRecord {
 	}
 }
 
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash)]
+pub struct SeasonWithMinorId {
+	season: SeasonId,
+	minor: Option<NonZeroU32>,
+}
+
+impl From<SeasonId> for SeasonWithMinorId {
+	fn from(value: SeasonId) -> Self {
+		Self { season: value, minor: None }
+	}
+}
+
+impl From<u32> for SeasonWithMinorId {
+	fn from(value: u32) -> Self {
+		Self { season: value.into(), minor: None }
+	}
+}
+
+impl<'de> Deserialize<'de> for SeasonWithMinorId {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		struct Visitor;
+
+		impl serde::de::Visitor<'_> for Visitor {
+			type Value = SeasonWithMinorId;
+
+			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+				formatter.write_str("a season id, or a string with a . denoting the minor")
+			}
+
+			fn visit_u32<E>(self, value: u32) -> Result<Self::Value, E>
+			where
+				E: Error
+			{
+				Ok(SeasonWithMinorId { season: SeasonId::from(value), minor: None })
+			}
+
+			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				if let Some((season, minor)) = v.split_once('.') {
+					let season = season.parse::<u32>().map_err(Error::custom)?;
+					let minor = minor.parse::<u32>().map_err(Error::custom)?;
+					let minor = NonZeroU32::try_from(minor).map_err(Error::custom)?;
+					Ok(SeasonWithMinorId { season: SeasonId::from(season), minor: Some(minor) })
+				} else {
+					Ok(v.parse::<u32>().map(|season| SeasonWithMinorId { season: SeasonId::from(season), minor: None }).map_err(Error::custom)?)
+				}
+			}
+		}
+
+		deserializer.deserialize_any(Visitor)
+	}
+}
+
+impl Display for SeasonWithMinorId {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}", self.season)?;
+		if let Some(minor) = self.minor {
+			write!(f, ".{minor}")?;
+		}
+		Ok(())
+	}
+}
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 struct AnnualRecordStruct {
@@ -130,20 +203,20 @@ struct AnnualRecordStruct {
 	// games_total: u32,
 	games_away_total: u32,
 	games_home_total: u32,
-	year: SeasonId,
+	year: SeasonWithMinorId,
 	// attendance_average_away: u32,
 	// attendance_average_home: u32,
 	// attendance_average_ytd: u32,
-	attendance_high: u32,
-	attendance_high_date: NaiveDateTime,
-	attendance_high_game: Game,
+	attendance_high: Option<u32>,
+	attendance_high_date: Option<NaiveDateTime>,
+	attendance_high_game: Option<Game>,
 	attendance_low: Option<u32>,
 	attendance_low_date: Option<NaiveDateTime>,
 	attendance_low_game: Option<Game>,
 	// attendance_opening_average: u32,
 	// attendance_total: u32,
-	attendance_total_away: u32,
-	attendance_total_home: u32,
+	attendance_total_away: Option<u32>,
+	attendance_total_home: Option<u32>,
 	game_type: GameType,
 	// team: Team,
 }
@@ -175,10 +248,34 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 			game_type,
 			// team,
 		} = value;
-		let high = DatedAttendance {
-			value: attendance_high,
-			date: attendance_high_date.date(),
-			game: attendance_high_game,
+		let single_opening_min_max = if let Some(attendance_high) = attendance_high
+			&& let Some(attendance_high_date) = attendance_high_date
+			&& let Some(attendance_high_game) = attendance_high_game
+		{
+			let max = DatedAttendance {
+				value: attendance_high,
+				date: attendance_high_date.date(),
+				game: attendance_high_game,
+			};
+
+			let min = {
+				if let Some(attendance_low) = attendance_low
+					&& let Some(attendance_low_date) = attendance_low_date
+					&& let Some(attendance_low_game) = attendance_low_game
+				{
+					DatedAttendance {
+						value: attendance_low,
+						date: attendance_low_date.date(),
+						game: attendance_low_game,
+					}
+				} else {
+					max.clone()
+				}
+			};
+
+			Some((min, max))
+		} else {
+			None
 		};
 		Self {
 			total_openings: HomeAwaySplits {
@@ -192,24 +289,10 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 			},
 			season: year,
 			attendance_totals: HomeAwaySplits {
-				home: attendance_total_home,
-				away: attendance_total_away,
+				home: attendance_total_home.unwrap_or(0),
+				away: attendance_total_away.unwrap_or(0),
 			},
-			single_opening_low: {
-				if let Some(attendance_low) = attendance_low
-					&& let Some(attendance_low_date) = attendance_low_date
-					&& let Some(attendance_low_game) = attendance_low_game
-				{
-					DatedAttendance {
-						value: attendance_low,
-						date: attendance_low_date.date(),
-						game: attendance_low_game,
-					}
-				} else {
-					high.clone()
-				}
-			},
-			single_opening_high: high,
+			single_opening_min_max,
 			game_type,
 		}
 	}
@@ -241,7 +324,7 @@ pub struct AttendanceRequest {
 	#[builder(setters(vis = "", name = __id_internal))]
 	id: Either<TeamId, LeagueId>,
 	#[builder(into)]
-	season: Option<SeasonId>,
+	season: Option<SeasonWithMinorId>,
 	#[builder(into)]
 	date: Option<NaiveDate>,
 	#[builder(default)]
@@ -291,21 +374,22 @@ impl StatsAPIRequestUrl for AttendanceRequest {
 mod tests {
 	use crate::attendance::AttendanceRequest;
 	use crate::teams::TeamsRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
+	use crate::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
-	async fn parse_all_mlb_teams_2025() {
-		let mlb_teams = TeamsRequest::builder()
-			.season(2025)
+	async fn parse_all_teams_test_year() {
+		let mlb_teams = TeamsRequest::all_sports()
+			.season(TEST_YEAR)
 			.build_and_get()
 		.await
 		.unwrap()
 		.teams;
 		for team in mlb_teams {
-			let _response = AttendanceRequest::builder()
+			let request = AttendanceRequest::builder()
 				.team_id(team.id)
-				.build_and_get()
+				.build();
+			let _response = request.get()
 				.await
 				.unwrap();
 		}

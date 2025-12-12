@@ -10,7 +10,7 @@ use crate::types::{Copyright, HomeAwaySplits, NaiveDateRange, MLB_API_DATE_FORMA
 use crate::venue::{Venue, VenueId};
 use crate::{GameStatus, GameType, Sky, StatsAPIRequestUrl};
 use bon::Builder;
-use chrono::{NaiveDate, Utc};
+use chrono::{NaiveDate, NaiveDateTime, Utc};
 use either::Either;
 use itertools::Itertools;
 use serde::Deserialize;
@@ -44,8 +44,8 @@ pub struct ScheduleGame {
 	pub game_guid: Uuid,
 	pub game_type: GameType,
 	pub season: SeasonId,
-	// pub game_date: NaiveDateTime,
-	/// Different from `game_date` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
+	pub game_date: NaiveDateTime,
+	/// Different from `game_date.date()` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
 	pub official_date: NaiveDate,
 	pub status: GameStatus,
 	pub teams: HomeAwaySplits<TeamWithStandings>,
@@ -80,7 +80,8 @@ struct __ScheduleGameStruct {
 	game_guid: Uuid,
 	game_type: GameType,
 	season: SeasonId,
-	// todo: // game_date: NaiveDateTime,
+	#[serde(deserialize_with = "crate::types::deserialize_datetime")]
+	game_date: NaiveDateTime,
 	official_date: NaiveDate,
 	status: GameStatus,
 	teams: HomeAwaySplits<TeamWithStandings>,
@@ -116,6 +117,7 @@ impl From<__ScheduleGameStruct> for ScheduleGame {
 			game_guid,
 			game_type,
 			season,
+			game_date,
 			official_date,
 			status,
 			teams,
@@ -139,6 +141,7 @@ impl From<__ScheduleGameStruct> for ScheduleGame {
 			game_guid,
 			game_type,
 			season,
+			game_date,
 			official_date,
 			status,
 			teams,
@@ -289,8 +292,8 @@ impl StatsAPIRequestUrl for ScheduleRequest {
 #[cfg(test)]
 mod tests {
 	use crate::schedule::ScheduleRequest;
-	use crate::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
-	use chrono::{Datelike, Local, NaiveDate};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use chrono::NaiveDate;
 
 	#[tokio::test]
 	async fn test_one_date() {
@@ -300,17 +303,14 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_all_dates_current_year() {
-		let current_date = Local::now().naive_local().date();
-		let request = ScheduleRequest::builder().date_range(current_date.with_ordinal0(0).unwrap()..=current_date.with_month(12).unwrap().with_day(31).unwrap()).build();
-		let _ = request.get().await.unwrap();
+		let _ = ScheduleRequest::builder().date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).expect("Valid date")..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).expect("Valid date")).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn test_all_dates_all_years() {
-		for year in 1876..=Local::now().year() as _ {
-			dbg!(year);
-			let _ = ScheduleRequest::builder().date_range(NaiveDate::from_ymd_opt(year, 1, 1).unwrap()..=NaiveDate::from_ymd_opt(year, 12, 31).unwrap())
+		for year in 1876..=TEST_YEAR {
+			let _ = ScheduleRequest::builder().date_range(NaiveDate::from_ymd_opt(year.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(year.try_into().unwrap(), 12, 31).unwrap())
 			.build_and_get()
 			.await
 			.unwrap();

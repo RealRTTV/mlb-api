@@ -1,4 +1,4 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::meta::MetaRequest;
 use crate::{rwlock_const_new, RwLock};
 use crate::{MetaKind, StatsAPIRequestUrl};
@@ -87,10 +87,10 @@ impl RequestEntryCache for StatGroup {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[tokio::test]
+	#[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaRequest::<super::StatGroup>::new().get().await.unwrap();
 	}

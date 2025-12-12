@@ -10,14 +10,14 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Builder)]
 pub struct JobsUmpiresRequest {
-    #[builder(into)]
-    sport_id: Option<SportId>,
+    #[builder(into, default)]
+    sport_id: SportId,
     date: Option<NaiveDate>,
 }
 
 impl Display for JobsUmpiresRequest {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "http://statsapi.mlb.com/api/v1/jobs/umpires{}", gen_params! { "sportId"?: self.sport_id, "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)) })
+        write!(f, "http://statsapi.mlb.com/api/v1/jobs/umpires{}", gen_params! { "sportId": self.sport_id, "date"?: self.date.as_ref().map(|date| date.format(MLB_API_DATE_FORMAT)) })
     }
 }
 

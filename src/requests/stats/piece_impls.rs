@@ -1,4 +1,6 @@
-use crate::requests::stats::pieces::{AtBatPiece, ExtraBaseHitsPiece, HitByPitchPiece, IntentionalWalksPiece, PlateAppearancePiece, SacrificeHitsPiece, HitsPiece, StealingPiece, StrikeoutsPiece, TotalBasesPiece, BaseOnBallsPiece, SwingDataPiece, StrikesPiece, PitchQuantityPiece, EarnedRunsPiece, InningsPitchedPiece, DecisionsPiece, RunsPiece, GamesPitchedPiece};
+#![allow(clippy::cast_lossless, reason = "this crate is not obsessed with producing the most accurate floating point representations of data, it's close enough for what we need.")]
+
+use crate::requests::stats::pieces::{AtBatPiece, BaseOnBallsPiece, DecisionsPiece, EarnedRunsPiece, ExtraBaseHitsPiece, GamesPitchedPiece, HitByPitchPiece, HitsPiece, InningsPitchedPiece, IntentionalWalksPiece, PitchQuantityPiece, PlateAppearancePiece, RunsPiece, SacrificeHitsPiece, StealingPiece, StrikeoutsPiece, StrikesPiece, SwingDataPiece, TotalBasesPiece};
 use crate::requests::stats::units::{PercentageStat, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 
 pub trait AVGPiece {
@@ -247,7 +249,7 @@ impl<T: EarnedRunsPiece + InningsPitchedPiece> ERAPiece for T {
 
 pub trait WHIPPiece {
 	/// # Walks & Hits per Inning Pitched
-	/// Described in title. 
+	/// Described in title.
 	#[must_use]
 	fn whip(&self) -> ThreeDecimalPlaceStat;
 }

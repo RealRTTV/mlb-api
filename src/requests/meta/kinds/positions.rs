@@ -1,5 +1,5 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
 use derive_more::{Deref, DerefMut, Display, From};
@@ -118,10 +118,10 @@ impl RequestEntryCache for Position {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[tokio::test]
+	#[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaRequest::<super::Position>::new().get().await.unwrap();
 	}

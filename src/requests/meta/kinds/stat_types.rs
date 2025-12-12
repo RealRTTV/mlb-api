@@ -1,5 +1,5 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
 #[cfg(not(feature = "static_stat_types"))]
@@ -189,10 +189,10 @@ impl RequestEntryCache for StatType {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[cfg(feature = "static_stat_types")]
+	#[cfg(feature = "static_stat_types")]
 	#[tokio::test]
 	async fn is_still_up_to_date() {
 		use crate::meta::MetaRequest;

@@ -1,8 +1,8 @@
-use crate::cache::{RequestEntryCache, HydratedCacheTable};
-use crate::meta::{MetaRequest, MetaKind};
-use crate::StatsAPIRequestUrl;
+use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::meta::{MetaKind, MetaRequest};
 use crate::{rwlock_const_new, RwLock};
-use derive_more::{Deref, DerefMut, Display, From};
+use crate::{string_id, StatsAPIRequestUrl};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
@@ -13,9 +13,7 @@ pub struct IdentifiableGameStatus {
 	#[serde(rename = "detailedState")] pub id: GameStatusId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Clone, Hash, From)]
-pub struct GameStatusId(String);
+string_id!(GameStatusId);
 
 /// Detailed game status (use [`AbstractGameCode`] for simpler responses)
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
@@ -209,10 +207,10 @@ impl RequestEntryCache for GameStatus {
 
 #[cfg(test)]
 mod tests {
-    use crate::meta::MetaRequest;
-    use crate::StatsAPIRequestUrl;
+	use crate::meta::MetaRequest;
+	use crate::StatsAPIRequestUrl;
 
-    #[tokio::test]
+	#[tokio::test]
 	async fn parse_meta() {
 		let _response = MetaRequest::<super::GameStatus>::new().get().await.unwrap();
 	}

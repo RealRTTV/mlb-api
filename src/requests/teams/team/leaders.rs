@@ -59,20 +59,20 @@ impl StatsAPIRequestUrl for TeamStatLeadersRequest {
 #[cfg(test)]
 mod tests {
 	use crate::meta::MetaRequest;
+	use crate::sports::SportId;
 	use crate::teams::team::leaders::TeamStatLeadersRequest;
 	use crate::teams::TeamsRequest;
 	use crate::{BaseballStat, StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
-	use crate::sports::SportId;
 
 	#[tokio::test]
 	async fn test_all_mlb_teams_all_stats() {
 		let all_stats = MetaRequest::<BaseballStat>::new().get().await.unwrap().entries.into_iter().map(|stat| stat.id.clone()).collect::<Vec<_>>();
 
-		for team in TeamsRequest::builder().sport_id(SportId::MLB).build_and_get().await.unwrap().teams {
+		for team in TeamsRequest::mlb_teams().build_and_get().await.unwrap().teams {
 			let request = TeamStatLeadersRequest::builder().team_id(team.id).stats(all_stats.clone()).build();
 			let _all_stats = request.get()
 			.await
-			.expect(&format!("expected team #{} to be valid; {request}", team.id));
+			.unwrap_or_else(|_| panic!("expected team #{} to be valid; {request}", team.id));
 		}
 	}
 }

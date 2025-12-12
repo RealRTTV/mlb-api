@@ -1,19 +1,6 @@
-use serde_with::DisplayFromStr;
-use std::collections::hash_map::Entry;
-use std::convert::Infallible;
-use derive_more::{Deref, DerefMut, TryFrom};
-use serde::{Deserialize, Deserializer};
-use std::fmt::{Debug, Display, Formatter};
-use std::num::ParseIntError;
-use std::str::FromStr;
-use chrono::NaiveDate;
-use fxhash::FxHashMap;
-use serde::de::{DeserializeOwned, Error, Visitor};
-use serde_json::Value;
-use serde_with::serde_as;
-use thiserror::Error;
+#![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
+
 use crate::league::League;
-use crate::requests::{GameType, StatGroup, StatType};
 use crate::requests::person::Person;
 use crate::requests::stats::catching::CatchingStats;
 use crate::requests::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingStats};
@@ -21,9 +8,24 @@ use crate::requests::stats::hitting::{AdvancedHittingStats, HittingStats, Saberm
 use crate::requests::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
 use crate::requests::stats::units::PercentageStat;
 use crate::requests::teams::team::Team;
+use crate::requests::{GameType, StatGroup, StatType};
 use crate::seasons::season::SeasonId;
 use crate::sports::Sport;
 use crate::types::{RGBAColor, SimpleTemperature};
+use chrono::NaiveDate;
+use derive_more::{Deref, DerefMut, TryFrom};
+use fxhash::FxHashMap;
+use serde::de::{DeserializeOwned, Error, Visitor};
+use serde::{Deserialize, Deserializer};
+use serde_json::Value;
+use serde_with::serde_as;
+use serde_with::DisplayFromStr;
+use std::collections::hash_map::Entry;
+use std::convert::Infallible;
+use std::fmt::{Debug, Display, Formatter};
+use std::num::ParseIntError;
+use std::str::FromStr;
+use thiserror::Error;
 
 pub mod pieces;
 pub mod piece_impls;
@@ -49,8 +51,11 @@ pub trait Stat: Debug + Clone + PartialEq + Eq {
 
 	type TryFromSplitWrappedVariantError;
 
+	/// # Errors
+	/// See [`Self::TryFromSplitWrappedVariantError`]
 	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError> where Self: Sized;
 
+	#[must_use]
 	fn fallback() -> Option<Self> where Self: Sized { None }
 }
 
@@ -143,7 +148,7 @@ impl From<__InlineStatEntry> for __ParsedStatEntry {
 
 impl From<__Depth1StatEntry> for Vec<__Depth0StatEntry> {
 	fn from(value: __Depth1StatEntry) -> Self {
-		value.splits.into_iter().map(|x| x.into()).collect()
+		value.splits.into_iter().map(Into::into).collect()
 	}
 }
 
@@ -159,7 +164,7 @@ impl From<__RawStatEntry> for Vec<__ParsedStatEntry> {
 impl From<__RawStats> for __ParsedStats {
 	fn from(value: __RawStats) -> Self {
 		Self {
-			entries: value.0.into_iter().flat_map::<Vec<__ParsedStatEntry>, _>(|entry| entry.into()).collect()
+			entries: value.0.into_iter().flat_map::<Vec<__ParsedStatEntry>, _>(Into::into).collect()
 		}
 	}
 }
@@ -255,7 +260,7 @@ impl<T: Stat + DeserializeOwned> Stat for Multiple<T> {
 	where
 		Self: Sized,
 	{
-		Some(Multiple { entries: Vec::new() })
+		Some(Self { entries: Vec::new() })
 	}
 }
 
@@ -311,7 +316,7 @@ impl<T: Stat + DeserializeOwned> Stat for MultipleSeasons<T> {
 	where
 		Self: Sized
 	{
-		let mut this = Self { seasons: Default::default() };
+		let mut this = Self { seasons: FxHashMap::default() };
 		for season in split_wrapped {
 			match this.seasons.entry(season.season) {
 				Entry::Occupied(_) => return Err (Self::TryFromSplitWrappedVariantError::DuplicateEntry { season: season.season }),
@@ -322,7 +327,7 @@ impl<T: Stat + DeserializeOwned> Stat for MultipleSeasons<T> {
 	}
 
 	fn fallback() -> Option<Self> {
-		Some(Self { seasons: Default::default() })
+		Some(Self { seasons: FxHashMap::default() })
 	}
 }
 
@@ -477,6 +482,7 @@ fn deserialize_day_of_week<'de, D: Deserializer<'de>>(deserializer: D) -> Result
 			formatter.write_str("an integer between 0 and 6 representing the day of the week")
 		}
 
+		#[allow(clippy::cast_sign_loss, reason = "needlessly pedantic")]
 		fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
 		where
 			E: Error,
@@ -629,6 +635,7 @@ pub struct SprayChart {
 
 impl BaseStat for SprayChart {}
 
+#[allow(clippy::struct_field_names, reason = "is a piece")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename = "camelCase")]
 pub struct HitSpray {

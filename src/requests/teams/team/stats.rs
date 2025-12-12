@@ -1,15 +1,18 @@
+#![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
+
+use crate::gen_params;
+use crate::requests::person::PersonId;
 use crate::requests::sports::SportId;
+use crate::requests::stats::Stats;
 use crate::requests::teams::team::TeamId;
 use crate::requests::{GameType, StatGroup, StatType, StatsAPIRequestUrl};
-use crate::gen_params;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
 use chrono::NaiveDate;
 use itertools::Itertools;
+use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
-use serde::Deserialize;
-use crate::requests::person::PersonId;
-use crate::requests::stats::Stats;
+use either::Either;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(bound = "S: Stats")]
@@ -19,8 +22,7 @@ pub struct TeamsStatsResponse<S: Stats> {
 }
 
 pub struct TeamsStatsRequest<S: Stats> {
-	/// Choice between either a [`TeamId`] or a [`SportId`]
-	pub id: Result<TeamId, SportId>,
+	pub id: Either<TeamId, SportId>,
 	pub season: Option<u16>,
 	pub game_type: GameType,
 	pub stat_types: Vec<StatType>,
@@ -33,9 +35,10 @@ pub struct TeamsStatsRequest<S: Stats> {
 }
 
 impl<S: Stats> Display for TeamsStatsRequest<S> {
+	#[allow(clippy::cognitive_complexity, reason = "still readable")]
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self.id {
-			Ok(id) => write!(
+			Either::Left(id) => write!(
 				f,
 				"http://statsapi.mlb.com/api/v1/teams/{id}/stats{params}",
 				params = gen_params! {
@@ -49,7 +52,7 @@ impl<S: Stats> Display for TeamsStatsRequest<S> {
 					"opposingTeamId"?: self.opposing_team,
 				}
 			),
-			Err(id) => write!(
+			Either::Right(id) => write!(
 				f,
 				"http://statsapi.mlb.com/api/v1/teams/stats{params}",
 				params = gen_params! {

@@ -1,9 +1,9 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
+use crate::requests::stats::units::InningsPitched;
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 use serde_with::serde_as;
-use crate::requests::stats::units::InningsPitched;
 
 macro_rules! piece {
     (
@@ -149,6 +149,7 @@ piece! {
 
 piece! {
 	#[derive(Add, AddAssign)]
+	#[allow(clippy::struct_field_names, reason = "its a piece")]
 	struct AdvancedHitsData: AdvancedHitsPiece {
 		#[serde(rename = "flyHits")]
 		pub flyball_hits: u32,
@@ -609,7 +610,7 @@ impl TryFrom<__InningsPitchedDataStruct> for InningsPitchedData {
 	type Error = &'static str;
 
 	fn try_from(value: __InningsPitchedDataStruct) -> Result<Self, Self::Error> {
-		value.innings_pitched.or_else(|| value.outs.map(InningsPitched::from_outs)).map(|innings_pitched| InningsPitchedData { innings_pitched }).ok_or("could not get either outs-based field (innings_pitched`")
+		value.innings_pitched.or_else(|| value.outs.map(InningsPitched::from_outs)).map(|innings_pitched| Self { innings_pitched }).ok_or("could not get either outs-based field (innings_pitched`")
 	}
 }
 

@@ -7,6 +7,7 @@ pub mod stats;
 pub mod uniforms; // done
 
 use crate::divisions::NamedDivision;
+use crate::integer_id;
 use crate::league::NamedLeague;
 use crate::seasons::season::SeasonId;
 use crate::sports::NamedSport;
@@ -290,16 +291,7 @@ impl TeamNameRaw {
 	}
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct TeamId(u32);
-
-impl TeamId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-}
+integer_id!(TeamId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]

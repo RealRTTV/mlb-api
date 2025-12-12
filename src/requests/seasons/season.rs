@@ -1,12 +1,11 @@
+use crate::integer_id;
 use crate::types::NaiveDateRange;
 use chrono::NaiveDate;
 use derive_more::{Deref, Display, From};
 use serde::{Deserialize, Deserializer};
 use std::fmt::Formatter;
 
-#[repr(transparent)]
-#[derive(Debug, Default, Deref, Display, From, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash)]
-pub struct SeasonId(u32);
+integer_id!(#[derive(Debug, Default, Deref, Display, From, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash)] SeasonId);
 
 impl<'de> Deserialize<'de> for SeasonId {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

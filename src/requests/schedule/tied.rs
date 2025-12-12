@@ -33,19 +33,18 @@ impl StatsAPIRequestUrl for ScheduleTiedRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::schedule::tied::ScheduleTiedRequest;
-    use crate::StatsAPIRequestUrlBuilderExt;
-    use chrono::{Datelike, Local};
+	use crate::schedule::tied::ScheduleTiedRequest;
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
-    #[tokio::test]
+	#[tokio::test]
     async fn test_one_season() {
-        let _ = ScheduleTiedRequest::builder().season(2025).build_and_get().await.unwrap();
+        let _ = ScheduleTiedRequest::builder().season(TEST_YEAR).build_and_get().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_all_seasons() {
-        for season in 1876..=Local::now().year() as _ {
+        for season in 1876..=TEST_YEAR {
             let _ = ScheduleTiedRequest::builder()
                 .season(season)
                 .build_and_get()

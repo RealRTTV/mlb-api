@@ -1,4 +1,4 @@
-use chrono::{Datelike, Local, NaiveDate};
+use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use compact_str::CompactString;
 use derive_more::{Display, FromStr};
 use serde::de::Error;
@@ -193,6 +193,18 @@ impl TryFrom<__HandednessStruct> for Handedness {
 pub type NaiveDateRange = RangeInclusive<NaiveDate>;
 
 pub(crate) const MLB_API_DATE_FORMAT: &str = "%m/%d/%Y";
+
+/// # Errors
+/// 1. If a string cannot be deserialized
+/// 2. If the data does not appear in the format `%Y-%m-%dT%H:%M:%SZ(%#z)?`. Why the MLB removes the +00:00 or -00:00 sometimes? I have no clue.
+pub fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -> Result<NaiveDateTime, D::Error> {
+	let string = String::deserialize(deserializer)?;
+	if string.ends_with('Z') {
+		NaiveDateTime::parse_from_str(&string, "%FT%TZ").map_err(D::Error::custom)
+	} else {
+		NaiveDateTime::parse_from_str(&string, "%FT%TZ%#z").map_err(D::Error::custom)
+	}
+}
 
 /// # Errors
 /// 1. If a string cannot be deserialized

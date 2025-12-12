@@ -44,15 +44,14 @@ impl StatsAPIRequestUrl for SeasonsRequest {
 mod tests {
 	use crate::seasons::SeasonsRequest;
 	use crate::sports::SportsRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
-	use chrono::{Datelike, Local};
+	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parses_all_seasons() {
 		let all_sport_ids = SportsRequest::builder().build_and_get().await.unwrap().sports.into_iter().map(|sport| sport.id).collect::<Vec<_>>();
 
-		for season in 1871..=Local::now().year() as _ {
+		for season in 1871..=TEST_YEAR {
 			for id in all_sport_ids.iter().copied() {
 				let _response = SeasonsRequest::builder().sport_id(id).season(season).build_and_get().await.unwrap();
 			}

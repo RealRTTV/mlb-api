@@ -1,7 +1,7 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::types::Copyright;
-use crate::StatsAPIRequestUrl;
 use crate::{gen_params, rwlock_const_new, RwLock};
+use crate::{integer_id, StatsAPIRequestUrl};
 use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
 use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
@@ -16,16 +16,9 @@ pub struct SportsResponse {
 	pub sports: Vec<Sport>,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct SportId(pub(super) u32);
+integer_id!(#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)] SportId);
 
 impl SportId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-
 	/// This is here because we can rest assured that it won't ever go away.
 	pub const MLB: Self = Self::new(1);
 }
