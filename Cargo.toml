@@ -54,7 +54,6 @@ optional = true
 default = ["reqwest"]
 
 cache = []
-static_stat_types = []
 _heavy_tests = []
 
 reqwest = ["dep:reqwest", "dep:tokio"]

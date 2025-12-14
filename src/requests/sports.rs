@@ -87,7 +87,6 @@ pub enum Sport {
 }
 
 id_only_eq_impl!(Sport, id);
-
 tiered_request_entry_cache_impl!(SportsRequest => |id: SportId| { SportsRequest::builder().id(*id).build() }.sports => Sport => HydratedSport);
 
 #[cfg(test)]
