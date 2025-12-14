@@ -1,3 +1,4 @@
+use serde::de::DeserializeOwned;
 use crate::types::StatsAPIError;
 
 #[cfg(feature = "ureq")]
@@ -26,3 +27,49 @@ pub enum Error {
 	#[error(transparent)]
 	StatsAPI(#[from] StatsAPIError),
 }
+
+#[cfg(all(feature = "reqwest", feature = "ureq"))]
+compile_error!("Only one http backend is allowed!");
+
+pub trait StatsAPIRequestUrl: ToString {
+	type Response: DeserializeOwned;
+
+	#[cfg(feature = "ureq")]
+	fn get(&self) -> Result<Self::Response>
+	where
+		Self: Sized,
+	{
+		let url = self.to_string();
+		get::<Self::Response>(url)
+	}
+
+	#[cfg(feature = "reqwest")]
+	fn get(&self) -> impl Future<Output = Result<Self::Response>>
+	where
+		Self: Sized,
+	{
+		let url = self.to_string();
+		get::<Self::Response>(url)
+	}
+}
+
+pub trait StatsAPIRequestUrlBuilderExt where Self: Sized {
+	type Built: StatsAPIRequestUrl + From<Self>;
+
+	#[cfg(feature = "ureq")]
+	fn build_and_get(self) -> Result<<T as StatsAPIRequestUrl>::Response> {
+		let built = T::from(self);
+		let url = built.to_string();
+		get::<<Self::Built as StatsAPIRequestUrl>::Response>(url)
+	}
+
+	#[cfg(feature = "reqwest")]
+	fn build_and_get(self) -> impl Future<Output = Result<<Self::Built as StatsAPIRequestUrl>::Response>> {
+		async {
+			let built = Self::Built::from(self);
+			let url = built.to_string();
+			get::<<Self::Built as StatsAPIRequestUrl>::Response>(url).await
+		}
+	}
+}
+

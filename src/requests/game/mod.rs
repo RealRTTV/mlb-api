@@ -1,8 +1,6 @@
-use crate::integer_id;
 use derive_more::From;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
-use std::ops::{Deref, DerefMut};
 
 pub mod boxscore;
 pub mod changes;
@@ -25,41 +23,13 @@ pub struct IdentifiableGame {
 	pub id: GameId,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Game {
 	Identifiable(IdentifiableGame),
 }
 
-impl Default for Game {
-	fn default() -> Self {
-		Self::Identifiable(IdentifiableGame::default())
-	}
-}
-
-impl Deref for Game {
-	type Target = IdentifiableGame;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for Game {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl PartialEq for Game {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
+id_only_eq_impl!(Game, id);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum DoubleHeaderKind {

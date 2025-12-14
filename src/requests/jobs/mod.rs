@@ -1,12 +1,12 @@
-use crate::gen_params;
 use crate::person::Person;
-use crate::sports::SportId;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
-use crate::{JobTypeId, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::job_types::JobTypeId;
+use crate::request::StatsAPIRequestUrl;
+use crate::sports::SportId;
 
 pub mod datacasters; // done
 pub mod official_scorers; // done
@@ -40,7 +40,7 @@ pub struct JobsRequest {
     date: Option<NaiveDate>,
 }
 
-impl<S: jobs_request_builder::State + jobs_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for JobsRequestBuilder<S> {
+impl<S: jobs_request_builder::State + jobs_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for JobsRequestBuilder<S> {
     type Built = JobsRequest;
 }
 
@@ -60,9 +60,10 @@ impl StatsAPIRequestUrl for JobsRequest {
 
 #[cfg(test)]
 mod tests {
+    use crate::job_types::JobType;
     use crate::jobs::JobsRequest;
     use crate::meta::MetaRequest;
-    use crate::{JobType, StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+    use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
 
     #[tokio::test]
     async fn parse_all_job_types() {

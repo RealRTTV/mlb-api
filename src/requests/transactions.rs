@@ -1,15 +1,14 @@
 use crate::person::{Person, PersonId};
-use crate::sports::SportId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, NaiveDateRange, MLB_API_DATE_FORMAT};
-use crate::StatsAPIRequestUrl;
-use crate::{gen_params, integer_id};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
+use crate::sports::SportId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -446,27 +445,25 @@ pub struct TransactionsRequest {
 	sport_id: Option<SportId>,
 }
 
-use transactions_request_builder::SetKind;
-
 impl TransactionsRequest {
-	pub fn for_team(team_id: impl Into<TeamId>) -> TransactionsRequestBuilder<SetKind> {
+	pub fn for_team(team_id: impl Into<TeamId>) -> TransactionsRequestBuilder<transactions_request_builder::SetKind> {
 		Self::__builder_internal().__kind_internal(TransactionsRequestKind::Team(team_id.into()))
 	}
 
-	pub fn for_player(person_id: impl Into<PersonId>) -> TransactionsRequestBuilder<SetKind> {
+	pub fn for_player(person_id: impl Into<PersonId>) -> TransactionsRequestBuilder<transactions_request_builder::SetKind> {
 		Self::__builder_internal().__kind_internal(TransactionsRequestKind::Player(person_id.into()))
 	}
 
-	pub fn for_ids(transactions: Vec<TransactionId>) -> TransactionsRequestBuilder<SetKind> {
+	pub fn for_ids(transactions: Vec<TransactionId>) -> TransactionsRequestBuilder<transactions_request_builder::SetKind> {
 		Self::__builder_internal().__kind_internal(TransactionsRequestKind::Transactions(transactions))
 	}
 
-	pub fn for_date_range(range: NaiveDateRange) -> TransactionsRequestBuilder<SetKind> {
+	pub fn for_date_range(range: NaiveDateRange) -> TransactionsRequestBuilder<transactions_request_builder::SetKind> {
 		Self::__builder_internal().__kind_internal(TransactionsRequestKind::DateRange(range))
 	}
 }
 
-impl<S: transactions_request_builder::State + transactions_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TransactionsRequestBuilder<S> {
+impl<S: transactions_request_builder::State + transactions_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TransactionsRequestBuilder<S> {
 	type Built = TransactionsRequest;
 }
 
@@ -491,12 +488,12 @@ impl StatsAPIRequestUrl for TransactionsRequest {
 mod tests {
 	use crate::person::Person;
 	use crate::requests::person::players::PlayersRequest;
-	use crate::sports::SportId;
 	use crate::teams::team::Team;
 	use crate::teams::TeamsRequest;
-	use crate::transactions::{TransactionsRequest, TransactionsRequestKind};
-	use crate::{serde_path_to_error_parse, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::transactions::TransactionsRequest;
+	use crate::{serde_path_to_error_parse, TEST_YEAR};
 	use chrono::NaiveDate;
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn parse_current_year() {
@@ -505,7 +502,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn parse_sample_requests() {
-		let blue_jays = TeamsRequest::builder()
+		let blue_jays = TeamsRequest::mlb_teams()
 			.season(TEST_YEAR)
 			.build_and_get()
 			.await

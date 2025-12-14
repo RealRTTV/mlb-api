@@ -1,15 +1,15 @@
-use crate::gen_params;
 use crate::schedule::ScheduleGame;
-use crate::seasons::season::SeasonId;
-use crate::sports::SportId;
+use crate::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::types::Copyright;
-use crate::{GameType, StatsAPIRequestUrl};
 use bon::Builder;
 use itertools::Itertools;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
+use crate::game_types::GameType;
+use crate::request::StatsAPIRequestUrl;
+use crate::sports::SportId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -59,7 +59,7 @@ pub struct SchedulePostseasonSeriesRequest {
     series_number: Option<u32>,
 }
 
-impl<S: schedule_postseason_series_request_builder::State + schedule_postseason_series_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for SchedulePostseasonSeriesRequestBuilder<S> {
+impl<S: schedule_postseason_series_request_builder::State + schedule_postseason_series_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for SchedulePostseasonSeriesRequestBuilder<S> {
     type Built = SchedulePostseasonSeriesRequest;
 }
 

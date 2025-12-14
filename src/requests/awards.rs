@@ -1,16 +1,15 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::league::{League, LeagueId};
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::sports::{Sport, SportId};
 use crate::types::Copyright;
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::{string_id, StatsAPIRequestUrl};
+use crate::{rwlock_const_new, RwLock};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use std::ops::Deref;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct AwardsResponse {
@@ -39,29 +38,14 @@ pub struct IdentifiableAward {
 
 string_id!(AwardId);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Award {
 	Hydrated(Box<HydratedAward>),
 	Identifiable(IdentifiableAward),
 }
 
-impl PartialEq for Award {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl Deref for Award {
-	type Target = IdentifiableAward;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
+id_only_eq_impl!(Award, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -76,7 +60,7 @@ pub struct AwardRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: award_request_builder::State + award_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for AwardRequestBuilder<S> {
+impl<S: award_request_builder::State + award_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for AwardRequestBuilder<S> {
     type Built = AwardRequest;
 }
 
@@ -131,7 +115,7 @@ impl RequestEntryCache for Award {
 #[cfg(test)]
 mod tests {
 	use crate::awards::AwardRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn parse_this_season() {

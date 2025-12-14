@@ -8,8 +8,6 @@ use crate::requests::stats::hitting::{AdvancedHittingStats, HittingStats, Saberm
 use crate::requests::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
 use crate::requests::stats::units::PercentageStat;
 use crate::requests::teams::team::Team;
-use crate::requests::{GameType, StatGroup, StatType};
-use crate::seasons::season::SeasonId;
 use crate::sports::Sport;
 use crate::types::{RGBAColor, SimpleTemperature};
 use chrono::NaiveDate;
@@ -26,6 +24,10 @@ use std::fmt::{Debug, Display, Formatter};
 use std::num::ParseIntError;
 use std::str::FromStr;
 use thiserror::Error;
+use crate::game_types::GameType;
+use crate::season::SeasonId;
+use crate::stat_groups::StatGroup;
+use crate::stat_types::StatType;
 
 pub mod pieces;
 pub mod piece_impls;

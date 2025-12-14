@@ -1,6 +1,6 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::meta::{MetaKind, MetaRequest};
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
 #[cfg(not(feature = "static_stat_types"))]
 use derive_more::Display;
@@ -33,6 +33,7 @@ macro_rules! create_stat_type {
 	    }
     };
 }
+
 #[cfg(feature = "static_stat_types")]
 create_stat_type! {
 	Projected,
@@ -190,13 +191,13 @@ impl RequestEntryCache for StatType {
 #[cfg(test)]
 mod tests {
 	use crate::meta::MetaRequest;
-	use crate::StatsAPIRequestUrl;
+	use crate::request::StatsAPIRequestUrl;
 
 	#[cfg(feature = "static_stat_types")]
 	#[tokio::test]
 	async fn is_still_up_to_date() {
 		use crate::meta::MetaRequest;
-		use crate::meta::kinds::stat_types::StatType;
+		use crate::requests::meta::stat_types::StatType;
 		use serde::Deserialize;
 
 		#[derive(Deserialize)]

@@ -1,17 +1,15 @@
 pub mod affiliates;
 pub mod history;
-pub mod stats;
 pub mod team;
 
-use crate::gen_params;
-use crate::seasons::season::SeasonId;
-use crate::sports::SportId;
+use crate::season::SeasonId;
 use crate::teams::team::Team;
 use crate::types::Copyright;
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::sports::SportId;
 
 /// Hydrations:
 /// * `previousSchedule`
@@ -40,6 +38,7 @@ pub struct TeamsResponse {
 }
 
 #[derive(Builder)]
+#[builder(start_fn(vis = ""))]
 #[builder(derive(Into))]
 pub struct TeamsRequest {
 	#[builder(setters(vis = "", name = "sport_id_internal"))]
@@ -62,7 +61,7 @@ impl TeamsRequest {
 	}
 }
 
-impl<S: teams_request_builder::State + teams_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamsRequestBuilder<S> {
+impl<S: teams_request_builder::State + teams_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TeamsRequestBuilder<S> {
 	type Built = TeamsRequest;
 }
 
@@ -78,8 +77,9 @@ impl StatsAPIRequestUrl for TeamsRequest {
 
 #[cfg(test)]
 mod tests {
+	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::TEST_YEAR;
 	use super::*;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]

@@ -1,14 +1,16 @@
 #![allow(non_snake_case)]
 
 use crate::game::{DoubleHeaderKind, GameId};
-use crate::gen_params;
 use crate::league::LeagueId;
-use crate::seasons::season::SeasonId;
-use crate::sports::SportId;
+use crate::season::SeasonId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, HomeAwaySplits, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::venue::{Venue, VenueId};
-use crate::{GameStatus, GameType, Sky, StatsAPIRequestUrl};
+use crate::game_status::GameStatus;
+use crate::game_types::GameType;
+use crate::request::StatsAPIRequestUrl;
+use crate::sky::Sky;
+use crate::sports::SportId;
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, Utc};
 use either::Either;
@@ -240,26 +242,24 @@ pub struct ScheduleRequest {
 }
 
 
-impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for ScheduleRequestBuilder<S> {
+impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for ScheduleRequestBuilder<S> {
     type Built = ScheduleRequest;
 }
 
-use schedule_request_builder::{IsUnset, SetDate, SetGameIds, SetVenueIds, State};
-
-impl<S: State> ScheduleRequestBuilder<S> {
-	pub fn game_ids(self, game_ids: Vec<impl Into<GameId>>) -> ScheduleRequestBuilder<SetGameIds<S>> where S::GameIds: IsUnset {
+impl<S: schedule_request_builder::State> ScheduleRequestBuilder<S> {
+	pub fn game_ids(self, game_ids: Vec<impl Into<GameId>>) -> ScheduleRequestBuilder<schedule_request_builder::SetGameIds<S>> where S::GameIds: schedule_request_builder::IsUnset {
 		self.__game_ids_internal(game_ids.into_iter().map(Into::into).collect())
 	}
 
-	pub fn venue_ids(self, venue_ids: Vec<impl Into<VenueId>>) -> ScheduleRequestBuilder<SetVenueIds<S>> where S::VenueIds: IsUnset {
+	pub fn venue_ids(self, venue_ids: Vec<impl Into<VenueId>>) -> ScheduleRequestBuilder<schedule_request_builder::SetVenueIds<S>> where S::VenueIds: schedule_request_builder::IsUnset {
 		self.__venue_ids_internal(venue_ids.into_iter().map(Into::into).collect())
 	}
 
-	pub fn date(self, date: NaiveDate) -> ScheduleRequestBuilder<SetDate<S>> where S::Date: IsUnset {
+	pub fn date(self, date: NaiveDate) -> ScheduleRequestBuilder<schedule_request_builder::SetDate<S>> where S::Date: schedule_request_builder::IsUnset {
 		self.__date_internal(Either::Left(date))
 	}
 
-	pub fn date_range(self, range: NaiveDateRange) -> ScheduleRequestBuilder<SetDate<S>> where S::Date: IsUnset {
+	pub fn date_range(self, range: NaiveDateRange) -> ScheduleRequestBuilder<schedule_request_builder::SetDate<S>> where S::Date: schedule_request_builder::IsUnset {
 		self.__date_internal(Either::Right(range))
 	}
 }
@@ -292,8 +292,9 @@ impl StatsAPIRequestUrl for ScheduleRequest {
 #[cfg(test)]
 mod tests {
 	use crate::schedule::ScheduleRequest;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::TEST_YEAR;
 	use chrono::NaiveDate;
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn test_one_date() {

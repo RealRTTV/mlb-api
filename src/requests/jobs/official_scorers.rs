@@ -1,5 +1,5 @@
 use crate::jobs::JobsResponse;
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 

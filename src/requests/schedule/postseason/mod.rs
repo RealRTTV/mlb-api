@@ -1,14 +1,14 @@
 pub mod series;
 
-use crate::gen_params;
 use crate::schedule::ScheduleResponse;
-use crate::seasons::season::SeasonId;
-use crate::sports::SportId;
+use crate::season::SeasonId;
 use crate::teams::team::TeamId;
-use crate::{GameType, StatsAPIRequestUrl};
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
+use crate::game_types::GameType;
+use crate::request::StatsAPIRequestUrl;
+use crate::sports::SportId;
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -24,7 +24,7 @@ pub struct SchedulePostseasonRequest {
     series_number: Option<u32>,
 }
 
-impl<S: schedule_postseason_request_builder::State + schedule_postseason_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for SchedulePostseasonRequestBuilder<S> {
+impl<S: schedule_postseason_request_builder::State + schedule_postseason_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for SchedulePostseasonRequestBuilder<S> {
     type Built = SchedulePostseasonRequest;
 }
 
@@ -46,8 +46,9 @@ impl StatsAPIRequestUrl for SchedulePostseasonRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::schedule::postseason::SchedulePostseasonRequest;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+    use crate::request::StatsAPIRequestUrlBuilderExt;
+    use crate::schedule::postseason::SchedulePostseasonRequest;
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
     async fn test_one_season() {

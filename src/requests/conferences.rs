@@ -1,16 +1,15 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::league::League;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::sports::Sport;
 use crate::types::Copyright;
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::{integer_id, StatsAPIRequestUrl};
+use crate::{rwlock_const_new, RwLock};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -53,7 +52,7 @@ pub struct IdentifiableConference {
 
 integer_id!(ConferenceId);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Conference {
 	Hydrated(Box<HydratedConference>),
@@ -61,33 +60,7 @@ pub enum Conference {
 	Identifiable(IdentifiableConference),
 }
 
-impl Deref for Conference {
-	type Target = IdentifiableConference;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for Conference {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl PartialEq for Conference {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
+id_only_eq_impl!(Conference, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -98,7 +71,7 @@ pub struct ConferencesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: conferences_request_builder::State + conferences_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for ConferencesRequestBuilder<S> {
+impl<S: conferences_request_builder::State + conferences_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for ConferencesRequestBuilder<S> {
     type Built = ConferencesRequest;
 }
 
@@ -149,7 +122,7 @@ impl RequestEntryCache for Conference {
 #[cfg(test)]
 mod tests {
 	use crate::conferences::ConferencesRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn parse_all_conferences() {

@@ -1,22 +1,24 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::types::Copyright;
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::{integer_id, StatsAPIRequestUrl};
+use crate::{rwlock_const_new, RwLock};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
 use itertools::Itertools;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct UniformsResponse {
     pub copyright: Copyright,
     #[serde(rename = "uniforms")] pub teams: Vec<TeamUniformAssets>,
 }
+
+integer_id!(UniformAssetId);
+integer_id!(UniformAssetCategoryId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -25,14 +27,12 @@ pub struct TeamUniformAssets {
     pub uniform_assets: Vec<UniformAsset>,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum UniformAsset {
     Hydrated(HydratedUniformAsset),
     Identifiable(IdentifiableUniformAsset),
 }
-
-integer_id!(UniformAssetId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct IdentifiableUniformAsset {
@@ -59,33 +59,7 @@ pub struct UniformAssetCategory {
     #[serde(rename = "uniformAssetTypeId")] pub id: UniformAssetCategoryId,
 }
 
-integer_id!(UniformAssetCategoryId);
-
-impl PartialEq for UniformAsset {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
-impl Deref for UniformAsset {
-    type Target = IdentifiableUniformAsset;
-
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Self::Hydrated(inner) => inner,
-            Self::Identifiable(inner) => inner,
-        }
-    }
-}
-
-impl DerefMut for UniformAsset {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        match self {
-            Self::Hydrated(inner) => inner,
-            Self::Identifiable(inner) => inner,
-        }
-    }
-}
+id_only_eq_impl!(UniformAsset, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -95,7 +69,7 @@ pub struct UniformsRequest {
     season: Option<SeasonId>,
 }
 
-impl<S: uniforms_request_builder::State + uniforms_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for UniformsRequestBuilder<S> {
+impl<S: uniforms_request_builder::State + uniforms_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for UniformsRequestBuilder<S> {
     type Built = UniformsRequest;
 }
 
@@ -149,7 +123,7 @@ impl RequestEntryCache for UniformAsset {
 mod tests {
     use crate::teams::team::uniforms::UniformsRequest;
     use crate::teams::TeamsRequest;
-    use crate::StatsAPIRequestUrlBuilderExt;
+    use crate::request::StatsAPIRequestUrlBuilderExt;
 
     #[tokio::test]
     async fn parse_all_mlb_teams_this_season() {

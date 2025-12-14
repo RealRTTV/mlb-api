@@ -1,4 +1,6 @@
-use crate::integer_id;
+mod seasons;
+pub use seasons::*;
+
 use crate::types::NaiveDateRange;
 use chrono::NaiveDate;
 use derive_more::{Deref, Display, From};
@@ -13,7 +15,7 @@ impl<'de> Deserialize<'de> for SeasonId {
 		D: Deserializer<'de>
 	{
 		struct Visitor;
-		
+
 		impl serde::de::Visitor<'_> for Visitor {
 			type Value = SeasonId;
 
@@ -29,7 +31,7 @@ impl<'de> Deserialize<'de> for SeasonId {
 				v.parse::<u32>().map(SeasonId).map_err(E::custom)
 			}
 		}
-		
+
 		deserializer.deserialize_any(Visitor)
 	}
 }

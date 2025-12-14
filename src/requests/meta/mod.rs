@@ -1,11 +1,68 @@
-use crate::{MetaKind, StatsAPIRequestUrl};
+macro_rules! meta_kind_impl {
+	($endpoint:literal => $name:ty) => {
+		impl $crate::requests::meta::MetaKind for $name {
+			const ENDPOINT_NAME: &'static str = $endpoint;
+		}
+	};
+}
+
+macro_rules! test_impl {
+    ($name:ty) => {
+		#[cfg(test)]
+		mod tests {
+			use super::*;
+			use crate::request::StatsAPIRequestUrl;
+
+			#[tokio::test]
+			async fn parse_meta() {
+				let _response = $crate::requests::meta::MetaRequest::<$name>::new().get().await.unwrap();
+			}
+		}
+	};
+}
+
+/*
+id_only_eq_impl!($name, $id_field);
+meta_kind_impl!($endpoint => $name);
+tiered_request_entry_cache_impl!($name => $hydrated_name; $id_field: $id);
+test_impl!($name);
+*/
+
+pub mod baseball_stats;
+pub mod event_types;
+pub mod game_status;
+pub mod game_types;
+pub mod hit_trajectories;
+pub mod job_types;
+pub mod languages;
+pub mod league_leader_types;
+pub mod logical_events;
+pub mod metrics;
+pub mod pitch_codes;
+pub mod pitch_types;
+pub mod platforms;
+pub mod positions;
+pub mod review_reasons;
+pub mod roster_types;
+pub mod schedule_event_types;
+pub mod situation_codes;
+pub mod sky;
+pub mod standings_types;
+pub mod stat_groups;
+pub mod stat_types;
+pub mod wind_direction;
+
+use crate::request::StatsAPIRequestUrl;
 use derive_more::{Deref, DerefMut};
 use serde::de::{Error, MapAccess, SeqAccess};
 use serde::{de, Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
+use crate::cache::RequestEntryCache;
 
-pub mod kinds;
+pub trait MetaKind: RequestEntryCache {
+	const ENDPOINT_NAME: &'static str;
+}
 
 #[derive(Debug, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct MetaResponse<T: MetaKind> {

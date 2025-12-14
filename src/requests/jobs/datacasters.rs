@@ -1,9 +1,8 @@
-use crate::gen_params;
-use crate::sports::SportId;
 use crate::types::MLB_API_DATE_FORMAT;
 use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
+use crate::sports::SportId;
 
 #[derive(Builder)]
 pub struct JobsDatacastersRequest {

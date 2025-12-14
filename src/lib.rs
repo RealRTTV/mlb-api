@@ -43,7 +43,6 @@ macro_rules! stats {
     };
 }
 
-pub mod ids;
 pub mod hydrations;
 pub mod request;
 pub mod types;
@@ -72,7 +71,7 @@ pub(crate) const fn rwlock_const_new<T>(t: T) -> RwLock<T> {
 }
 
 #[cfg(test)]
-pub(crate) async fn serde_path_to_error_parse<T: StatsAPIRequestUrl>(url: T) -> T::Response {
+pub(crate) async fn serde_path_to_error_parse<T: request::StatsAPIRequestUrl>(url: T) -> T::Response {
     let url = url.to_string();
     let bytes = reqwest::get(url).await.unwrap().bytes().await.unwrap();
     let mut de = serde_json::Deserializer::from_slice(&bytes);

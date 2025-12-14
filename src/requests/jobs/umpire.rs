@@ -1,11 +1,11 @@
-use crate::gen_params;
 use crate::jobs::JobsResponse;
-use crate::sports::SportId;
 use crate::types::MLB_API_DATE_FORMAT;
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
+use crate::sports::SportId;
+
 // pub mod games; // needs private mlb-only api key -- absolutely not going to implement this.
 
 #[derive(Builder)]

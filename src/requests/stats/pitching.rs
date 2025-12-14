@@ -1,9 +1,9 @@
 use crate::requests::stats::pieces::{bWARData, fWARData, xFIPData, AtBatData, BalksData, BaseOnBallsData, BattersFacedData, CatchersInterferenceData, CompleteGamesData, DecisionsData, ERAMinusData, EarnedRunsData, ExtraBaseHitsData, FIPData, FIPMinusData, FieldOutsData, FlyoutsData, GIDPData, GamesFinishedData, GamesPitchedData, GamesPlayedData, GamesStartedData, HitByPitchData, HitsData, InheritedRunnersData, InningsPitchedData, IntentionalWalksData, PassedBallData, PickoffsData, PitchQuantityData, RARData, RBIData, RunsData, SacrificeHitsData, ShutdownsAndMeltdownsData, StealingData, StrikeoutsData, StrikesData, WildPitchData};
 use crate::requests::stats::units::PercentageStat;
 use crate::requests::stats::BaseStat;
-use crate::requests::PitchType;
 use derive_more::{Add, AddAssign, AsRef};
 use serde::Deserialize;
+use crate::pitch_types::PitchType;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Add, AddAssign, Default, AsRef)]
 #[serde(rename_all = "camelCase")]

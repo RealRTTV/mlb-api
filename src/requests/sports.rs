@@ -1,13 +1,12 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::types::Copyright;
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::{integer_id, StatsAPIRequestUrl};
+use crate::{rwlock_const_new, RwLock};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -36,7 +35,7 @@ pub struct SportsRequest {
 	id: Option<SportId>,
 }
 
-impl<S: sports_request_builder::State + sports_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for SportsRequestBuilder<S> {
+impl<S: sports_request_builder::State + sports_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for SportsRequestBuilder<S> {
 	type Built = SportsRequest;
 }
 
@@ -81,7 +80,7 @@ pub struct HydratedSport {
 	pub(super) inner: NamedSport,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Sport {
 	Hydrated(HydratedSport),
@@ -89,33 +88,7 @@ pub enum Sport {
 	Identifiable(IdentifiableSport),
 }
 
-impl PartialEq for Sport {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl Deref for Sport {
-	type Target = IdentifiableSport;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for Sport {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
+id_only_eq_impl!(Sport, id);
 
 static CACHE: RwLock<HydratedCacheTable<Sport>> = rwlock_const_new(HydratedCacheTable::new());
 
@@ -154,7 +127,7 @@ impl RequestEntryCache for Sport {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::StatsAPIRequestUrlBuilderExt;
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn parse_all_sports() {

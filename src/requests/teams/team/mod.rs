@@ -7,17 +7,15 @@ pub mod stats;
 pub mod uniforms; // done
 
 use crate::divisions::NamedDivision;
-use crate::integer_id;
 use crate::league::NamedLeague;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::sports::NamedSport;
 use crate::venue::NamedVenue;
 use derive_more::{Deref, DerefMut, Display, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use serde_with::serde_as;
 use serde_with::DefaultOnError;
-use std::ops::{Deref, DerefMut};
 
 #[serde_as]
 #[derive(Deserialize)]
@@ -31,8 +29,6 @@ struct RegularTeamRaw {
 	#[serde_as(deserialize_as = "DefaultOnError")]
 	#[serde(default)]
 	venue: NamedVenue,
-	#[serde(flatten)]
-	name: TeamNameRaw,
 	location_name: Option<String>,
 	#[serde(default, deserialize_with = "crate::types::try_from_str")]
 	first_year_of_play: Option<u32>,
@@ -54,7 +50,6 @@ pub struct RegularTeam {
 	pub active: bool,
 	pub season: SeasonId,
 	pub venue: NamedVenue,
-	pub name: TeamName,
 	pub location_name: Option<String>,
 	pub first_year_of_play: u32,
 	pub league: NamedLeague,
@@ -75,7 +70,6 @@ impl From<RegularTeamRaw> for RegularTeam {
 			active,
 			season,
 			venue,
-			name,
 			location_name,
 			first_year_of_play,
 			league,
@@ -90,7 +84,6 @@ impl From<RegularTeamRaw> for RegularTeam {
 			active,
 			season,
 			venue,
-			name: name.initialize(inner.id),
 			location_name,
 			first_year_of_play: first_year_of_play.unwrap_or(*season),
 			league,
@@ -145,7 +138,7 @@ pub struct IdentifiableTeam {
 	pub id: TeamId,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Team {
 	MLB(MLBTeam),
@@ -161,35 +154,7 @@ impl Team {
 	}
 }
 
-impl PartialEq for Team {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl Deref for Team {
-	type Target = IdentifiableTeam;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::MLB(inner) => inner,
-			Self::Regular(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for Team {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::MLB(inner) => inner,
-			Self::Regular(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
+id_only_eq_impl!(Team, id);
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -204,37 +169,13 @@ struct TeamNameRaw {
 	pub club_name: Option<String>,
 }
 
-#[derive(Debug, Eq, Clone, From)]
+#[derive(Debug, Eq, Clone, From, EnumDeref, EnumDerefMut)]
 pub enum TeamName {
 	Hydrated(HydratedTeamName),
 	Unhydrated(UnhydratedTeamName),
 }
 
-impl PartialEq for TeamName {
-	fn eq(&self, other: &Self) -> bool {
-		self.name == other.name
-	}
-}
-
-impl Deref for TeamName {
-	type Target = UnhydratedTeamName;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Unhydrated(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for TeamName {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Unhydrated(inner) => inner,
-		}
-	}
-}
+id_only_eq_impl!(TeamName, name);
 
 #[derive(Debug, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct UnhydratedTeamName {
@@ -306,32 +247,10 @@ pub struct NamedOrganization {
 #[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct OrganizationId(u16);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Organization {
 	NamedOrganization(NamedOrganization),
 }
 
-impl PartialEq for Organization {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl Deref for Organization {
-	type Target = NamedOrganization;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::NamedOrganization(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for Organization {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::NamedOrganization(inner) => inner,
-		}
-	}
-}
+id_only_eq_impl!(Organization, id);

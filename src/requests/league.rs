@@ -1,15 +1,14 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
-use crate::seasons::season::{Season, SeasonState};
 use crate::sports::{NamedSport, SportId};
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::{integer_id, StatsAPIRequestUrl};
+use crate::{rwlock_const_new, RwLock};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
 use itertools::Itertools;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
+use crate::season::{Season, SeasonState};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -99,7 +98,7 @@ fn bad_league_season_schema_deserializer<'de, D: serde::Deserializer<'de>>(deser
 
 integer_id!(LeagueId);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum League {
 	Hydrated(Box<HydratedLeague>),
@@ -114,33 +113,7 @@ impl League {
 	}
 }
 
-impl PartialEq for League {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl Deref for League {
-	type Target = IdentifiableLeague;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for League {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
+id_only_eq_impl!(League, id);
 
 #[derive(Builder)]
 pub struct LeagueRequest {
@@ -150,11 +123,9 @@ pub struct LeagueRequest {
 	league_ids: Option<Vec<LeagueId>>,
 }
 
-use league_request_builder::{IsUnset, SetLeagueIds, State};
-
-impl<S: State> LeagueRequestBuilder<S> {
+impl<S: league_request_builder::State> LeagueRequestBuilder<S> {
 	#[allow(dead_code)]
-	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeagueRequestBuilder<SetLeagueIds<S>> where S::LeagueIds: IsUnset {
+	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeagueRequestBuilder<league_request_builder::SetLeagueIds<S>> where S::LeagueIds: league_request_builder::IsUnset {
 		self.league_ids_internal(league_ids.into_iter().map(T::into).collect::<Vec<_>>())
 	}
 }

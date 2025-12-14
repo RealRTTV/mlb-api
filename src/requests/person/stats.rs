@@ -1,10 +1,10 @@
 use crate::requests::game::GameId;
 use crate::requests::person::PersonId;
-use crate::requests::StatsAPIRequestUrl;
 use crate::types::Copyright;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::request::StatsAPIRequestUrl;
 
 stats! {
 	pub struct SingleGameStats {
@@ -29,7 +29,7 @@ pub struct PersonSingleGameStatsRequest {
 	game_id: GameId,
 }
 
-impl<S: person_single_game_stats_request_builder::State + person_single_game_stats_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for PersonSingleGameStatsRequestBuilder<S> {
+impl<S: person_single_game_stats_request_builder::State + person_single_game_stats_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PersonSingleGameStatsRequestBuilder<S> {
 	type Built = PersonSingleGameStatsRequest;
 }
 

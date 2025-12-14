@@ -1,13 +1,14 @@
 use crate::person::Person;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
-use crate::{gen_params, RosterType};
-use crate::{Position, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::positions::Position;
+use crate::request::StatsAPIRequestUrl;
+use crate::roster_types::RosterType;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -102,7 +103,7 @@ pub struct RosterRequest {
     roster_type: RosterType,
 }
 
-impl<S: roster_request_builder::State + roster_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for RosterRequestBuilder<S> {
+impl<S: roster_request_builder::State + roster_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for RosterRequestBuilder<S> {
     type Built = RosterRequest;
 }
 
@@ -132,11 +133,13 @@ pub struct RosterEntry {
 #[cfg(test)]
 mod tests {
 	use crate::meta::MetaRequest;
-	use crate::teams::team::roster::RosterRequest;
+    use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+    use crate::roster_types::RosterType;
+    use crate::teams::team::roster::RosterRequest;
 	use crate::teams::TeamsRequest;
-	use crate::{RosterType, StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+    use crate::TEST_YEAR;
 
-	#[tokio::test]
+    #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_this_year_all_mlb_teams_all_roster_types() {
         let season = TEST_YEAR;

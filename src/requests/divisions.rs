@@ -1,16 +1,15 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::league::{League, LeagueId};
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::sports::{Sport, SportId};
 use crate::types::Copyright;
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::{integer_id, StatsAPIRequestUrl};
+use crate::{rwlock_const_new, RwLock};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -18,6 +17,9 @@ pub struct DivisionsResponse {
 	pub copyright: Copyright,
 	pub divisions: Vec<Division>,
 }
+
+integer_id!(DivisionId);
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentifiableDivision {
@@ -54,7 +56,7 @@ pub struct HydratedDivision {
 	inner: NamedDivision,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Division {
 	Hydrated(Box<HydratedDivision>),
@@ -62,35 +64,7 @@ pub enum Division {
 	Identifiable(IdentifiableDivision),
 }
 
-impl PartialEq for Division {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl Deref for Division {
-	type Target = IdentifiableDivision;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for Division {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-integer_id!(DivisionId);
+id_only_eq_impl!(Division, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -105,7 +79,7 @@ pub struct DivisionsRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: divisions_request_builder::State + divisions_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for DivisionsRequestBuilder<S> {
+impl<S: divisions_request_builder::State + divisions_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for DivisionsRequestBuilder<S> {
     type Built = DivisionsRequest;
 }
 
@@ -160,7 +134,7 @@ impl RequestEntryCache for Division {
 #[cfg(test)]
 mod tests {
 	use crate::divisions::DivisionsRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn all_divisions_this_season() {

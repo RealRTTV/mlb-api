@@ -1,19 +1,14 @@
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
-use crate::meta::{MetaKind, MetaRequest};
-use crate::{rwlock_const_new, RwLock};
-use crate::{string_id, StatsAPIRequestUrl};
 use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
-use std::ops::{Deref, DerefMut};
+
+string_id!(GameStatusId);
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentifiableGameStatus {
 	#[serde(rename = "detailedState")] pub id: GameStatusId,
 }
-
-string_id!(GameStatusId);
 
 /// Detailed game status (use [`AbstractGameCode`] for simpler responses)
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
@@ -134,84 +129,14 @@ pub struct HydratedGameStatus {
 	inner: IdentifiableGameStatus,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum GameStatus {
 	Hydrated(HydratedGameStatus),
 	Identifiable(IdentifiableGameStatus),
 }
 
-impl Deref for GameStatus {
-	type Target = IdentifiableGameStatus;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for GameStatus {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl PartialEq for GameStatus {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl MetaKind for GameStatus {
-	const ENDPOINT_NAME: &'static str = "gameStatus";
-}
-
-static CACHE: RwLock<HydratedCacheTable<GameStatus>> = rwlock_const_new(HydratedCacheTable::new());
-
-impl RequestEntryCache for GameStatus {
-	type HydratedVariant = HydratedGameStatus;
-	type Identifier = GameStatusId;
-	type URL = MetaRequest<Self>;
-
-	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated()
-	}
-
-	fn id(&self) -> &Self::Identifier {
-		&self.id
-	}
-
-	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
-		MetaRequest::new()
-	}
-
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
-	where
-		Self: Sized
-	{
-		response.entries
-	}
-
-	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
-	where
-		Self: Sized
-	{
-		&CACHE
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use crate::meta::MetaRequest;
-	use crate::StatsAPIRequestUrl;
-
-	#[tokio::test]
-	async fn parse_meta() {
-		let _response = MetaRequest::<super::GameStatus>::new().get().await.unwrap();
-	}
-}
+id_only_eq_impl!(GameStatus, id);
+meta_kind_impl!("gameStatus" => GameStatus);
+tiered_request_entry_cache_impl!(GameStatus => HydratedGameStatus; id: GameStatusId);
+test_impl!(GameStatus);

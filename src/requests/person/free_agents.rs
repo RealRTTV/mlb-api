@@ -1,15 +1,15 @@
-use crate::gen_params;
 use crate::person::Person;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::Team;
 use crate::types::Copyright;
-use crate::{Position, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_with::serde_as;
 use serde_with::DefaultOnError;
 use std::fmt::{Display, Formatter};
+use crate::positions::Position;
+use crate::request::StatsAPIRequestUrl;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -67,7 +67,7 @@ pub struct FreeAgentsRequest {
 	season: SeasonId,
 }
 
-impl<S: free_agents_request_builder::State + free_agents_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for FreeAgentsRequestBuilder<S> {
+impl<S: free_agents_request_builder::State + free_agents_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for FreeAgentsRequestBuilder<S> {
 	type Built = FreeAgentsRequest;
 }
 
@@ -83,8 +83,9 @@ impl StatsAPIRequestUrl for FreeAgentsRequest {
 
 #[cfg(test)]
 mod tests {
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 	use crate::requests::person::free_agents::FreeAgentsRequest;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
 	async fn test_one_year() {

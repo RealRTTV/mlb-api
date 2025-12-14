@@ -1,3 +1,5 @@
+//! Shared types across multiple requests
+
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use compact_str::CompactString;
 use derive_more::{Display, FromStr};
@@ -9,7 +11,6 @@ use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
 use thiserror::Error;
 
-/// Shared types across multiple requests
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__CopyrightStruct")]
 pub enum Copyright {

@@ -1,5 +1,5 @@
 use crate::RwLock;
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use fxhash::FxBuildHasher;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;

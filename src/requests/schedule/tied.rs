@@ -1,10 +1,10 @@
-use crate::gen_params;
 use crate::schedule::ScheduleResponse;
-use crate::seasons::season::SeasonId;
-use crate::{GameType, StatsAPIRequestUrl};
+use crate::season::SeasonId;
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
+use crate::game_types::GameType;
+use crate::request::StatsAPIRequestUrl;
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -14,7 +14,7 @@ pub struct ScheduleTiedRequest {
     game_types: Option<Vec<GameType>>,
 }
 
-impl<S: schedule_tied_request_builder::State + schedule_tied_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for ScheduleTiedRequestBuilder<S> {
+impl<S: schedule_tied_request_builder::State + schedule_tied_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for ScheduleTiedRequestBuilder<S> {
     type Built = ScheduleTiedRequest;
 }
 
@@ -33,8 +33,9 @@ impl StatsAPIRequestUrl for ScheduleTiedRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::schedule::tied::ScheduleTiedRequest;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+    use crate::request::StatsAPIRequestUrlBuilderExt;
+    use crate::schedule::tied::ScheduleTiedRequest;
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
     async fn test_one_season() {

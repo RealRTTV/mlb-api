@@ -1,8 +1,7 @@
-use crate::gen_params;
 use crate::requests::person::people::PeopleResponse;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::TeamId;
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 
@@ -15,7 +14,7 @@ pub struct AlumniRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: alumni_request_builder::State + alumni_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for AlumniRequestBuilder<S> {
+impl<S: alumni_request_builder::State + alumni_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for AlumniRequestBuilder<S> {
 	type Built = AlumniRequest;
 }
 
@@ -31,9 +30,10 @@ impl StatsAPIRequestUrl for AlumniRequest {
 
 #[cfg(test)]
 mod tests {
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 	use crate::teams::team::alumni::AlumniRequest;
 	use crate::teams::TeamsRequest;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]

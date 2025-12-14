@@ -1,16 +1,15 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
-use crate::seasons::season::SeasonId;
-use crate::sports::SportId;
+use crate::season::SeasonId;
 use crate::types::Copyright;
-use crate::{gen_params, rwlock_const_new, RwLock};
-use crate::{integer_id, StatsAPIRequestUrl};
+use crate::{rwlock_const_new, RwLock};
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
 use itertools::Itertools;
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
+use crate::sports::SportId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -65,7 +64,7 @@ pub struct HydratedVenue {
 
 integer_id!(VenueId);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 pub enum Venue {
 	Hydrated(Box<HydratedVenue>),
@@ -80,33 +79,7 @@ impl Venue {
 	}
 }
 
-impl PartialEq for Venue {
-	fn eq(&self, other: &Self) -> bool {
-		self.id == other.id
-	}
-}
-
-impl Deref for Venue {
-	type Target = IdentifiableVenue;
-
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
-
-impl DerefMut for Venue {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
-	}
-}
+id_only_eq_impl!(Venue, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -118,7 +91,7 @@ pub struct VenuesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: venues_request_builder::State + venues_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for VenuesRequestBuilder<S> {
+impl<S: venues_request_builder::State + venues_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for VenuesRequestBuilder<S> {
 	type Built = VenuesRequest;
 }
 
@@ -168,8 +141,9 @@ impl RequestEntryCache for Venue {
 
 #[cfg(test)]
 mod tests {
+	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::TEST_YEAR;
 	use crate::venue::VenuesRequest;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]

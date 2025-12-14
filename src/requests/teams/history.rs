@@ -1,8 +1,7 @@
-use crate::gen_params;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::teams::TeamsResponse;
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 
@@ -19,7 +18,7 @@ pub struct TeamHistoryRequest {
 	end_season: Option<SeasonId>,
 }
 
-impl<S: team_history_request_builder::State + team_history_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for TeamHistoryRequestBuilder<S> {
+impl<S: team_history_request_builder::State + team_history_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TeamHistoryRequestBuilder<S> {
 	type Built = TeamHistoryRequest;
 }
 
@@ -37,7 +36,7 @@ impl StatsAPIRequestUrl for TeamHistoryRequest {
 mod tests {
 	use crate::teams::history::TeamHistoryRequest;
 	use crate::teams::TeamsRequest;
-	use crate::StatsAPIRequestUrlBuilderExt;
+	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn all_mlb_teams() {

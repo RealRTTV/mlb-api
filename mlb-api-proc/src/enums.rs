@@ -1,8 +1,9 @@
 use crate::pascal_or_camel_case_to_snake_case;
-use anyhow::{anyhow, bail, ensure, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
+use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
-use syn::{Data, DataEnum, DeriveInput, Expr, ExprLit, Fields, FieldsUnnamed, GenericParam, Lit};
+use syn::{Data, DataEnum, DeriveInput, Expr, ExprLit, Fields, FieldsUnnamed, GenericParam, Lit, Variant};
 
 fn generics(input: &DeriveInput) -> (TokenStream, TokenStream) {
 	let generics_def = input.generics.params.iter().map(|param| match param {
@@ -175,6 +176,62 @@ pub(crate) fn try_into(input: DeriveInput) -> Result<TokenStream> {
 	Ok(quote! {
 		impl #generics_def #name #generics_use {
 			#functions
+		}
+	})
+}
+
+pub(crate) fn deref(input: DeriveInput) -> Result<TokenStream> {
+	let (generics_def, generics_use) = generics(&input);
+
+	let name = input.ident;
+
+	let Data::Enum(DataEnum { variants, .. }) = input.data else { bail!("Expected an enum as input") };
+	let Variant { fields: Fields::Unnamed(FieldsUnnamed { unnamed, .. }), .. } = variants.last().cloned().context("Must have at least one variant for deref")? else { bail!("Expected unnamed fields") };
+	let [minimum_variant_type] = unnamed.into_iter().collect_array::<1>().context("Expected exactly one field")?;
+
+	let arms = variants.into_iter().map(|var| {
+		let arm_variant_name = &var.ident;
+
+		quote! {
+			Self::#arm_variant_name(inner) => inner,
+		}
+	}).collect::<TokenStream>();
+
+	Ok(quote! {
+		impl #generics_def ::core::ops::Deref for #name #generics_use {
+			type Target = #minimum_variant_type;
+
+			fn deref(&self) -> &Self::Target {
+				match self {
+					#arms
+				}
+			}
+		}
+	})
+}
+
+pub(crate) fn deref_mut(input: DeriveInput) -> Result<TokenStream> {
+	let (generics_def, generics_use) = generics(&input);
+
+	let name = input.ident;
+
+	let Data::Enum(DataEnum { variants, .. }) = input.data else { bail!("Expected an enum as input") };
+
+	let arms = variants.into_iter().map(|var| {
+		let arm_variant_name = &var.ident;
+
+		quote! {
+			Self::#arm_variant_name(inner) => inner,
+		}
+	}).collect::<TokenStream>();
+
+	Ok(quote! {
+		impl #generics_def ::core::ops::DerefMut for #name #generics_use {
+			fn deref_mut(&mut self) -> &mut Self::Target {
+				match self {
+					#arms
+				}
+			}
 		}
 	})
 }

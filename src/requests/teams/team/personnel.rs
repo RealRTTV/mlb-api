@@ -1,9 +1,8 @@
-use crate::gen_params;
 use crate::requests::person::people::PeopleResponse;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::types::MLB_API_DATE_FORMAT;
-use crate::StatsAPIRequestUrl;
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
@@ -18,7 +17,7 @@ pub struct PersonnelRequest {
     date: Option<NaiveDate>,
 }
 
-impl<S: personnel_request_builder::State + personnel_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for PersonnelRequestBuilder<S> {
+impl<S: personnel_request_builder::State + personnel_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PersonnelRequestBuilder<S> {
     type Built = PersonnelRequest;
 }
 
@@ -34,9 +33,10 @@ impl StatsAPIRequestUrl for PersonnelRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::teams::team::personnel::PersonnelRequest;
+    use crate::request::StatsAPIRequestUrlBuilderExt;
+    use crate::teams::team::personnel::PersonnelRequest;
 	use crate::teams::TeamsRequest;
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]

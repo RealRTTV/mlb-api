@@ -1,9 +1,9 @@
 use crate::person::{Person, PersonId};
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::{Team, TeamId};
 use crate::types::{Copyright, Location};
-use crate::{gen_params, integer_id};
-use crate::{Position, StatsAPIRequestUrl};
+use crate::positions::Position;
+use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::Display;
 use serde::Deserialize;
@@ -204,7 +204,7 @@ pub struct DraftRequest {
 	player_id: Option<PersonId>,
 }
 
-impl<S: draft_request_builder::State + draft_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for DraftRequestBuilder<S> {
+impl<S: draft_request_builder::State + draft_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for DraftRequestBuilder<S> {
 	type Built = DraftRequest;
 }
 
@@ -294,7 +294,7 @@ pub struct DraftProspectsRequest {
 	player_id: Option<PersonId>,
 }
 
-impl<S: draft_prospects_request_builder::State + draft_prospects_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for DraftProspectsRequestBuilder<S> {
+impl<S: draft_prospects_request_builder::State + draft_prospects_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for DraftProspectsRequestBuilder<S> {
     type Built = DraftProspectsRequest;
 }
 
@@ -340,7 +340,8 @@ impl StatsAPIRequestUrl for DraftProspectsRequest {
 #[cfg(test)]
 mod tests {
 	use crate::draft::{DraftProspectsRequest, DraftRequest};
-	use crate::{StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
 	async fn draft_test_year() {

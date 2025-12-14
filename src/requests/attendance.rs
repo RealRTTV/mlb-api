@@ -1,10 +1,8 @@
 use crate::game::Game;
-use crate::gen_params;
 use crate::league::LeagueId;
-use crate::seasons::season::SeasonId;
+use crate::season::SeasonId;
 use crate::teams::team::TeamId;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
-use crate::{GameType, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use either::Either;
@@ -15,6 +13,8 @@ use std::fmt::{Debug, Display, Formatter};
 use std::iter::Sum;
 use std::num::NonZeroU32;
 use std::ops::Add;
+use crate::game_types::GameType;
+use crate::request::StatsAPIRequestUrl;
 
 /// Within regards to attendance, the term frequently used is "Opening" over "Game";
 /// this is for reasons including but not limited to: single ticket double headers,
@@ -298,7 +298,7 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 	}
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DatedAttendance {
 	pub value: u32,
 	pub date: NaiveDate,
@@ -331,26 +331,24 @@ pub struct AttendanceRequest {
 	game_type: GameType,
 }
 
-impl<S: State + attendance_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for AttendanceRequestBuilder<S> {
+impl<S: attendance_request_builder::State + attendance_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for AttendanceRequestBuilder<S> {
     type Built = AttendanceRequest;
 }
 
-use attendance_request_builder::{IsUnset, SetId, State};
-
 #[allow(dead_code)]
-impl<S: State> AttendanceRequestBuilder<S> {
+impl<S: attendance_request_builder::State> AttendanceRequestBuilder<S> {
 	#[doc = "_**Required.**_\n\n"]
-	pub fn team_id(self, id: impl Into<TeamId>) -> AttendanceRequestBuilder<SetId<S>>
+	pub fn team_id(self, id: impl Into<TeamId>) -> AttendanceRequestBuilder<attendance_request_builder::SetId<S>>
 	where
-		S::Id: IsUnset,
+		S::Id: attendance_request_builder::IsUnset,
 	{
 		self.__id_internal(Either::Left(id.into()))
 	}
 
 	#[doc = "_**Required.**_\n\n"]
-	pub fn league_id(self, id: impl Into<LeagueId>) -> AttendanceRequestBuilder<SetId<S>>
+	pub fn league_id(self, id: impl Into<LeagueId>) -> AttendanceRequestBuilder<attendance_request_builder::SetId<S>>
 	where
-		S::Id: IsUnset,
+		S::Id: attendance_request_builder::IsUnset,
 	{
 		self.__id_internal(Either::Right(id.into()))
 	}
@@ -373,8 +371,9 @@ impl StatsAPIRequestUrl for AttendanceRequest {
 #[cfg(test)]
 mod tests {
 	use crate::attendance::AttendanceRequest;
+	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
 	use crate::teams::TeamsRequest;
-	use crate::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]

@@ -1,7 +1,7 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
 
-pub mod stats;
 pub mod free_agents;
+pub mod stats;
 // done
 pub mod people;
 pub mod players;
@@ -9,27 +9,29 @@ pub mod players;
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::draft::School;
 use crate::hydrations::Hydrations;
-use crate::positions::Position;
-use crate::seasons::season::SeasonId;
+use crate::requests::meta::positions::Position;
+use crate::season::SeasonId;
 use crate::teams::team::Team;
 use crate::types::{Gender, Handedness, HeightMeasurement};
-use crate::{integer_id, StatsAPIRequestUrl};
+use crate::request::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
 use bon::Builder;
 use chrono::NaiveDate;
 use derive_more::{Deref, DerefMut, Display, From};
-use mlb_api_proc::{EnumTryAs, EnumTryAsMut, EnumTryInto};
+use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use people::PeopleResponse;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
-pub struct Ballplayer<H> where H: PersonHydrations {
+pub struct Ballplayer<H>
+where
+	H: PersonHydrations,
+{
 	#[serde(deserialize_with = "crate::types::try_from_str")]
 	#[serde(default)]
 	pub primary_number: Option<u8>,
@@ -136,12 +138,16 @@ impl<H: PersonHydrations> HydratedPerson<H> {
 
 	#[must_use]
 	pub fn name_fml(&self) -> String {
-		self.middle_name.as_ref().map_or_else(|| format!("{0} {1}", self.use_first_name, self.use_last_name), |middle| format!("{0} {1} {2}", self.use_first_name, middle, self.use_last_name))
+		self.middle_name
+			.as_ref()
+			.map_or_else(|| format!("{0} {1}", self.use_first_name, self.use_last_name), |middle| format!("{0} {1} {2}", self.use_first_name, middle, self.use_last_name))
 	}
 
 	#[must_use]
 	pub fn name_lfm(&self) -> String {
-		self.middle_name.as_ref().map_or_else(|| format!("{1}, {0}", self.use_first_name, self.use_last_name), |middle| format!("{2}, {0} {1}", self.use_first_name, middle, self.use_last_name))
+		self.middle_name
+			.as_ref()
+			.map_or_else(|| format!("{1}, {0}", self.use_first_name, self.use_last_name), |middle| format!("{2}, {0} {1}", self.use_first_name, middle, self.use_last_name))
 	}
 }
 
@@ -166,7 +172,7 @@ pub struct IdentifiablePerson<H: PersonHydrations> {
 	#[serde(flatten)]
 	#[deref]
 	#[deref_mut]
-	hydrations: H
+	hydrations: H,
 }
 
 integer_id!(PersonId);
@@ -178,13 +184,13 @@ pub struct JerseyNumber(u8);
 impl<'de> Deserialize<'de> for JerseyNumber {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 	where
-		D: Deserializer<'de>
+		D: Deserializer<'de>,
 	{
 		String::deserialize(deserializer)?.parse::<u8>().map(JerseyNumber).map_err(D::Error::custom)
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto)]
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]
 #[serde(bound = "H: PersonHydrations")]
 pub enum Person<H: PersonHydrations = ()> {
@@ -207,27 +213,42 @@ impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<Person<H2>> for Perso
 	}
 }
 
-impl<H: PersonHydrations> Deref for Person<H> {
-	type Target = IdentifiablePerson<H>;
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
+#[serde(untagged)]
+#[serde(bound = "H: PersonHydrations")]
+pub enum NamedOrBetterPerson<H: PersonHydrations = ()> {
+	Ballplayer(Box<Ballplayer<H>>),
+	Hydrated(Box<HydratedPerson<H>>),
+	Named(NamedPerson<H>),
+}
 
-	fn deref(&self) -> &Self::Target {
-		match self {
-			Self::Ballplayer(inner) => inner,
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
+impl NamedOrBetterPerson<()> {
+	#[must_use]
+	pub(crate) const fn unknown_person() -> Self {
+		Self::Named(NamedPerson {
+			full_name: String::new(),
+			inner: IdentifiablePerson { id: PersonId::new(0), hydrations: () },
+		})
 	}
 }
 
-impl<H: PersonHydrations> DerefMut for Person<H> {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		match self {
-			Self::Ballplayer(inner) => inner,
-			Self::Hydrated(inner) => inner,
-			Self::Named(inner) => inner,
-			Self::Identifiable(inner) => inner,
-		}
+impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<NamedOrBetterPerson<H2>> for NamedOrBetterPerson<H1> {
+	fn eq(&self, other: &NamedOrBetterPerson<H2>) -> bool {
+		self.id == other.id
+	}
+}
+
+#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
+#[serde(untagged)]
+#[serde(bound = "H: PersonHydrations")]
+pub enum HydratedOrBetterPerson<H: PersonHydrations = ()> {
+	Ballplayer(Box<Ballplayer<H>>),
+	Hydrated(Box<HydratedPerson<H>>),
+}
+
+impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<HydratedOrBetterPerson<H2>> for HydratedOrBetterPerson<H1> {
+	fn eq(&self, other: &HydratedOrBetterPerson<H2>) -> bool {
+		self.id == other.id
 	}
 }
 
@@ -241,7 +262,7 @@ pub struct PersonRequest<H: PersonHydrations> {
 	_marker: PhantomData<H>,
 }
 
-impl<H: PersonHydrations, S: person_request_builder::State + person_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for PersonRequestBuilder<H, S> {
+impl<H: PersonHydrations, S: person_request_builder::State + person_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PersonRequestBuilder<H, S> {
 	type Built = PersonRequest<H>;
 }
 
@@ -293,9 +314,7 @@ pub struct ExternalReference {
 	pub season: Option<SeasonId>,
 }
 
-pub trait PersonHydrations: Hydrations {
-
-}
+pub trait PersonHydrations: Hydrations {}
 
 impl PersonHydrations for () {}
 
@@ -444,16 +463,16 @@ impl RequestEntryCache for Person<()> {
 		PersonRequest::builder(*id).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item = Self>
 	where
-		Self: Sized
+		Self: Sized,
 	{
 		response.people
 	}
 
 	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
 	where
-		Self: Sized
+		Self: Sized,
 	{
 		&CACHE
 	}
@@ -461,11 +480,12 @@ impl RequestEntryCache for Person<()> {
 
 #[cfg(test)]
 mod tests {
+	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::roster_types::RosterType;
 	use super::*;
-	use crate::sports::SportId;
 	use crate::teams::team::roster::RosterRequest;
 	use crate::teams::TeamsRequest;
-	use crate::{RosterType, StatsAPIRequestUrlBuilderExt, TEST_YEAR};
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
 	async fn no_hydrations() {

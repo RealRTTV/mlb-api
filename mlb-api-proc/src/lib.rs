@@ -1,4 +1,4 @@
-mod enum_try;
+mod enums;
 mod filtered;
 mod stats;
 
@@ -38,19 +38,31 @@ pub fn pascal_case_to_camel_case(input: proc_macro::TokenStream) -> proc_macro::
 #[proc_macro_derive(EnumTryAs)]
 pub fn enum_try_as(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let input = syn::parse_macro_input!(input as DeriveInput);
-	enum_try::try_as(input).unwrap().into()
+	enums::try_as(input).unwrap().into()
 }
 
 #[proc_macro_derive(EnumTryAsMut)]
 pub fn enum_try_as_mut(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let input = syn::parse_macro_input!(input as DeriveInput);
-	enum_try::try_as_mut(input).unwrap().into()
+	enums::try_as_mut(input).unwrap().into()
 }
 
 #[proc_macro_derive(EnumTryInto, attributes(try_into_field_name))]
 pub fn enum_try_into(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let input = syn::parse_macro_input!(input as DeriveInput);
-	enum_try::try_into(input).unwrap().into()
+	enums::try_into(input).unwrap().into()
+}
+
+#[proc_macro_derive(EnumDeref)]
+pub fn enum_deref(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = syn::parse_macro_input!(input as DeriveInput);
+	enums::deref(input).unwrap().into()
+}
+
+#[proc_macro_derive(EnumDerefMut)]
+pub fn enum_deref_mut(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = syn::parse_macro_input!(input as DeriveInput);
+	enums::deref_mut(input).unwrap().into()
 }
 
 fn pascal_case_to_camel_case0(pascal_case: String) -> String {

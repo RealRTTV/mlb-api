@@ -1,17 +1,20 @@
-use crate::gen_params;
 use crate::league::League;
 use crate::person::Person;
-use crate::seasons::season::SeasonId;
 use crate::sports::{Sport, SportId};
 use crate::teams::team::Team;
 use crate::types::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
-use crate::{BaseballStat, BaseballStatId, GameType, IdentifiableBaseballStat, StatGroup, StatType, StatsAPIRequestUrl};
 use bon::Builder;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use crate::baseball_stats::{BaseballStat, BaseballStatId, IdentifiableBaseballStat};
+use crate::game_types::GameType;
+use crate::request::StatsAPIRequestUrl;
+use crate::season::SeasonId;
+use crate::stat_groups::StatGroup;
+use crate::stat_types::StatType;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -99,7 +102,7 @@ pub struct StatLeadersRequest {
 	game_types: Option<Vec<GameType>>,
 }
 
-impl<S: stat_leaders_request_builder::State + stat_leaders_request_builder::IsComplete> crate::requests::links::StatsAPIRequestUrlBuilderExt for StatLeadersRequestBuilder<S> {
+impl<S: stat_leaders_request_builder::State + stat_leaders_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for StatLeadersRequestBuilder<S> {
 	type Built = StatLeadersRequest;
 }
 
@@ -135,7 +138,9 @@ mod tests {
 	use crate::meta::MetaRequest;
 	use crate::stats::leaders::StatLeadersRequest;
 	use crate::types::PlayerPool;
-	use crate::{BaseballStat, GameType, StatsAPIRequestUrl};
+	use crate::baseball_stats::BaseballStat;
+	use crate::game_types::GameType;
+	use crate::request::StatsAPIRequestUrl;
 
 	#[tokio::test]
 	async fn test_stat_leaders() {
