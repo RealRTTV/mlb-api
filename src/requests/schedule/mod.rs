@@ -3,7 +3,7 @@
 use crate::game::{DoubleHeaderKind, GameId};
 use crate::league::LeagueId;
 use crate::season::SeasonId;
-use crate::teams::team::{Team, TeamId};
+use crate::requests::team::{Team, TeamId};
 use crate::types::{Copyright, HomeAwaySplits, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::venue::{Venue, VenueId};
 use crate::game_status::GameStatus;

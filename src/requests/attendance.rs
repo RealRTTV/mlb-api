@@ -1,7 +1,7 @@
 use crate::game::Game;
 use crate::league::LeagueId;
 use crate::season::SeasonId;
-use crate::teams::team::TeamId;
+use crate::requests::team::TeamId;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
@@ -372,7 +372,7 @@ impl StatsAPIRequestUrl for AttendanceRequest {
 mod tests {
 	use crate::attendance::AttendanceRequest;
 	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
-	use crate::teams::TeamsRequest;
+	use crate::requests::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]

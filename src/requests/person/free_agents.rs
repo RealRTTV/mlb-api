@@ -1,6 +1,6 @@
 use crate::person::Person;
 use crate::season::SeasonId;
-use crate::teams::team::Team;
+use crate::requests::team::Team;
 use crate::types::Copyright;
 use bon::Builder;
 use chrono::NaiveDate;

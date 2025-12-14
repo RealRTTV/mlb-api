@@ -1,9 +1,5 @@
-pub mod affiliates;
-pub mod history;
-pub mod team;
-
 use crate::season::SeasonId;
-use crate::teams::team::Team;
+use crate::requests::team::Team;
 use crate::types::Copyright;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
@@ -85,13 +81,13 @@ mod tests {
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_teams_all_seasons() {
 		for season in 1871..=TEST_YEAR {
-			let _response = TeamsRequest::builder().season(season).build_and_get().await.unwrap();
+			let _response = TeamsRequest::all_sports().season(season).build_and_get().await.unwrap();
 		}
 	}
 
 	#[tokio::test]
 	async fn parse_all_mlb_teams_this_season() {
-		let _response = TeamsRequest::builder()
+		let _response = TeamsRequest::mlb_teams()
 		.build_and_get()
 		.await
 		.unwrap();

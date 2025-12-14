@@ -1,7 +1,7 @@
 use crate::league::League;
 use crate::person::Person;
 use crate::sports::{Sport, SportId};
-use crate::teams::team::Team;
+use crate::requests::team::Team;
 use crate::types::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;

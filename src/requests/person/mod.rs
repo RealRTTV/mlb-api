@@ -11,7 +11,7 @@ use crate::draft::School;
 use crate::hydrations::Hydrations;
 use crate::requests::meta::positions::Position;
 use crate::season::SeasonId;
-use crate::teams::team::Team;
+use crate::requests::team::Team;
 use crate::types::{Gender, Handedness, HeightMeasurement};
 use crate::request::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
@@ -362,11 +362,11 @@ macro_rules! person_hydrations {
 		    pub stats: $stats,
 		    #[serde(default)]
 		    pub awards: ::std::vec::Vec<$crate::awards::Award>,
-		    pub current_team: $crate::teams::team::Team,
+		    pub current_team: $crate::requests::team::Team,
 			pub preferred_team: $crate::person::PreferredTeamData,
 		    // team: $crate::teams::team::Team,
 		    #[serde(default)]
-		    pub roster_entries: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
+		    pub roster_entries: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
 		    #[serde(default, rename = "jobEntries")]
 		    pub jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
 		    #[serde(default)]
@@ -384,7 +384,7 @@ macro_rules! person_hydrations {
 		    #[serde(default)]
 		    pub nicknames: ::std::vec::Vec<String>,
 		    #[serde(default)]
-		    pub depth_charts: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
+		    pub depth_charts: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
 	    }
 
 	    impl $crate::hydrations::Hydrations for $hydrations_name {
@@ -408,11 +408,11 @@ macro_rules! person_hydrations {
 	    $vis struct $hydrations_name {
 		    #[serde(default)]
 		    pub awards: ::std::vec::Vec<$crate::awards::Award>,
-		    pub current_team: $crate::teams::team::Team,
+		    pub current_team: $crate::requests::team::Team,
 			pub preferred_team: $crate::person::PreferredTeamData,
 		    // team: $crate::teams::team::Team,
 		    #[serde(default)]
-		    pub roster_entries: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
+		    pub roster_entries: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
 		    #[serde(default, rename = "jobEntries")]
 		    pub jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
 		    #[serde(default)]
@@ -430,7 +430,7 @@ macro_rules! person_hydrations {
 		    #[serde(default)]
 		    pub nicknames: ::std::vec::Vec<String>,
 		    #[serde(default)]
-		    pub depth_charts: ::std::vec::Vec<$crate::teams::team::roster::RosterEntry>,
+		    pub depth_charts: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
 	    }
 
 		impl $crate::hydrations::Hydrations for $hydrations_name {
@@ -483,8 +483,8 @@ mod tests {
 	use crate::request::StatsAPIRequestUrlBuilderExt;
 	use crate::roster_types::RosterType;
 	use super::*;
-	use crate::teams::team::roster::RosterRequest;
-	use crate::teams::TeamsRequest;
+	use crate::requests::team::roster::RosterRequest;
+	use crate::requests::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]

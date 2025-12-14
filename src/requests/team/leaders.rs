@@ -1,6 +1,6 @@
 use crate::season::SeasonId;
 use crate::stats::leaders::StatLeaders;
-use crate::teams::team::TeamId;
+use crate::requests::team::TeamId;
 use crate::types::{Copyright, PlayerPool};
 use bon::Builder;
 use itertools::Itertools;
@@ -62,8 +62,8 @@ mod tests {
 	use crate::baseball_stats::BaseballStat;
 	use crate::meta::MetaRequest;
 	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
-	use crate::teams::team::leaders::TeamStatLeadersRequest;
-	use crate::teams::TeamsRequest;
+	use crate::requests::team::leaders::TeamStatLeadersRequest;
+	use crate::requests::team::teams::TeamsRequest;
 
 	#[tokio::test]
 	async fn test_all_mlb_teams_all_stats() {

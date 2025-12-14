@@ -3,7 +3,7 @@
 use crate::requests::person::PersonId;
 use crate::requests::sports::SportId;
 use crate::requests::stats::Stats;
-use crate::requests::teams::team::TeamId;
+use crate::requests::team::TeamId;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
 use chrono::NaiveDate;
 use itertools::Itertools;

@@ -1,6 +1,6 @@
 use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::season::SeasonId;
-use crate::teams::team::TeamId;
+use crate::requests::team::TeamId;
 use crate::types::Copyright;
 use crate::{rwlock_const_new, RwLock};
 use crate::request::StatsAPIRequestUrl;
@@ -121,8 +121,8 @@ impl RequestEntryCache for UniformAsset {
 
 #[cfg(test)]
 mod tests {
-    use crate::teams::team::uniforms::UniformsRequest;
-    use crate::teams::TeamsRequest;
+    use crate::requests::team::uniforms::UniformsRequest;
+    use crate::requests::team::teams::TeamsRequest;
     use crate::request::StatsAPIRequestUrlBuilderExt;
 
     #[tokio::test]

@@ -7,7 +7,7 @@ use crate::requests::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingS
 use crate::requests::stats::hitting::{AdvancedHittingStats, HittingStats, SabermetricsHittingStats, SimplifiedGameLogHittingStats, VsPlayerHittingStats};
 use crate::requests::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
 use crate::requests::stats::units::PercentageStat;
-use crate::requests::teams::team::Team;
+use crate::requests::team::Team;
 use crate::sports::Sport;
 use crate::types::{RGBAColor, SimpleTemperature};
 use chrono::NaiveDate;

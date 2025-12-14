@@ -4,7 +4,11 @@ pub mod leaders;
 pub mod personnel; // done
 pub mod roster; // done
 pub mod stats;
-pub mod uniforms; // done
+pub mod uniforms;
+pub mod history;
+pub mod affiliates;
+pub mod teams;
+// done
 
 use crate::divisions::NamedDivision;
 use crate::league::NamedLeague;

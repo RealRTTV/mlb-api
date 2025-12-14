@@ -2,7 +2,7 @@ pub mod series;
 
 use crate::schedule::ScheduleResponse;
 use crate::season::SeasonId;
-use crate::teams::team::TeamId;
+use crate::requests::team::TeamId;
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};

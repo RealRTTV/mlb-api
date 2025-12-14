@@ -1,6 +1,6 @@
 use crate::person::Person;
 use crate::season::SeasonId;
-use crate::teams::team::{Team, TeamId};
+use crate::requests::team::{Team, TeamId};
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
@@ -135,15 +135,15 @@ mod tests {
 	use crate::meta::MetaRequest;
     use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
     use crate::roster_types::RosterType;
-    use crate::teams::team::roster::RosterRequest;
-	use crate::teams::TeamsRequest;
+    use crate::requests::team::roster::RosterRequest;
+	use crate::requests::team::teams::TeamsRequest;
     use crate::TEST_YEAR;
 
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_this_year_all_mlb_teams_all_roster_types() {
         let season = TEST_YEAR;
-        let teams = TeamsRequest::builder().season(season).build_and_get().await.unwrap().teams;
+        let teams = TeamsRequest::mlb_teams().season(season).build_and_get().await.unwrap().teams;
         let roster_types = MetaRequest::<RosterType>::new().get().await.unwrap().entries;
         for team in teams {
             for roster_type in &roster_types {

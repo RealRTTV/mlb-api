@@ -1,6 +1,6 @@
 use crate::season::SeasonId;
-use crate::teams::team::TeamId;
-use crate::teams::TeamsResponse;
+use crate::requests::team::TeamId;
+use crate::requests::team::teams::TeamsResponse;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
@@ -34,13 +34,13 @@ impl StatsAPIRequestUrl for TeamHistoryRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::teams::history::TeamHistoryRequest;
-	use crate::teams::TeamsRequest;
+	use crate::requests::team::history::TeamHistoryRequest;
+	use crate::requests::team::teams::TeamsRequest;
 	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]
 	async fn all_mlb_teams() {
-		for team in TeamsRequest::builder().build_and_get().await.unwrap().teams {
+		for team in TeamsRequest::mlb_teams().build_and_get().await.unwrap().teams {
 			let _history = TeamHistoryRequest::builder().team_id(team.id).build_and_get().await.unwrap();
 		}
 	}

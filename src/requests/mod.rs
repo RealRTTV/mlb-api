@@ -166,8 +166,10 @@ pub mod season; // done
 pub mod sports; // done
 pub mod standings; // done
 pub mod stats;
-pub mod teams; // done
+// done
 pub mod transactions; // done
-pub mod venue; // done
+pub mod venue;
+pub mod team;
+// done
 
 pub use meta::*;

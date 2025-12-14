@@ -1,6 +1,6 @@
 use crate::person::{Person, PersonId};
 use crate::season::SeasonId;
-use crate::teams::team::{Team, TeamId};
+use crate::requests::team::{Team, TeamId};
 use crate::types::{Copyright, Location};
 use crate::positions::Position;
 use crate::request::StatsAPIRequestUrl;

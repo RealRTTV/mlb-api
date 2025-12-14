@@ -1,5 +1,5 @@
 use crate::person::{Person, PersonId};
-use crate::teams::team::{Team, TeamId};
+use crate::requests::team::{Team, TeamId};
 use crate::types::{Copyright, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
@@ -488,12 +488,13 @@ impl StatsAPIRequestUrl for TransactionsRequest {
 mod tests {
 	use crate::person::Person;
 	use crate::requests::person::players::PlayersRequest;
-	use crate::teams::team::Team;
-	use crate::teams::TeamsRequest;
+	use crate::requests::team::Team;
+	use crate::requests::team::teams::TeamsRequest;
 	use crate::transactions::TransactionsRequest;
 	use crate::{serde_path_to_error_parse, TEST_YEAR};
 	use chrono::NaiveDate;
 	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::sports::SportId;
 
 	#[tokio::test]
 	async fn parse_current_year() {
