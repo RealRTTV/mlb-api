@@ -5,6 +5,7 @@ use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::request::StatsAPIRequestUrl;
+use crate::stats;
 
 stats! {
 	pub struct SingleGameStats {

@@ -1,7 +1,5 @@
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::season::SeasonId;
 use crate::types::Copyright;
-use crate::{rwlock_const_new, RwLock};
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
@@ -105,39 +103,7 @@ impl StatsAPIRequestUrl for VenuesRequest {
 	type Response = VenuesResponse;
 }
 
-static CACHE: RwLock<HydratedCacheTable<Venue>> = rwlock_const_new(HydratedCacheTable::new());
-
-impl RequestEntryCache for Venue {
-	type HydratedVariant = Box<HydratedVenue>;
-	type Identifier = VenueId;
-	type URL = VenuesRequest;
-
-	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated()
-	}
-
-	fn id(&self) -> &Self::Identifier {
-		&self.id
-	}
-
-	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		VenuesRequest::builder().venue_ids(vec![*id]).build()
-	}
-
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
-	where
-		Self: Sized
-	{
-		response.venues
-	}
-
-	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
-	where
-		Self: Sized
-	{
-		&CACHE
-	}
-}
+tiered_request_entry_cache_impl!(VenuesRequest => |id: VenueId| { VenuesRequest::builder().venue_ids(vec![*id]).build() }.venues => Venue => Box<HydratedVenue>);
 
 #[cfg(test)]
 mod tests {

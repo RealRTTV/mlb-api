@@ -15,7 +15,7 @@ use crate::league::NamedLeague;
 use crate::season::SeasonId;
 use crate::sports::NamedSport;
 use crate::venue::NamedVenue;
-use derive_more::{Deref, DerefMut, Display, From};
+use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use serde_with::serde_as;
@@ -247,9 +247,7 @@ pub struct NamedOrganization {
 	pub id: OrganizationId,
 }
 
-#[repr(transparent)]
-#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct OrganizationId(u16);
+integer_id!(OrganizationId);
 
 #[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
 #[serde(untagged)]

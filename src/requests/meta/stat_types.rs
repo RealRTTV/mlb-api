@@ -1,7 +1,3 @@
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
-use crate::meta::{MetaKind, MetaRequest};
-use crate::request::StatsAPIRequestUrl;
-use crate::{rwlock_const_new, RwLock};
 #[cfg(not(feature = "static_stat_types"))]
 use derive_more::Display;
 use serde::Deserialize;
@@ -150,43 +146,9 @@ impl StatType {
 	}
 }
 
-impl MetaKind for StatType {
-	const ENDPOINT_NAME: &'static str = "statTypes";
-}
+meta_kind_impl!("statTypes" => StatType);
 
-static CACHE: RwLock<HydratedCacheTable<StatType>> = rwlock_const_new(HydratedCacheTable::new());
-
-impl RequestEntryCache for StatType {
-	type HydratedVariant = Self;
-	type Identifier = Self;
-	type URL = MetaRequest<Self>;
-
-	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		Some(self)
-	}
-
-	fn id(&self) -> &Self::Identifier {
-		self
-	}
-
-	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
-		MetaRequest::new()
-	}
-
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
-	where
-		Self: Sized
-	{
-		response.entries
-	}
-
-	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
-	where
-		Self: Sized
-	{
-		&CACHE
-	}
-}
+static_request_entry_cache_impl!(StatType);
 
 #[cfg(test)]
 mod tests {

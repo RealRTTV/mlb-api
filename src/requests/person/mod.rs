@@ -246,6 +246,27 @@ pub enum HydratedOrBetterPerson<H: PersonHydrations = ()> {
 	Hydrated(Box<HydratedPerson<H>>),
 }
 
+impl<H: PersonHydrations> Person<H> {
+	#[must_use]
+	pub fn try_into_named_or_better(self) -> Option<NamedOrBetterPerson<H>> {
+		match self {
+			Self::Ballplayer(inner) => Some(NamedOrBetterPerson::Ballplayer(inner)),
+			Self::Hydrated(inner) => Some(NamedOrBetterPerson::Hydrated(inner)),
+			Self::Named(inner) => Some(NamedOrBetterPerson::Named(inner)),
+			Self::Identifiable(_) => None,
+		}
+	}
+
+	#[must_use]
+	pub fn try_into_hydrated_or_better(self) -> Option<HydratedOrBetterPerson<H>> {
+		match self {
+			Self::Ballplayer(inner) => Some(HydratedOrBetterPerson::Ballplayer(inner)),
+			Self::Hydrated(inner) => Some(HydratedOrBetterPerson::Hydrated(inner)),
+			Self::Named(_) | Self::Identifiable(_) => None,
+		}
+	}
+}
+
 impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<HydratedOrBetterPerson<H2>> for HydratedOrBetterPerson<H1> {
 	fn eq(&self, other: &HydratedOrBetterPerson<H2>) -> bool {
 		self.id == other.id
@@ -322,10 +343,10 @@ impl PersonHydrations for () {}
 /// ```rs
 /// person_hydrations! {
 ///     pub struct ExampleHydrations {   ->    pub struct ExampleHydrations {
-///         stats: MyStats,                        stats: MyStats,
-///         awards,                                awards: Vec<Award>,
-///         social,                                social: HashMap<String, Vec<String>>,
-///     }                                      }
+///         stats: MyStats,              ->        stats: MyStats,
+///         awards,                      ->        awards: Vec<Award>,
+///         social,                      ->        social: HashMap<String, Vec<String>>,
+///     }                                ->    }
 /// }
 /// ```
 ///
@@ -447,12 +468,12 @@ macro_rules! person_hydrations {
 static CACHE: RwLock<HydratedCacheTable<Person<()>>> = rwlock_const_new(HydratedCacheTable::new());
 
 impl RequestEntryCache for Person<()> {
-	type HydratedVariant = Box<HydratedPerson<()>>;
+	type HydratedVariant = HydratedOrBetterPerson<()>;
 	type Identifier = PersonId;
 	type URL = PersonRequest<()>;
 
 	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated()
+		self.try_into_hydrated_or_better()
 	}
 
 	fn id(&self) -> &Self::Identifier {
@@ -485,7 +506,7 @@ mod tests {
 	use super::*;
 	use crate::requests::team::roster::RosterRequest;
 	use crate::requests::team::teams::TeamsRequest;
-	use crate::TEST_YEAR;
+	use crate::{stats, TEST_YEAR};
 
 	#[tokio::test]
 	async fn no_hydrations() {

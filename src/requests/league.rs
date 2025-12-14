@@ -1,6 +1,4 @@
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::sports::{NamedSport, SportId};
-use crate::{rwlock_const_new, RwLock};
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
@@ -143,36 +141,4 @@ impl StatsAPIRequestUrl for LeagueRequest {
 	type Response = LeagueResponse;
 }
 
-static CACHE: RwLock<HydratedCacheTable<League>> = rwlock_const_new(HydratedCacheTable::new());
-
-impl RequestEntryCache for League {
-	type HydratedVariant = Box<HydratedLeague>;
-	type Identifier = LeagueId;
-	type URL = LeagueRequest;
-
-	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated()
-	}
-
-	fn id(&self) -> &Self::Identifier {
-		&self.id
-	}
-
-	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		LeagueRequest::builder().league_ids_internal(vec![*id]).build()
-	}
-
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
-	where
-		Self: Sized
-	{
-		response.leagues
-	}
-
-	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
-	where
-		Self: Sized
-	{
-		&CACHE
-	}
-}
+tiered_request_entry_cache_impl!(LeagueRequest => |id: LeagueId| { LeagueRequest::builder().league_ids(vec![*id]).build() }.leagues => League => Box<HydratedLeague>);

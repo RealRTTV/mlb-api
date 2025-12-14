@@ -1,10 +1,8 @@
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::league::{League, LeagueId};
+use crate::request::StatsAPIRequestUrl;
 use crate::season::SeasonId;
 use crate::sports::{Sport, SportId};
 use crate::types::Copyright;
-use crate::{rwlock_const_new, RwLock};
-use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, From};
 use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
@@ -78,39 +76,7 @@ impl StatsAPIRequestUrl for AwardRequest {
 	type Response = AwardsResponse;
 }
 
-static CACHE: RwLock<HydratedCacheTable<Award>> = rwlock_const_new(HydratedCacheTable::new());
-
-impl RequestEntryCache for Award {
-	type HydratedVariant = Box<HydratedAward>;
-	type Identifier = AwardId;
-	type URL = AwardRequest;
-
-	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated()
-	}
-
-	fn id(&self) -> &Self::Identifier {
-		&self.id
-	}
-
-	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		AwardRequest::builder().award_id(id.clone()).build()
-	}
-
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
-	where
-		Self: Sized
-	{
-		response.awards
-	}
-
-	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
-	where
-		Self: Sized
-	{
-		&CACHE
-	}
-}
+tiered_request_entry_cache_impl!(AwardRequest => |id: AwardId| { AwardRequest::builder().award_id(id.clone()).build() }.awards => Award => Box<HydratedAward>);
 
 #[cfg(test)]
 mod tests {

@@ -73,7 +73,7 @@ macro_rules! id_only_eq_impl {
 }
 
 macro_rules! tiered_request_entry_cache_impl {
-    ($name:ty => $hydrated_name:ty; $id_field:ident: $id:ty) => {
+	($name:ty => $hydrated_name:ty; $id_field:ident: $id:ty) => {
 		static CACHE: $crate::RwLock<$crate::cache::HydratedCacheTable<$name>> = $crate::rwlock_const_new($crate::cache::HydratedCacheTable::new());
 
 		impl $crate::cache::RequestEntryCache for $name {
@@ -98,6 +98,42 @@ macro_rules! tiered_request_entry_cache_impl {
 				Self: Sized
 			{
 				response.entries
+			}
+
+			fn get_hydrated_cache_table() -> &'static $crate::RwLock<$crate::cache::HydratedCacheTable<Self>>
+			where
+				Self: Sized
+			{
+				&CACHE
+			}
+		}
+	};
+    ($url:ty => |$id_field:ident: $id:ty| $expr:block . $entries:ident => $name:ty => $hydrated_name:ty) => {
+		static CACHE: $crate::RwLock<$crate::cache::HydratedCacheTable<$name>> = $crate::rwlock_const_new($crate::cache::HydratedCacheTable::new());
+
+		impl $crate::cache::RequestEntryCache for $name {
+			type HydratedVariant = $hydrated_name;
+			type Identifier = $id;
+			type URL = $url;
+
+			fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
+				self.try_into_hydrated()
+			}
+
+			fn id(&self) -> &Self::Identifier {
+				&self.$id_field
+			}
+
+			fn url_for_id(id: &Self::Identifier) -> Self::URL {
+				let $id_field = id;
+				$expr
+			}
+
+			fn get_entries(response: <Self::URL as $crate::request::StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+			where
+				Self: Sized
+			{
+				response.$entries
 			}
 
 			fn get_hydrated_cache_table() -> &'static $crate::RwLock<$crate::cache::HydratedCacheTable<Self>>

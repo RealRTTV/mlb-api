@@ -1,5 +1,47 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
+/// Generates stat structs to be used in requests.
+///
+/// These are commonly associated with [`person_hydrations`] to create a [`person::PersonRequest`].
+///
+/// The list of [`StatType`]s can be found on its file (if the static feature is enabled), or as impls of [`stats::StatTypeStats`].
+///
+/// The list of [`StatGroup`]s can be found on its type.
+///
+/// # Examples
+/// ```rs
+/// stats! {
+///     pub struct MyStats {
+///         [Season, Career] = [Hitting, Pitching]
+///     }
+/// }
+///
+/// ---
+///
+/// pub struct BasicStats {
+///     season: BasicStatsSeasonSplit,
+///     career: BasicStatsCareerSplit,
+/// }
+///
+/// pub struct BasicStatsSeasonSplit {
+///     hitting: Box<<SeasonStats as StatTypeStats>::Hitting>, // Box<Season<HittingStats>>
+///     pitching: Box<<SeasonStats as StatTypeStats>::Pitching>, // Box<Season<PitchingStats>>
+/// }
+///
+/// pub struct BasicStatsCareerSplit {
+///     hitting: Box<<CareerStats as StatTypeStats>::Hitting>, // Box<HittingStats>
+///     pitching: Box<<CareerStats as StatTypeStats>::Pitching>, // Box<PitchingStats>
+/// }
+/// ```
+#[macro_export]
+macro_rules! stats {
+    ($($t:tt)*) => {
+        ::mlb_api_proc::stats! {
+            $crate $($t)*
+        }
+    };
+}
+
 use crate::league::League;
 use crate::requests::person::Person;
 use crate::requests::stats::catching::CatchingStats;

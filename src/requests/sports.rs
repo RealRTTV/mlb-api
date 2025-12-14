@@ -1,6 +1,4 @@
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
 use crate::types::Copyright;
-use crate::{rwlock_const_new, RwLock};
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
@@ -90,39 +88,7 @@ pub enum Sport {
 
 id_only_eq_impl!(Sport, id);
 
-static CACHE: RwLock<HydratedCacheTable<Sport>> = rwlock_const_new(HydratedCacheTable::new());
-
-impl RequestEntryCache for Sport {
-	type HydratedVariant = HydratedSport;
-	type Identifier = SportId;
-	type URL = SportsRequest;
-
-	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated()
-	}
-
-	fn id(&self) -> &Self::Identifier {
-		&self.id
-	}
-
-	fn url_for_id(id: &Self::Identifier) -> Self::URL {
-		SportsRequest::builder().id(*id).build()
-	}
-
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
-	where
-		Self: Sized
-	{
-		response.sports
-	}
-
-	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
-	where
-		Self: Sized
-	{
-		&CACHE
-	}
-}
+tiered_request_entry_cache_impl!(SportsRequest => |id: SportId| { SportsRequest::builder().id(*id).build() }.sports => Sport => HydratedSport);
 
 #[cfg(test)]
 mod tests {
