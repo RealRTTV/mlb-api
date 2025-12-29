@@ -1,6 +1,6 @@
 use crate::season::SeasonId;
-use crate::requests::team::TeamId;
-use crate::requests::team::teams::TeamsResponse;
+use crate::team::TeamId;
+use crate::team::teams::TeamsResponse;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
@@ -34,8 +34,8 @@ impl StatsAPIRequestUrl for TeamHistoryRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::requests::team::history::TeamHistoryRequest;
-	use crate::requests::team::teams::TeamsRequest;
+	use crate::team::history::TeamHistoryRequest;
+	use crate::team::teams::TeamsRequest;
 	use crate::request::StatsAPIRequestUrlBuilderExt;
 
 	#[tokio::test]

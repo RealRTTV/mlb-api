@@ -263,7 +263,6 @@ pub struct Location {
 
 impl Eq for Location {}
 
-// todo: replace these with stat types like percentage, two decimal place, three decimal place, etc.
 #[derive(Debug, Copy, Clone)]
 pub enum IntegerOrFloatStat {
 	Integer(i64),

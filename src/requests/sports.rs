@@ -1,10 +1,10 @@
 use crate::types::Copyright;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
-use derive_more::{Deref, DerefMut, Display, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::cache::{CacheTable, RequestEntryCache};
+use crate::{rwlock_const_new, RwLock};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -13,10 +13,10 @@ pub struct SportsResponse {
 	pub sports: Vec<Sport>,
 }
 
-integer_id!(#[derive(Debug, Deserialize, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)] SportId);
+id!(SportId { id: u32 });
 
 impl SportId {
-	/// This is here because we can rest assured that it won't ever go away.
+	/// This is only here because we can rest assured that it won't ever go away.
 	pub const MLB: Self = Self::new(1);
 }
 
@@ -47,47 +47,57 @@ impl StatsAPIRequestUrl for SportsRequest {
 	type Response = SportsResponse;
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct IdentifiableSport {
-	pub id: SportId,
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct NamedSport {
-	pub name: String,
-
-	#[deref]
-	#[deref_mut]
-	#[serde(flatten)]
-	pub(super) inner: IdentifiableSport,
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct HydratedSport {
+pub struct Sport {
 	pub code: String,
+	pub name: String,
 	pub abbreviation: String,
 	#[serde(rename = "activeStatus")]
 	pub active: bool,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	pub(super) inner: NamedSport,
-}
-
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum Sport {
-	Hydrated(HydratedSport),
-	Named(NamedSport),
-	Identifiable(IdentifiableSport),
+	pub id: SportId,
 }
 
 id_only_eq_impl!(Sport, id);
-tiered_request_entry_cache_impl!(SportsRequest => |id: SportId| { SportsRequest::builder().id(*id).build() }.sports => Sport => HydratedSport);
+
+static CACHE: RwLock<CacheTable<Sport>> = rwlock_const_new(CacheTable::new());
+
+impl RequestEntryCache for Sport {
+	type Identifier = SportId;
+	type URL = SportsRequest;
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	#[cfg(feature = "aggressive_cache")]
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		SportsRequest::builder().build()
+	}
+
+	#[cfg(not(feature = "aggressive_cache"))]
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		SportsRequest::builder().id(*id).build()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.sports
+	}
+
+	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
+}
+
+entrypoint!(SportId => Sport);
+entrypoint!(Sport.id => Sport);
 
 #[cfg(test)]
 mod tests {

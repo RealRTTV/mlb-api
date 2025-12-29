@@ -1,14 +1,6 @@
-use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 
-string_id!(GameStatusId);
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableGameStatus {
-	#[serde(rename = "detailedState")] pub id: GameStatusId,
-}
+id!(GameStatusId { detailedState: String });
 
 /// Detailed game status (use [`AbstractGameCode`] for simpler responses)
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
@@ -114,29 +106,19 @@ impl AbstractGameCode {
 	}
 }
 
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedGameStatus {
+pub struct GameStatus {
 	pub abstract_game_state: String,
 	pub coded_game_state: CodedGameState,
 	pub status_code: String,
 	pub reason: Option<String>,
 	pub abstract_game_code: AbstractGameCode,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableGameStatus,
-}
-
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum GameStatus {
-	Hydrated(HydratedGameStatus),
-	Identifiable(IdentifiableGameStatus),
+	pub id: GameStatusId,
 }
 
 id_only_eq_impl!(GameStatus, id);
 meta_kind_impl!("gameStatus" => GameStatus);
-tiered_request_entry_cache_impl!(GameStatus => HydratedGameStatus; id: GameStatusId);
+tiered_request_entry_cache_impl!(GameStatus.id: GameStatusId);
 test_impl!(GameStatus);

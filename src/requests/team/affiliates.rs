@@ -1,6 +1,6 @@
 use crate::season::SeasonId;
-use crate::requests::team::TeamId;
-use crate::requests::team::teams::TeamsResponse;
+use crate::team::TeamId;
+use crate::team::teams::TeamsResponse;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
@@ -31,8 +31,8 @@ impl StatsAPIRequestUrl for TeamAffiliatesRequest {
 #[cfg(test)]
 mod tests {
 	use crate::request::{Error as RequestError, StatsAPIRequestUrlBuilderExt};
-	use crate::requests::team::affiliates::TeamAffiliatesRequest;
-	use crate::requests::team::teams::TeamsRequest;
+	use crate::team::affiliates::TeamAffiliatesRequest;
+	use crate::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]

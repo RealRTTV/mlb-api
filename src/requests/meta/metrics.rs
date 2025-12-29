@@ -1,9 +1,8 @@
-use crate::requests::meta::stat_groups::StatGroup;
-use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
+use crate::meta::stat_groups::StatGroup;
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 
-integer_id!(MetricId);
+id!(MetricId { metricId: u32 });
 
 macro_rules! units {
     ($($name:ident($func:path => $units:ty)),+ $(,)?) => {
@@ -59,30 +58,21 @@ units! {
 	Time(uom::si::time::units => uom::si::time::Units),
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableMetric {
-	#[serde(rename = "metricId")]
-	pub id: MetricId,
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedMetric {
 	pub name: String,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableMetric,
+	pub id: MetricId,
 }
 
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedMetric {
-	#[serde(deserialize_with = "crate::types::deserialize_comma_separated_vec")]
-	pub group: Vec<StatGroup>,
-	pub unit: Unit,
+pub struct Metric {
+	#[serde(default)]
+	#[serde(rename = "group", deserialize_with = "crate::types::deserialize_comma_separated_vec")]
+	pub groups: Vec<StatGroup>,
+	pub unit: Option<Unit>,
 
 	#[deref]
 	#[deref_mut]
@@ -90,15 +80,8 @@ pub struct HydratedMetric {
 	inner: NamedMetric,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum Metric {
-	Hydrated(HydratedMetric),
-	Named(NamedMetric),
-	Identifiable(IdentifiableMetric),
-}
-
+id_only_eq_impl!(NamedMetric, id);
 id_only_eq_impl!(Metric, id);
 meta_kind_impl!("metrics" => Metric);
-tiered_request_entry_cache_impl!(Metric => HydratedMetric; id: MetricId);
+tiered_request_entry_cache_impl!([Metric, NamedMetric].id: MetricId);
 test_impl!(Metric);

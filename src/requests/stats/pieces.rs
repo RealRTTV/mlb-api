@@ -1,6 +1,6 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
-use crate::requests::stats::units::InningsPitched;
+use crate::stats::units::InningsPitched;
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 use serde_with::serde_as;

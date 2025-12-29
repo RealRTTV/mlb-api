@@ -1,4 +1,4 @@
-use crate::request::Error;
+use crate::request::{Result, Error};
 use crate::types::StatsAPIError;
 use serde::de::DeserializeOwned;
 

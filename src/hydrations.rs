@@ -1,12 +1,17 @@
-use serde::de::DeserializeOwned;
 use std::borrow::Cow;
+use std::fmt::Debug;
+use serde::de::DeserializeOwned;
 
-pub trait Hydrations: DeserializeOwned {
-	fn request_text() -> Option<Cow<'static, str>>;
+pub trait Hydrations: 'static + Debug + DeserializeOwned + Eq + Clone + HydrationText {}
+
+pub trait HydrationText {
+	fn hydration_text() -> Cow<'static, str>;
 }
 
-impl Hydrations for () {
-	fn request_text() -> Option<Cow<'static, str>> {
-		None
+impl Hydrations for () {}
+
+impl HydrationText for () {
+	fn hydration_text() -> Cow<'static, str> {
+		Cow::Borrowed("")
 	}
 }

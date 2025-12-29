@@ -1,12 +1,55 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __stats_stat_type_definition {
+    ($parent_name:ident => $vis:vis struct $name:ident { $stat_type:ident => [$($stat_group:ident),+] }) => {
+		::pastey::paste! {
+			#[derive(Debug, PartialEq, Eq, Clone)]
+			$vis struct $name {
+				$($vis [< $stat_group:snake >]: ::std::boxed::Box<$crate::stats::PossiblyFallback<<$crate::stats::[< $stat_type Stats >] as $crate::stats::StatTypeStats>::$stat_group>>),+
+			}
+
+			impl [<__ $parent_name Split Parser>] for $name {
+				fn parse(parsed_stats: &mut $crate::stats::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String> {
+					Ok(Self {
+						$([<$stat_group:snake>]: ::std::boxed::Box::new(
+							$crate::stats::make_stat_split::<<$crate::stats::[< $stat_type Stats >] as $crate::stats::StatTypeStats>::$stat_group>(
+								parsed_stats, ::core::stringify!([<$stat_type:lower_camel>]), $crate::stat_groups::StatGroup::$stat_group
+							).map_err(|e| ::std::string::ToString::to_string(&e))?
+						)),+
+					})
+				}
+			}
+    	}
+	};
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __stats_hydration_text {
+    ([$first_stat_type:ident $(, $stat_type:ident)* $(,)?] [$first_stat_group:ident $(, $stat_group:ident)* $(,)?]) => {
+		::pastey::paste! {
+			::core::concat!(
+				"type=[",
+				::core::stringify!([<$first_stat_type:lower_camel>]),
+				$(",", ::core::stringify!([<$stat_type:lower_camel>]), )*
+				"],group=[",
+				::core::stringify!([<$first_stat_group:lower_camel>]),
+				$(",", ::core::stringify!([<$stat_group:lower_camel>]), )*
+				"]"
+			)
+		}
+	};
+}
+
 /// Generates stat structs to be used in requests.
 ///
-/// These are commonly associated with [`person_hydrations`] to create a [`person::PersonRequest`].
+/// These are commonly associated with [`person_hydrations`](crate::person_hydrations) to create a [`PersonRequest`](crate::person::PersonRequest).
 ///
-/// The list of [`StatType`]s can be found on its file (if the static feature is enabled), or as impls of [`stats::StatTypeStats`].
+/// The list of [`StatType`](crate::stat_types::StatType)s can be found as implementors of [`StatTypeStats`](crate::stats::StatTypeStats).
 ///
-/// The list of [`StatGroup`]s can be found on its type.
+/// The list of [`StatGroup`](crate::stat_groups::StatGroup)s can be found on its type.
 ///
 /// # Examples
 /// ```rs
@@ -24,35 +67,74 @@
 /// }
 ///
 /// pub struct BasicStatsSeasonSplit {
-///     hitting: Box<<SeasonStats as StatTypeStats>::Hitting>, // Box<Season<HittingStats>>
-///     pitching: Box<<SeasonStats as StatTypeStats>::Pitching>, // Box<Season<PitchingStats>>
+///     hitting: Box<<SeasonStats as StatTypeStats>::Hitting>, // Season<HittingStats>
+///     pitching: Box<<SeasonStats as StatTypeStats>::Pitching>, // Season<PitchingStats>
 /// }
 ///
 /// pub struct BasicStatsCareerSplit {
-///     hitting: Box<<CareerStats as StatTypeStats>::Hitting>, // Box<HittingStats>
-///     pitching: Box<<CareerStats as StatTypeStats>::Pitching>, // Box<PitchingStats>
+///     hitting: Box<<CareerStats as StatTypeStats>::Hitting>, // Career<HittingStats>
+///     pitching: Box<<CareerStats as StatTypeStats>::Pitching>, // Career<PitchingStats>
 /// }
 /// ```
 #[macro_export]
 macro_rules! stats {
-    ($($t:tt)*) => {
-        ::mlb_api_proc::stats! {
-            $crate $($t)*
-        }
+    ($vis:vis struct $name:ident {
+		[$($stat_type:ident),+] = $stat_groups:tt
+	}) => {
+		::pastey::paste! {
+			#[derive(Debug, PartialEq, Eq, Clone)]
+        	$vis struct $name {
+				$($vis [<$stat_type:snake>]: [<$name $stat_type Split>],)*
+			}
+
+			#[doc(hidden)]
+			trait [<__ $name Split Parser>] {
+				fn parse(parsed_stats: &mut $crate::stats::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String>
+				where
+					Self: Sized;
+			}
+
+			$($crate::__stats_stat_type_definition!($name => $vis struct [<$name $stat_type Split>] { $stat_type => $stat_groups });)+
+
+			impl<'de> ::serde::Deserialize<'de> for $name {
+				fn deserialize<D: ::serde::de::Deserializer<'de>>(deserializer: D) -> ::core::result::Result<Self, D::Error>
+				where
+					Self: Sized
+				{
+					let mut parsed_stats: $crate::stats::__ParsedStats = <$crate::stats::__ParsedStats as ::serde::Deserialize>::deserialize(deserializer)?;
+
+					Ok(Self {
+						$([<$stat_type:snake>]: <[<$name $stat_type Split>] as [<__ $name Split Parser>]>::parse(&mut parsed_stats).map_err(D::Error::custom)?),+
+					})
+				}
+			}
+
+			impl $crate::hydrations::Hydrations for $name {}
+
+			impl $crate::hydrations::HydrationText for $name {
+                fn hydration_text() -> ::std::borrow::Cow<'static, str> {
+					::std::borrow::Cow::Borrowed($crate::__stats_hydration_text!([$($stat_type),+] $stat_groups))
+				}
+            }
+		}
     };
 }
 
-use crate::league::League;
-use crate::requests::person::Person;
-use crate::requests::stats::catching::CatchingStats;
-use crate::requests::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingStats};
-use crate::requests::stats::hitting::{AdvancedHittingStats, HittingStats, SabermetricsHittingStats, SimplifiedGameLogHittingStats, VsPlayerHittingStats};
-use crate::requests::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
-use crate::requests::stats::units::PercentageStat;
-use crate::requests::team::Team;
-use crate::sports::Sport;
+stats! {
+	pub struct MyStats {
+		[Season, Career] = [Hitting, Pitching]
+	}
+}
+
+use crate::league::NamedLeague;
+use crate::stats::catching::CatchingStats;
+use crate::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingStats};
+use crate::stats::hitting::{AdvancedHittingStats, HittingStats, SabermetricsHittingStats, SimplifiedGameLogHittingStats, VsPlayerHittingStats};
+use crate::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
+use crate::stats::units::PercentageStat;
+use crate::sports::SportId;
 use crate::types::{RGBAColor, SimpleTemperature};
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
 use derive_more::{Deref, DerefMut, TryFrom};
 use fxhash::FxHashMap;
 use serde::de::{DeserializeOwned, Error, Visitor};
@@ -65,11 +147,16 @@ use std::convert::Infallible;
 use std::fmt::{Debug, Display, Formatter};
 use std::num::ParseIntError;
 use std::str::FromStr;
+use smallvec::SmallVec;
 use thiserror::Error;
+use crate::game::GameId;
 use crate::game_types::GameType;
+use crate::hydrations::Hydrations;
+use crate::person::NamedPerson;
 use crate::season::SeasonId;
 use crate::stat_groups::StatGroup;
 use crate::stat_types::StatType;
+use crate::team::NamedTeam;
 
 pub mod pieces;
 pub mod piece_impls;
@@ -80,17 +167,11 @@ pub mod fielding;
 pub mod catching;
 pub mod units;
 
-pub trait Stats: Debug + DeserializeOwned + PartialEq + Eq + Clone {
-	fn request_text() -> &'static str;
-}
+pub trait Stats: 'static + Debug + PartialEq + Eq + Clone + Hydrations {}
 
-impl Stats for () {
-	fn request_text() -> &'static str {
-		""
-	}
-}
+impl Stats for () {}
 
-pub trait Stat: Debug + Clone + PartialEq + Eq {
+pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
 	type SplitWrappedVariant: DeserializeOwned;
 
 	type TryFromSplitWrappedVariantError;
@@ -98,16 +179,69 @@ pub trait Stat: Debug + Clone + PartialEq + Eq {
 	/// # Errors
 	/// See [`Self::TryFromSplitWrappedVariantError`]
 	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError> where Self: Sized;
+}
 
+pub trait SingletonWrappedEntryStat: Debug + DeserializeOwned + Clone + PartialEq + Eq + Default {
+
+}
+
+/// Wrapper type due to stupidity; [`PossiblyFallback`] is the cleanest solution to MLB api's stat problem.
+///
+/// Consider the case where a batter is polled for pitching stats. Instead of returning pitching stats for the season with a sample of 0 IP, 0 ER, etc. The stats data is removed from the response altogether.
+/// The solution is to give defaults for when the data doesn't exist. However, there are some problems with these defaults.
+/// Consider the case of [`VsPlayerStats`]. Here the data looks like:
+///
+/// ```rs
+/// struct AccumulatedMatchup {
+///     stats: HittingStats,
+///     team: NamedTeam,
+///     opposing_team: NamedTeam,
+///     game_type: GameType
+/// }
+/// ```
+///
+/// When creating defaults, for [`HittingStats`] is trivial.
+/// However for `opposing_team`, that is rather tricky. There has been no matchup with this hitter as the pitcher, so there is no most recent `opposing_team`.
+/// Because of this problem, the defaults are given the most sensible values possible, but some are still rather arbitrary ([`Weekday`] defaults to Monday).
+///
+/// ```rs
+/// AccumulatedMatchup {
+///     stats: HittingStats::default(),
+///     team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
+///     opposing_team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
+///     game_type: GameType::RegularSeason,
+/// }
+/// ```
+///
+/// <u>As a solution</u>, this wrapper is created, if you are able to discard stats, then you can filter real stats from default ones with `is_fallback`. However, if you want to get the expected batting average of a player in the 1950s, better `.000` than `Option<T>` and `unwrap`-ifying your whole codebase.
+#[derive(Debug, PartialEq, Eq, Deref, DerefMut, Clone, Copy)]
+pub struct PossiblyFallback<T> {
+	#[deref]
+	#[deref_mut]
+	value: T,
+	pub is_fallback: bool,
+}
+
+impl<T> PossiblyFallback<T> {
 	#[must_use]
-	fn fallback() -> Option<Self> where Self: Sized { None }
+	pub const fn new(value: T) -> Self {
+		Self {
+			value,
+			is_fallback: false,
+		}
+	}
 }
 
-pub trait BaseStat: Debug + DeserializeOwned + Clone + PartialEq + Eq {
-
+impl<T: Default> Default for PossiblyFallback<T> {
+	fn default() -> Self {
+		Self {
+			value: T::default(),
+			is_fallback: true,
+		}
+	}
 }
 
-impl<T: BaseStat> Stat for T {
+impl<T: SingletonWrappedEntryStat> Stat for T {
 	type SplitWrappedVariant = Self;
 
 	type TryFromSplitWrappedVariantError = &'static str;
@@ -122,23 +256,22 @@ impl<T: BaseStat> Stat for T {
 	}
 }
 
-impl BaseStat for HittingStats {}
-impl BaseStat for VsPlayerHittingStats {}
-impl BaseStat for SimplifiedGameLogHittingStats {}
-impl BaseStat for AdvancedHittingStats {}
-impl BaseStat for SabermetricsHittingStats {}
+impl SingletonWrappedEntryStat for HittingStats {}
+impl SingletonWrappedEntryStat for VsPlayerHittingStats {}
+impl SingletonWrappedEntryStat for SimplifiedGameLogHittingStats {}
+impl SingletonWrappedEntryStat for AdvancedHittingStats {}
+impl SingletonWrappedEntryStat for SabermetricsHittingStats {}
 
-impl BaseStat for PitchingStats {}
-impl BaseStat for VsPlayerPitchingStats {}
-impl BaseStat for SimplifiedGameLogPitchingStats {}
-impl BaseStat for SabermetricsPitchingStats {}
-impl BaseStat for AdvancedPitchingStats {}
+impl SingletonWrappedEntryStat for PitchingStats {}
+impl SingletonWrappedEntryStat for VsPlayerPitchingStats {}
+impl SingletonWrappedEntryStat for SimplifiedGameLogPitchingStats {}
+impl SingletonWrappedEntryStat for SabermetricsPitchingStats {}
+impl SingletonWrappedEntryStat for AdvancedPitchingStats {}
 
-impl BaseStat for FieldingStats {}
-impl BaseStat for SimplifiedGameLogFieldingStats {}
+impl SingletonWrappedEntryStat for FieldingStats {}
+impl SingletonWrappedEntryStat for SimplifiedGameLogFieldingStats {}
 
-impl BaseStat for CatchingStats {}
-
+impl SingletonWrappedEntryStat for CatchingStats {}
 
 pub trait StatTypeStats {
 	type Hitting: Stat;
@@ -152,7 +285,10 @@ pub trait StatTypeStats {
 
 #[derive(Deserialize)]
 #[doc(hidden)]
-struct __RawStats(Vec<__RawStatEntry>);
+struct __RawStats {
+    #[serde(alias = "stat")]
+	stats: Vec<__RawStatEntry>,
+}
 
 #[derive(Deserialize)]
 #[serde(untagged)]
@@ -185,7 +321,7 @@ impl From<__InlineStatEntry> for __ParsedStatEntry {
 		Self {
 			stat_type: value.stat_type,
 			stat_group: value.stat_group,
-			splits: vec![value.stat],
+			splits: SmallVec::from_buf::<1>([value.stat]),
 		}
 	}
 }
@@ -207,8 +343,20 @@ impl From<__RawStatEntry> for Vec<__ParsedStatEntry> {
 
 impl From<__RawStats> for __ParsedStats {
 	fn from(value: __RawStats) -> Self {
+		let mut entries = Vec::with_capacity(value.stats.len());
+		for entry in value.stats {
+			match entry {
+				__RawStatEntry::Depth0(entry) => entries.push(entry),
+				__RawStatEntry::Depth1(entry) => {
+					entries.reserve(entry.splits.len());
+					for entry in entry.splits {
+						entries.push(__ParsedStatEntry::from(entry));
+					}
+				},
+			}
+		}
 		Self {
-			entries: value.0.into_iter().flat_map::<Vec<__ParsedStatEntry>, _>(Into::into).collect()
+			entries
 		}
 	}
 }
@@ -228,14 +376,12 @@ pub struct __ParsedStatEntry {
 	stat_type: StatType,
 	#[serde(rename = "group")]
 	stat_group: StatGroup,
-	splits: Vec<Value>,
+	splits: SmallVec<Value, 1>,
 }
 
 #[doc(hidden)]
 #[derive(Debug, Error)]
 pub enum MakeStatSplitsError<S: Stat> {
-	#[error("No matches found for {0} + {1}")]
-	NoMatchFound(&'static str, StatGroup),
 	#[error("Failed to deserialize json into split type ({name}): {0}", name = core::any::type_name::<S>())]
 	FailedPartialDeserialize(serde_json::Error),
 	// FailedPartialDeserialize(serde_path_to_error::Error<serde_json::Error>),
@@ -244,7 +390,7 @@ pub enum MakeStatSplitsError<S: Stat> {
 }
 
 #[doc(hidden)]
-pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str: &'static str, target_stat_group: StatGroup) -> Result<S, MakeStatSplitsError<S>> {
+pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str: &'static str, target_stat_group: StatGroup) -> Result<PossiblyFallback<S>, MakeStatSplitsError<S>> {
 	if let Some(idx) = stats.entries.iter().position(|entry| entry.stat_type.as_str().eq_ignore_ascii_case(target_stat_type_str) && entry.stat_group == target_stat_group) {
 		let entry = stats.entries.remove(idx);
 		let partially_deserialized = entry.splits
@@ -256,11 +402,9 @@ pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str:
 			.collect::<Result<Vec<S::SplitWrappedVariant>, _>>()
 			.map_err(MakeStatSplitsError::FailedPartialDeserialize)?;
 		let deserialized = <S as Stat>::from_split_wrapped_variant(partially_deserialized).map_err(MakeStatSplitsError::FailedFullDeserialize)?;
-		Ok(deserialized)
-	} else if let Some(fallback) = S::fallback() {
-		Ok(fallback)
+		Ok(PossiblyFallback::new(deserialized))
 	} else {
-		Err(MakeStatSplitsError::NoMatchFound(target_stat_type_str, target_stat_group))
+		Ok(PossiblyFallback::<S>::default())
 	}
 }
 
@@ -282,14 +426,14 @@ macro_rules! stat_type_stats {
     };
 }
 
-impl BaseStat for () {}
+impl SingletonWrappedEntryStat for () {}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Deref, DerefMut)]
-pub struct Multiple<T: Stat + DeserializeOwned> {
+pub struct Multiple<T: SingletonWrappedEntryStat> {
 	pub entries: Vec<T>,
 }
 
-impl<T: Stat + DeserializeOwned> Stat for Multiple<T> {
+impl<T: SingletonWrappedEntryStat> Stat for Multiple<T> {
 	type SplitWrappedVariant = T;
 	type TryFromSplitWrappedVariantError = Infallible;
 
@@ -299,23 +443,16 @@ impl<T: Stat + DeserializeOwned> Stat for Multiple<T> {
 	{
 		Ok(Self { entries: split_wrapped })
 	}
-
-	fn fallback() -> Option<Self>
-	where
-		Self: Sized,
-	{
-		Some(Self { entries: Vec::new() })
-	}
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
-#[serde(bound = "T: Stat + DeserializeOwned")]
+#[serde(bound = "T: SingletonWrappedEntryStat")]
 #[serde(rename_all = "camelCase")]
-pub struct Career<T: Stat + DeserializeOwned> {
-	pub team: Option<Team>,
-	pub player: Person,
-	pub league: Option<League>,
-	pub sport: Option<Sport>,
+pub struct Career<T: SingletonWrappedEntryStat> {
+	pub team: Option<NamedTeam>,
+	pub player: NamedPerson,
+	pub league: Option<NamedLeague>,
+	pub sport: Option<SportId>,
 	pub game_type: GameType,
 	#[deref]
 	#[deref_mut]
@@ -323,13 +460,26 @@ pub struct Career<T: Stat + DeserializeOwned> {
 	pub stats: T,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for Career<T> {
+impl<T: SingletonWrappedEntryStat> Default for Career<T> {
+	fn default() -> Self {
+		Self {
+			team: None,
+			player: NamedPerson::unknown_person(),
+			league: None,
+			sport: None,
+			game_type: GameType::default(),
+			stats: T::default(),
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for Career<T> {
 
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct Season<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct Season<T: SingletonWrappedEntryStat> {
 	pub season: SeasonId,
 	#[deref]
 	#[deref_mut]
@@ -337,12 +487,21 @@ pub struct Season<T: Stat + DeserializeOwned> {
 	pub stats: T,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for Season<T> {
+impl<T: SingletonWrappedEntryStat> Default for Season<T> {
+	fn default() -> Self {
+		Self {
+			season: SeasonId::current_season(),
+			stats: T::default(),
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for Season<T> {
 
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct MultipleSeasons<T: Stat + DeserializeOwned> {
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct MultipleSeasons<T: SingletonWrappedEntryStat> {
 	pub seasons: FxHashMap<SeasonId, Season<T>>,
 }
 
@@ -352,7 +511,7 @@ pub enum MultipleSeasonsFromSplitWrappedVariantError {
 	DuplicateEntry { season: SeasonId },
 }
 
-impl<T: Stat + DeserializeOwned> Stat for MultipleSeasons<T> {
+impl<T: SingletonWrappedEntryStat> Stat for MultipleSeasons<T> {
 	type SplitWrappedVariant = Season<T>;
 	type TryFromSplitWrappedVariantError = MultipleSeasonsFromSplitWrappedVariantError;
 
@@ -369,130 +528,211 @@ impl<T: Stat + DeserializeOwned> Stat for MultipleSeasons<T> {
 		}
 		Ok(this)
 	}
+}
 
-	fn fallback() -> Option<Self> {
-		Some(Self { seasons: FxHashMap::default() })
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[serde(rename_all = "camelCase")]
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct Game<T: SingletonWrappedEntryStat> {
+	#[deref]
+	#[deref_mut]
+	#[serde(flatten)]
+	stats: Season<T>,
+	pub opponent: NamedTeam,
+	pub date: NaiveDate,
+	pub is_home: bool,
+	pub game: GameId,
+}
+
+impl<T: SingletonWrappedEntryStat> Default for Game<T> {
+	fn default() -> Self {
+		Self {
+			stats: Season::default(),
+			opponent: NamedTeam::unknown_team(),
+			date: Utc::now().date_naive(),
+			is_home: true,
+			game: GameId::new(0),
+		}
 	}
 }
 
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for Game<T> {}
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct Game<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct Player<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
 	stats: Season<T>,
-	pub opponent: Team,
-	pub date: NaiveDate,
-	pub is_home: bool,
-	pub game: super::game::Game,
-}
-
-impl<T: Stat + DeserializeOwned> BaseStat for Game<T> {}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
-#[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct Player<T: Stat + DeserializeOwned> {
-	#[deref]
-	#[deref_mut]
-	#[serde(flatten)]
-	stats: Season<T>,
-	pub player: Person,
+	pub player: NamedPerson,
 	pub game_type: GameType,
 	pub rank: u32,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for Player<T> {}
+impl<T: SingletonWrappedEntryStat> Default for Player<T> {
+	fn default() -> Self {
+		Self {
+			stats: Season::default(),
+			player: NamedPerson::unknown_person(),
+			game_type: GameType::default(),
+			rank: 0,
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for Player<T> {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct SingleMatchup<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct SingleMatchup<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
 	stats: Game<T>,
-	pub pitcher: Person,
-	pub batter: Person,
+	pub pitcher: NamedPerson,
+	pub batter: NamedPerson,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for SingleMatchup<T> {}
+impl<T: SingletonWrappedEntryStat> Default for SingleMatchup<T> {
+	fn default() -> Self {
+		Self {
+			stats: Game::default(),
+			pitcher: NamedPerson::unknown_person(),
+			batter: NamedPerson::unknown_person(),
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for SingleMatchup<T> {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct AccumulatedMatchup<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct AccumulatedMatchup<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
 	pub stats: T,
-	pub team: Team,
+	pub team: NamedTeam,
 	#[serde(rename = "opponent")]
-	pub opposing_team: Team,
+	pub opposing_team: NamedTeam,
 	pub game_type: GameType,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for AccumulatedMatchup<T> {}
+impl<T: SingletonWrappedEntryStat> Default for AccumulatedMatchup<T> {
+	fn default() -> Self {
+		Self {
+			stats: T::default(),
+			team: NamedTeam::unknown_team(),
+			opposing_team: NamedTeam::unknown_team(),
+			game_type: GameType::default(),
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for AccumulatedMatchup<T> {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct AccumulatedVsPlayerMatchup<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct AccumulatedVsPlayerMatchup<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
 	stats: AccumulatedMatchup<T>,
-	pub pitcher: Person,
-	pub batter: Person,
+	pub pitcher: NamedPerson,
+	pub batter: NamedPerson,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for AccumulatedVsPlayerMatchup<T> {}
+impl<T: SingletonWrappedEntryStat> Default for AccumulatedVsPlayerMatchup<T> {
+	fn default() -> Self {
+		Self {
+			stats: AccumulatedMatchup::<T>::default(),
+			pitcher: NamedPerson::unknown_person(),
+			batter: NamedPerson::unknown_person(),
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for AccumulatedVsPlayerMatchup<T> {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct AccumulatedVsTeamTotalMatchup<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct AccumulatedVsTeamTotalMatchup<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
 	stats: AccumulatedMatchup<T>,
 	pub rank: usize,
-	pub batter: Person,
+	pub batter: NamedPerson,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for AccumulatedVsTeamTotalMatchup<T> {}
+impl<T: SingletonWrappedEntryStat> Default for AccumulatedVsTeamTotalMatchup<T> {
+	fn default() -> Self {
+		Self {
+			stats: AccumulatedMatchup::<T>::default(),
+			rank: 0,
+			batter: NamedPerson::unknown_person(),
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for AccumulatedVsTeamTotalMatchup<T> {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct AccumulatedVsTeamSeasonalPitcherSplit<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct AccumulatedVsTeamSeasonalPitcherSplit<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
 	stats: AccumulatedMatchup<Season<T>>,
 	pub rank: usize,
-	pub pitcher: Person,
-	pub batter: Person,
+	pub pitcher: NamedPerson,
+	pub batter: NamedPerson,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for AccumulatedVsTeamSeasonalPitcherSplit<T> {}
+impl<T: SingletonWrappedEntryStat> Default for AccumulatedVsTeamSeasonalPitcherSplit<T> {
+	fn default() -> Self {
+		Self {
+			stats: AccumulatedMatchup::<Season<T>>::default(),
+			rank: 0,
+			pitcher: NamedPerson::unknown_person(),
+			batter: NamedPerson::unknown_person(),
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for AccumulatedVsTeamSeasonalPitcherSplit<T> {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldedMatchup {
-	pub pitcher: Person,
-	pub batter: Person,
-	pub fielding_team: Team,
+	pub pitcher: NamedPerson,
+	pub batter: NamedPerson,
+	pub fielding_team: NamedTeam,
 }
 
-impl BaseStat for FieldedMatchup {}
+impl Default for FieldedMatchup {
+	fn default() -> Self {
+		Self {
+			pitcher: NamedPerson::unknown_person(),
+			batter: NamedPerson::unknown_person(),
+			fielding_team: NamedTeam::unknown_team(),
+		}
+	}
+}
+
+impl SingletonWrappedEntryStat for FieldedMatchup {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct Month<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct Month<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
@@ -500,12 +740,21 @@ pub struct Month<T: Stat + DeserializeOwned> {
 	pub month: chrono::Month,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for Month<T> {}
+impl<T: SingletonWrappedEntryStat> Default for Month<T> {
+	fn default() -> Self {
+		Self {
+			stats: Season::default(),
+			month: chrono::Month::January,
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for Month<T> {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
-pub struct Weekday<T: Stat + DeserializeOwned> {
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct Weekday<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
@@ -514,7 +763,16 @@ pub struct Weekday<T: Stat + DeserializeOwned> {
 	pub weekday: chrono::Weekday,
 }
 
-impl<T: Stat + DeserializeOwned> BaseStat for Weekday<T> {}
+impl<T: SingletonWrappedEntryStat> Default for Weekday<T> {
+	fn default() -> Self {
+		Self {
+			stats: Season::default(),
+			weekday: chrono::Weekday::Mon,
+		}
+	}
+}
+
+impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for Weekday<T> {}
 
 fn deserialize_day_of_week<'de, D: Deserializer<'de>>(deserializer: D) -> Result<chrono::Weekday, D::Error> {
 	struct WeekdayVisitor;
@@ -540,16 +798,16 @@ fn deserialize_day_of_week<'de, D: Deserializer<'de>>(deserializer: D) -> Result
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
+#[serde(bound = "T: SingletonWrappedEntryStat")]
 #[doc(hidden)]
-pub struct __HomeOrAwayStruct<T: Stat + DeserializeOwned> {
+pub struct __HomeOrAwayStruct<T: SingletonWrappedEntryStat> {
 	#[serde(flatten)]
 	stats: Season<T>,
 	is_home: bool,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct HomeAndAway<T: Stat + DeserializeOwned> {
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct HomeAndAway<T: SingletonWrappedEntryStat> {
 	pub home: Season<T>,
 	pub away: Season<T>,
 }
@@ -564,7 +822,7 @@ pub enum HomeAndAwayFromSplitWrappedVariantError {
 	DuplicateAway,
 }
 
-impl<T: Stat + DeserializeOwned> Stat for HomeAndAway<T> {
+impl<T: SingletonWrappedEntryStat> Stat for HomeAndAway<T> {
 	type SplitWrappedVariant = __HomeOrAwayStruct<T>;
 	type TryFromSplitWrappedVariantError = HomeAndAwayFromSplitWrappedVariantError;
 
@@ -596,16 +854,16 @@ impl<T: Stat + DeserializeOwned> Stat for HomeAndAway<T> {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "T: Stat + DeserializeOwned")]
+#[serde(bound = "T: SingletonWrappedEntryStat")]
 #[doc(hidden)]
-pub struct __WinOrLossStruct<T: Stat + DeserializeOwned> {
+pub struct __WinOrLossStruct<T: SingletonWrappedEntryStat> {
 	#[serde(flatten)]
 	stats: Season<T>,
 	is_win: bool,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct WinLoss<T: Stat + DeserializeOwned> {
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct WinLoss<T: SingletonWrappedEntryStat> {
 	pub win: Season<T>,
 	pub loss: Season<T>,
 }
@@ -620,7 +878,7 @@ pub enum WinLossFromSplitWrappedVariantError {
 	DuplicateLoss,
 }
 
-impl<T: Stat + DeserializeOwned> Stat for WinLoss<T> {
+impl<T: SingletonWrappedEntryStat> Stat for WinLoss<T> {
 	type SplitWrappedVariant = __WinOrLossStruct<T>;
 	type TryFromSplitWrappedVariantError = WinLossFromSplitWrappedVariantError;
 
@@ -667,17 +925,26 @@ pub struct ExpectedStats {
 
 impl Eq for ExpectedStats {}
 
-impl BaseStat for ExpectedStats {}
+impl SingletonWrappedEntryStat for ExpectedStats {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename = "camelCase")]
 pub struct SprayChart {
 	#[serde(rename = "stat")]
 	spray: HitSpray,
-	batter: Person,
+	batter: NamedPerson,
 }
 
-impl BaseStat for SprayChart {}
+impl Default for SprayChart {
+	fn default() -> Self {
+		Self {
+			spray: HitSpray::default(),
+			batter: NamedPerson::unknown_person(),
+		}
+	}
+}
+
+impl SingletonWrappedEntryStat for SprayChart {}
 
 #[allow(clippy::struct_field_names, reason = "is a piece")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -688,6 +955,18 @@ pub struct HitSpray {
 	center_field: PercentageStat,
 	right_center_field: PercentageStat,
 	right_field: PercentageStat,
+}
+
+impl Default for HitSpray {
+	fn default() -> Self {
+		Self {
+			left_field: PercentageStat::new(0.0),
+			left_center_field: PercentageStat::new(0.0),
+			center_field: PercentageStat::new(0.0),
+			right_center_field: PercentageStat::new(0.0),
+			right_field: PercentageStat::new(0.0),
+		}
+	}
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, TryFrom)]
@@ -745,9 +1024,20 @@ pub struct HotColdZone {
 	pub value: f64,
 }
 
+impl Default for HotColdZone {
+	fn default() -> Self {
+		Self {
+			zone: StrikeZoneSection::MiddleMiddle,
+			color: RGBAColor::default(),
+			temperature: SimpleTemperature::Lukewarm,
+			value: 0.0,
+		}
+	}
+}
+
 impl Eq for HotColdZone {}
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
 #[serde(try_from = "__HotColdZonesStruct")]
 pub struct HotColdZones {
 	pub z01: HotColdZone,
@@ -834,7 +1124,7 @@ impl TryFrom<__HotColdZonesStruct> for HotColdZones {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct HittingHotColdZones {
 	pub OPS: HotColdZones,
 	pub AVG: HotColdZones,
@@ -897,7 +1187,7 @@ impl Stat for HittingHotColdZones {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct PitchingHotColdZones {
 	pub AVG: HotColdZones,
 	pub OBP: HotColdZones,
@@ -965,7 +1255,7 @@ pub struct __HotColdZonesEntryStruct {
 	zones: HotColdZones,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone/*, Deref, DerefMut*/)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
 pub struct PlayStat {
 	// pub play: Play,
 }
@@ -973,7 +1263,7 @@ pub struct PlayStat {
 // todo: replace with real struct
 pub type PitchStat = ();
 
-impl BaseStat for PlayStat {}
+impl SingletonWrappedEntryStat for PlayStat {}
 
 impl<T: Stat> Stat for Option<T> {
 	type SplitWrappedVariant = T::SplitWrappedVariant;

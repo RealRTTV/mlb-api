@@ -1,4 +1,4 @@
-use crate::requests::stats::units::{ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use crate::stats::units::{ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 

@@ -1,4 +1,4 @@
-use crate::person::Person;
+use crate::person::NamedPerson;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
@@ -8,9 +8,9 @@ use crate::job_types::JobTypeId;
 use crate::request::StatsAPIRequestUrl;
 use crate::sports::SportId;
 
-pub mod datacasters; // done
-pub mod official_scorers; // done
-pub mod umpire; // done
+pub mod datacasters;
+pub mod official_scorers;
+pub mod umpire;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct JobsResponse {
@@ -22,7 +22,8 @@ pub struct JobsResponse {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EmployedPerson {
-    pub person: Person,
+    #[serde(default = "NamedPerson::unknown_person")]
+    pub person: NamedPerson,
     #[serde(deserialize_with = "crate::types::try_from_str")]
     pub jersey_number: Option<u8>,
     #[serde(rename = "job")] pub job_name: String,

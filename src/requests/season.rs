@@ -1,38 +1,44 @@
 use crate::types::{Copyright, NaiveDateRange};
-use chrono::NaiveDate;
+use chrono::{Datelike, NaiveDate, Utc};
 use derive_more::{Deref, Display, From};
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
 use bon::Builder;
+use serde::de::Error;
 use crate::request::StatsAPIRequestUrl;
 use crate::sports::SportId;
 
-integer_id!(#[derive(Debug, Default, Deref, Display, From, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash)] SeasonId);
+#[derive(Debug, Default, Deref, Display, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash, From)]
+#[repr(transparent)]
+pub struct SeasonId(u32);
 
 impl<'de> Deserialize<'de> for SeasonId {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-	where
-		D: Deserializer<'de>
-	{
-		struct Visitor;
-
-		impl serde::de::Visitor<'_> for Visitor {
-			type Value = SeasonId;
-
-			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-				formatter.write_str("int or string")
-			}
-
-			fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E> {
-				Ok(SeasonId(v))
-			}
-
-			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-				v.parse::<u32>().map(SeasonId).map_err(E::custom)
-			}
+	fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		#[derive(::serde::Deserialize)]
+		#[serde(untagged)]
+		enum Repr {
+			Wrapped { #[allow(non_snake_case)]   id: u32 },
+			Inline(u32),
+			String(String),
 		}
 
-		deserializer.deserialize_any(Visitor)
+		let id = match Repr::deserialize(deserializer)? {
+			Repr::Wrapped { id } | Repr::Inline(id) => id,
+			Repr::String(id) => id.parse::<u32>().map_err(D::Error::custom)?,
+		};
+		Ok(SeasonId(id))
+	}
+}
+
+impl SeasonId {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self(id)
+	}
+	
+	#[must_use]
+	pub fn current_season() -> Self {
+		Self::new(Utc::now().year() as _)
 	}
 }
 

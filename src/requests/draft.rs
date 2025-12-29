@@ -1,14 +1,15 @@
 use crate::person::{Person, PersonId};
 use crate::season::SeasonId;
-use crate::requests::team::{Team, TeamId};
+use crate::team::TeamId;
 use crate::types::{Copyright, Location};
-use crate::positions::Position;
+use crate::positions::PositionCode;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use derive_more::Display;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
+use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -32,7 +33,7 @@ pub struct DraftRound {
 	pub picks: Vec<DraftPick>,
 }
 
-integer_id!(EBISPersonId);
+id!(EBISPersonId { id: u32 });
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -67,10 +68,9 @@ pub struct DraftPick {
 	pub blurb: Option<String>,
 	#[serde(rename = "headshotLink", default = "get_default_headshot")]
 	pub headshot_url: String,
-	#[serde(default = "Person::unknown_person")]
-	pub person: Person,
-	#[serde(default = "Team::unknown_team")]
-	pub team: Team,
+	pub person: Option<Person>,
+	#[serde(default = "NamedTeam::unknown_team")]
+	pub team: NamedTeam,
 	pub draft_type: DraftType,
 	pub is_drafted: bool,
 	pub is_pass: bool,
@@ -192,7 +192,7 @@ pub struct DraftRequest {
 	school: Option<char>,
 	/// Filter players by their position.
 	#[builder(into)]
-	position: Option<Position>,
+	position: Option<PositionCode>,
 	/// Filter players by the team they were drafted by.
 	#[builder(into)]
 	team_id: Option<TeamId>,
@@ -240,7 +240,7 @@ impl Display for DraftRequest {
 					"drafted"?: drafted_only,
 					"name"?: last_name,
 					"school"?: school,
-					"position"?: position.as_ref().map(|pos| &pos.code),
+					"position"?: position,
 					"teamId"?: team_id,
 					"homeCountry"?: home_country,
 					"playerId"?: player_id,
@@ -282,7 +282,7 @@ pub struct DraftProspectsRequest {
 	school: Option<char>,
 	/// Filter players by their position.
 	#[builder(into)]
-	position: Option<Position>,
+	position: Option<PositionCode>,
 	/// Filter players by the team they were drafted by.
 	#[builder(into)]
 	team_id: Option<TeamId>,
@@ -324,7 +324,7 @@ impl Display for DraftProspectsRequest {
 						"drafted"?: drafted_only,
 						"name"?: last_name,
 						"school"?: school,
-						"position"?: position.as_ref().map(|pos| &pos.code),
+						"position"?: position,
 						"teamId"?: team_id,
 						"homeCountry"?: home_country,
 						"playerId"?: player_id,
@@ -353,8 +353,8 @@ mod tests {
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn draft_all_years() {
 		for year in 1965..=TEST_YEAR {
-			let _ = crate::serde_path_to_error_parse(DraftRequest::regular().year(year).build()).await;
-			let _ = crate::serde_path_to_error_parse(DraftProspectsRequest::regular().year(year).build()).await;
+			let _ = DraftRequest::regular().year(year).build_and_get().await.unwrap();
+			let _ = DraftProspectsRequest::regular().year(year).build_and_get().await.unwrap();
 		}
 	}
 }

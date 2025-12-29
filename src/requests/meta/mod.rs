@@ -1,6 +1,8 @@
 macro_rules! meta_kind_impl {
 	($endpoint:literal => $name:ty) => {
-		impl $crate::requests::meta::MetaKind for $name {
+		impl $crate::meta::MetaKind for $name {
+			type Complete = $name;
+
 			const ENDPOINT_NAME: &'static str = $endpoint;
 		}
 	};
@@ -15,18 +17,88 @@ macro_rules! test_impl {
 
 			#[tokio::test]
 			async fn parse_meta() {
-				let _response = $crate::requests::meta::MetaRequest::<$name>::new().get().await.unwrap();
+				let _response = $crate::meta::MetaRequest::<$name>::new().get().await.unwrap();
 			}
 		}
 	};
 }
 
-/*
-id_only_eq_impl!($name, $id_field);
-meta_kind_impl!($endpoint => $name);
-tiered_request_entry_cache_impl!($name => $hydrated_name; $id_field: $id);
-test_impl!($name);
-*/
+macro_rules! tiered_request_entry_cache_impl {
+	($complete:ident.$id_field:ident: $id:ident) => {
+		tiered_request_entry_cache_impl!([$complete].$id_field: $id);
+	};
+	([$complete:ident $(, $($others:ident)*)?].$id_field:ident: $id:ident) => {
+		static CACHE: $crate::RwLock<$crate::cache::CacheTable<$complete>> = $crate::rwlock_const_new($crate::cache::CacheTable::new());
+
+		impl $crate::cache::RequestEntryCache for $complete {
+			type Identifier = $id;
+			type URL = $crate::meta::MetaRequest<Self>;
+
+			fn id(&self) -> &Self::Identifier {
+				&self.$id_field
+			}
+
+			fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+				$crate::meta::MetaRequest::new()
+			}
+
+			fn get_entries(response: <Self::URL as $crate::request::StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+			where
+				Self: Sized
+			{
+				response.entries
+			}
+
+			fn get_cache_table() -> &'static $crate::RwLock<$crate::cache::CacheTable<Self>>
+			where
+				Self: Sized
+			{
+				&CACHE
+			}
+		}
+
+		entrypoint!($complete.$id_field => $complete);
+		$($(
+		entrypoint!($others.$id_field => $complete);
+		)*)?
+		entrypoint!($id => $complete);
+	};
+}
+
+macro_rules! static_request_entry_cache_impl {
+    ($name:ident) => {
+		static CACHE: $crate::RwLock<$crate::cache::CacheTable<$name>> = $crate::rwlock_const_new($crate::cache::CacheTable::new());
+
+		impl $crate::cache::RequestEntryCache for $name {
+			type Identifier = Self;
+			type URL = $crate::meta::MetaRequest<Self>;
+
+			fn id(&self) -> &Self::Identifier {
+				self
+			}
+
+			fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+				$crate::meta::MetaRequest::new()
+			}
+
+			fn get_entries(response: <Self::URL as $crate::request::StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+			where
+				Self: Sized
+			{
+				response.entries
+			}
+
+			fn get_cache_table() -> &'static $crate::RwLock<$crate::cache::CacheTable<Self>>
+			where
+				Self: Sized
+			{
+				&CACHE
+			}
+		}
+		
+		entrypoint!($name => $name);
+	};
+}
 
 pub mod baseball_stats;
 pub mod event_types;
@@ -54,19 +126,20 @@ pub mod wind_direction;
 
 use crate::request::StatsAPIRequestUrl;
 use derive_more::{Deref, DerefMut};
-use serde::de::{Error, MapAccess, SeqAccess};
+use serde::de::{DeserializeOwned, Error, MapAccess, SeqAccess};
 use serde::{de, Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
-use crate::cache::RequestEntryCache;
 
-pub trait MetaKind: RequestEntryCache {
+pub trait MetaKind {
+	type Complete: Debug + DeserializeOwned + Eq + Clone;
+
 	const ENDPOINT_NAME: &'static str;
 }
 
 #[derive(Debug, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct MetaResponse<T: MetaKind> {
-	pub entries: Vec<T>,
+	pub entries: Vec<<T as MetaKind>::Complete>,
 }
 
 impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
@@ -74,7 +147,7 @@ impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
 	where
 		D: Deserializer<'de>,
 	{
-		struct Visitor<T>(PhantomData<T>);
+		struct Visitor<T: MetaKind>(PhantomData<T>);
 
 		impl<'de, T: MetaKind> de::Visitor<'de> for Visitor<T> {
 			type Value = MetaResponse<T>;
@@ -88,7 +161,7 @@ impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
 				A: SeqAccess<'de>,
 			{
 				let mut entries = vec![];
-				while let Some(element) = seq.next_element::<T>()? {
+				while let Some(element) = seq.next_element::<<T as MetaKind>::Complete>()? {
 					entries.push(element);
 				}
 				Ok(MetaResponse { entries })
@@ -100,7 +173,7 @@ impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
 			{
 				while let Some(key) = map.next_key::<String>()? {
 					if key != "copyright" {
-						let entries = map.next_value::<Vec<T>>()?;
+						let entries = map.next_value::<Vec<<T as MetaKind>::Complete>>()?;
 						return Ok(MetaResponse { entries });
 					}
 				}
@@ -124,8 +197,10 @@ impl<T: MetaKind> Default for MetaRequest<T> {
 
 impl<T: MetaKind> MetaRequest<T> {
 	#[must_use]
-	pub fn new() -> Self {
-		Self::default()
+	pub const fn new() -> Self {
+		Self {
+			_marker: PhantomData
+		}
 	}
 }
 

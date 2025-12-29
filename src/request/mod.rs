@@ -22,8 +22,12 @@ pub enum Error {
 	#[cfg(feature = "reqwest")]
 	#[error(transparent)]
 	Network(#[from] ::reqwest::Error),
+	#[cfg(not(all(test, debug_assertions)))]
 	#[error(transparent)]
 	Serde(#[from] serde_json::Error),
+	#[cfg(all(test, debug_assertions))]
+	#[error(transparent)]
+	Serde(#[from] serde_path_to_error::Error<serde_json::Error>),
 	#[error(transparent)]
 	StatsAPI(#[from] StatsAPIError),
 }
@@ -57,8 +61,8 @@ pub trait StatsAPIRequestUrlBuilderExt where Self: Sized {
 	type Built: StatsAPIRequestUrl + From<Self>;
 
 	#[cfg(feature = "ureq")]
-	fn build_and_get(self) -> Result<<T as StatsAPIRequestUrl>::Response> {
-		let built = T::from(self);
+	fn build_and_get(self) -> Result<<Self::Built as StatsAPIRequestUrl>::Response> {
+		let built = Self::Built::from(self);
 		let url = built.to_string();
 		get::<<Self::Built as StatsAPIRequestUrl>::Response>(url)
 	}

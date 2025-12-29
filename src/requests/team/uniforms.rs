@@ -1,13 +1,11 @@
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::cache::{CacheTable, RequestEntryCache, RequestEntryCacheEntrypoint};
 use crate::season::SeasonId;
-use crate::requests::team::TeamId;
+use crate::team::TeamId;
 use crate::types::Copyright;
 use crate::{rwlock_const_new, RwLock};
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
-use derive_more::{Deref, DerefMut, From};
 use itertools::Itertools;
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 
@@ -17,8 +15,8 @@ pub struct UniformsResponse {
     #[serde(rename = "uniforms")] pub teams: Vec<TeamUniformAssets>,
 }
 
-integer_id!(UniformAssetId);
-integer_id!(UniformAssetCategoryId);
+id!(UniformAssetId { uniformAssetId: u32 });
+id!(UniformAssetCategoryId { uniformAssetTypeId: u32 });
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -27,31 +25,16 @@ pub struct TeamUniformAssets {
     pub uniform_assets: Vec<UniformAsset>,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum UniformAsset {
-    Hydrated(HydratedUniformAsset),
-    Identifiable(IdentifiableUniformAsset),
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct IdentifiableUniformAsset {
-    #[serde(rename = "uniformAssetId")] pub id: UniformAssetId,
-    #[serde(rename = "uniformAssetCode")] pub code: String,
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-pub struct HydratedUniformAsset {
+#[derive(Debug, Deserialize, Clone)]
+pub struct UniformAsset {
     #[serde(rename = "uniformAssetText")] pub name: String,
     #[serde(rename = "uniformAssetType")] pub category: UniformAssetCategory,
-
-    #[deref]
-    #[deref_mut]
+    #[serde(rename = "uniformAssetCode")] pub code: String,
     #[serde(flatten)]
-    inner: IdentifiableUniformAsset,
+    pub id: UniformAssetId,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct UniformAssetCategory {
     #[serde(rename = "uniformAssetTypeText")] pub name: String,
     #[serde(rename = "uniformAssetTypeCode")] pub code: String,
@@ -60,6 +43,7 @@ pub struct UniformAssetCategory {
 }
 
 id_only_eq_impl!(UniformAsset, id);
+id_only_eq_impl!(UniformAssetCategory, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -83,16 +67,11 @@ impl StatsAPIRequestUrl for UniformsRequest {
     type Response = UniformsResponse;
 }
 
-static CACHE: RwLock<HydratedCacheTable<UniformAsset>> = rwlock_const_new(HydratedCacheTable::new());
+static CACHE: RwLock<CacheTable<UniformAsset>> = rwlock_const_new(CacheTable::new());
 
 impl RequestEntryCache for UniformAsset {
-    type HydratedVariant = HydratedUniformAsset;
     type Identifier = String;
     type URL = UniformsRequest;
-
-    fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-        self.try_into_hydrated()
-    }
 
     fn id(&self) -> &Self::Identifier {
         &self.code
@@ -111,7 +90,7 @@ impl RequestEntryCache for UniformAsset {
         response.teams.into_iter().flat_map(|team| team.uniform_assets)
     }
 
-    fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+    fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
     where
         Self: Sized
     {
@@ -119,10 +98,18 @@ impl RequestEntryCache for UniformAsset {
     }
 }
 
+impl RequestEntryCacheEntrypoint for UniformAsset {
+    type Complete = Self;
+
+    fn id(&self) -> &<<Self as RequestEntryCacheEntrypoint>::Complete as RequestEntryCache>::Identifier {
+        &self.code
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::requests::team::uniforms::UniformsRequest;
-    use crate::requests::team::teams::TeamsRequest;
+    use crate::team::uniforms::UniformsRequest;
+    use crate::team::teams::TeamsRequest;
     use crate::request::StatsAPIRequestUrlBuilderExt;
 
     #[tokio::test]

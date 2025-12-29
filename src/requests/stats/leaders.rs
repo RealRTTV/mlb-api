@@ -1,7 +1,5 @@
-use crate::league::League;
-use crate::person::Person;
-use crate::sports::{Sport, SportId};
-use crate::requests::team::Team;
+use crate::league::NamedLeague;
+use crate::sports::SportId;
 use crate::types::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
@@ -9,12 +7,14 @@ use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use crate::baseball_stats::{BaseballStat, BaseballStatId, IdentifiableBaseballStat};
+use crate::baseball_stats::BaseballStatId;
 use crate::game_types::GameType;
+use crate::person::NamedPerson;
 use crate::request::StatsAPIRequestUrl;
 use crate::season::SeasonId;
 use crate::stat_groups::StatGroup;
 use crate::stat_types::StatType;
+use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -26,7 +26,7 @@ pub struct StatLeadersResponse {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(try_from = "__StatLeadersStruct")]
 pub struct StatLeaders {
-	pub category: BaseballStat,
+	pub category: BaseballStatId,
 	pub game_type: GameType,
 	pub leaders: Vec<StatLeader>,
 	pub stat_group: StatGroup,
@@ -50,9 +50,7 @@ impl TryFrom<__StatLeadersStruct> for StatLeaders {
 
 	fn try_from(value: __StatLeadersStruct) -> Result<Self, Self::Error> {
 		Ok(Self {
-			category: BaseballStat::Identifiable(IdentifiableBaseballStat {
-				id: BaseballStatId::new(value.leader_category),
-			}),
+			category: value.leader_category.into(),
 			game_type: value.game_type,
 			leaders: value.leaders,
 			stat_group: StatGroup::from_str(&value.stat_group)?,
@@ -66,12 +64,12 @@ impl TryFrom<__StatLeadersStruct> for StatLeaders {
 pub struct StatLeader {
 	pub rank: u32,
 	pub value: IntegerOrFloatStat,
-	#[serde(default = "Team::unknown_team")]
-	pub team: Team,
-	#[serde(default = "League::unknown_league")]
-	pub league: League,
-	pub person: Person,
-	pub sport: Sport,
+	#[serde(default = "NamedTeam::unknown_team")]
+	pub team: NamedTeam,
+	#[serde(default = "NamedLeague::unknown_league")]
+	pub league: NamedLeague,
+	pub person: NamedPerson,
+	pub sport: SportId,
 	pub season: SeasonId,
 }
 
@@ -140,13 +138,13 @@ mod tests {
 	use crate::types::PlayerPool;
 	use crate::baseball_stats::BaseballStat;
 	use crate::game_types::GameType;
-	use crate::request::StatsAPIRequestUrl;
+	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
 
 	#[tokio::test]
 	async fn test_stat_leaders() {
 		let all_stats = MetaRequest::<BaseballStat>::new().get().await.unwrap().entries.into_iter().map(|x| x.id.clone()).collect::<Vec<_>>();
 		let all_game_types = MetaRequest::<GameType>::new().get().await.unwrap().entries;
 
-		let _ = crate::serde_path_to_error_parse(StatLeadersRequest::builder().stats(all_stats).pool(PlayerPool::All).limit(100).game_types(all_game_types).stat_types(vec![]).build()).await;
+		let _ = StatLeadersRequest::builder().stats(all_stats).pool(PlayerPool::All).limit(100).game_types(all_game_types).stat_types(vec![]).build_and_get().await.unwrap();
 	}
 }

@@ -1,10 +1,9 @@
-use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 
-string_id!(PositionCode);
+id!(PositionCode { code: String });
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPosition {
 	pub code: PositionCode,
@@ -17,9 +16,9 @@ pub struct NamedPosition {
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedPosition {
+pub struct Position {
 	pub short_name: String,
 	pub full_name: String,
 	pub formal_name: String,
@@ -38,14 +37,8 @@ pub struct HydratedPosition {
 	inner: NamedPosition,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum Position {
-	Hydrated(HydratedPosition),
-	Named(NamedPosition),
-}
-
 id_only_eq_impl!(Position, code);
+id_only_eq_impl!(NamedPosition, code);
 meta_kind_impl!("positions" => Position);
-tiered_request_entry_cache_impl!(Position => HydratedPosition; code: PositionCode);
+tiered_request_entry_cache_impl!([Position, NamedPosition].code: PositionCode);
 test_impl!(Position);

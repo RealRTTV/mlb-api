@@ -1,11 +1,12 @@
-use crate::league::{League, LeagueId};
-use crate::season::SeasonId;
-use crate::sports::{Sport, SportId};
-use crate::types::Copyright;
+use crate::cache::{CacheTable, RequestEntryCache};
+use crate::league::LeagueId;
 use crate::request::StatsAPIRequestUrl;
+use crate::season::SeasonId;
+use crate::sports::SportId;
+use crate::types::Copyright;
+use crate::{rwlock_const_new, RwLock};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 
@@ -16,34 +17,25 @@ pub struct DivisionsResponse {
 	pub divisions: Vec<Division>,
 }
 
-integer_id!(DivisionId);
+id!(DivisionId { id: u32 });
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableDivision {
-	pub id: DivisionId,
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedDivision {
 	pub name: String,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableDivision,
+	pub id: DivisionId,
 }
 
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedDivision {
+pub struct Division {
 	#[serde(rename = "nameShort")]
 	pub short_name: String,
 	pub season: SeasonId,
 	pub abbreviation: String,
-	pub league: League,
-	pub sport: Sport,
+	pub league: LeagueId,
+	pub sport: SportId,
 	pub has_wildcard: bool,
 	pub num_playoff_teams: Option<u8>,
 	pub active: bool,
@@ -54,15 +46,8 @@ pub struct HydratedDivision {
 	inner: NamedDivision,
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum Division {
-	Hydrated(Box<HydratedDivision>),
-	Named(NamedDivision),
-	Identifiable(IdentifiableDivision),
-}
-
 id_only_eq_impl!(Division, id);
+id_only_eq_impl!(NamedDivision, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -95,7 +80,44 @@ impl StatsAPIRequestUrl for DivisionsRequest {
 	type Response = DivisionsResponse;
 }
 
-tiered_request_entry_cache_impl!(DivisionsRequest => |id: DivisionId| { DivisionsRequest::builder().division_id(*id).build() }.divisions => Division => Box<HydratedDivision>);
+static CACHE: RwLock<CacheTable<Division>> = rwlock_const_new(CacheTable::new());
+
+impl RequestEntryCache for Division {
+	type Identifier = DivisionId;
+	type URL = DivisionsRequest;
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	#[cfg(feature = "aggressive_cache")]
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		DivisionsRequest::builder().build()
+	}
+
+	#[cfg(not(feature = "aggressive_cache"))]
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		DivisionsRequest::builder().division_id(*id).build()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.divisions
+	}
+
+	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
+}
+
+entrypoint!(DivisionId => Division);
+entrypoint!(NamedDivision.id => Division);
+entrypoint!(Division.id => Division);
 
 #[cfg(test)]
 mod tests {

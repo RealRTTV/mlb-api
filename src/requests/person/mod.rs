@@ -2,40 +2,35 @@
 
 pub mod free_agents;
 pub mod stats;
-// done
 pub mod people;
 pub mod players;
 
-use crate::cache::{HydratedCacheTable, RequestEntryCache};
+use crate::cache::{CacheTable, RequestEntryCache};
 use crate::draft::School;
 use crate::hydrations::Hydrations;
-use crate::requests::meta::positions::Position;
 use crate::season::SeasonId;
-use crate::requests::team::Team;
 use crate::types::{Gender, Handedness, HeightMeasurement};
 use crate::request::StatsAPIRequestUrl;
 use crate::{rwlock_const_new, RwLock};
 use bon::Builder;
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate};
 use derive_more::{Deref, DerefMut, Display, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use people::PeopleResponse;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
+use crate::positions::NamedPosition;
+use crate::team::NamedTeam;
 
-#[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deref, DerefMut, Deserialize, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
-pub struct Ballplayer<H>
-where
-	H: PersonHydrations,
-{
+pub struct Ballplayer<H: PersonHydrations> {
 	#[serde(deserialize_with = "crate::types::try_from_str")]
 	#[serde(default)]
 	pub primary_number: Option<u8>,
-	pub current_age: u16,
 	#[serde(flatten)]
 	pub birth_data: BirthData,
 	#[serde(flatten)]
@@ -54,46 +49,21 @@ where
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inner: Box<HydratedPerson<H>>,
+	inner: Box<RegularPerson<H>>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct BirthData {
-	pub birth_date: NaiveDate,
-	pub birth_city: String,
-	#[serde(rename = "birthStateProvince")]
-	pub birth_state_or_province: Option<String>,
-	pub birth_country: String,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct BodyMeasurements {
-	pub height: HeightMeasurement,
-	pub weight: u16,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct StrikeZoneMeasurements {
-	pub strike_zone_top: f64,
-	pub strike_zone_bottom: f64,
-}
-
-impl Eq for StrikeZoneMeasurements {}
-
-#[derive(Debug, Deref, DerefMut, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
-pub struct HydratedPerson<H: PersonHydrations> {
-	pub primary_position: Position,
+pub struct RegularPerson<H: PersonHydrations> {
+	pub primary_position: NamedPosition,
 	// '? ? Brown' in 1920 does not have a first name or a middle name, rather than dealing with Option and making everyone hate this API, the better approach is an empty String.
 	#[serde(default)]
 	pub first_name: String,
-	pub middle_name: Option<String>,
 	#[serde(rename = "nameSuffix")]
 	pub suffix: Option<String>,
+	#[serde(default)] // this is how their API does it, so I'll copy that.
+	pub middle_name: String,
 	#[serde(default)]
 	pub last_name: String,
 	#[serde(default)]
@@ -112,10 +82,13 @@ pub struct HydratedPerson<H: PersonHydrations> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inner: NamedPerson<H>,
+	inner: NamedPerson,
+
+	#[serde(flatten)]
+	pub extras: Box<H>,
 }
 
-impl<H: PersonHydrations> HydratedPerson<H> {
+impl<H: PersonHydrations> RegularPerson<H> {
 	#[must_use]
 	pub fn name_first_last(&self) -> String {
 		format!("{0} {1}", self.use_first_name, self.use_last_name)
@@ -138,72 +111,97 @@ impl<H: PersonHydrations> HydratedPerson<H> {
 
 	#[must_use]
 	pub fn name_fml(&self) -> String {
-		self.middle_name
-			.as_ref()
-			.map_or_else(|| format!("{0} {1}", self.use_first_name, self.use_last_name), |middle| format!("{0} {1} {2}", self.use_first_name, middle, self.use_last_name))
+		format!("{0} {1} {2}", self.use_first_name, self.middle_name, self.use_last_name)
 	}
 
 	#[must_use]
 	pub fn name_lfm(&self) -> String {
-		self.middle_name
-			.as_ref()
-			.map_or_else(|| format!("{1}, {0}", self.use_first_name, self.use_last_name), |middle| format!("{2}, {0} {1}", self.use_first_name, middle, self.use_last_name))
+		format!("{2}, {0} {1}", self.use_first_name, self.middle_name, self.use_last_name)
 	}
 }
 
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-#[serde(bound = "H: PersonHydrations")]
-pub struct NamedPerson<H: PersonHydrations> {
+pub struct NamedPerson {
+	// todo: rework to be like name in Team
 	pub full_name: String,
 
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiablePerson<H>,
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-#[serde(bound = "H: PersonHydrations")]
-pub struct IdentifiablePerson<H: PersonHydrations> {
 	pub id: PersonId,
-
-	#[serde(flatten)]
-	#[deref]
-	#[deref_mut]
-	hydrations: H,
 }
 
-integer_id!(PersonId);
+impl NamedPerson {
+	#[must_use]
+	pub(crate) fn unknown_person() -> Self {
+		Self {
+			full_name: "null".to_owned(),
+			id: PersonId::new(0),
+		}
+	}
 
-#[repr(transparent)]
-#[derive(Debug, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
-pub struct JerseyNumber(u8);
-
-impl<'de> Deserialize<'de> for JerseyNumber {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-	where
-		D: Deserializer<'de>,
-	{
-		String::deserialize(deserializer)?.parse::<u8>().map(JerseyNumber).map_err(D::Error::custom)
+	#[must_use]
+	pub fn is_unknown(&self) -> bool {
+		*self.id == 0
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
+id!(PersonId { id: u32 });
+
+#[derive(Debug, Deserialize, Clone, Eq, From)]
 #[serde(untagged)]
 #[serde(bound = "H: PersonHydrations")]
 pub enum Person<H: PersonHydrations = ()> {
 	Ballplayer(Box<Ballplayer<H>>),
-	Hydrated(Box<HydratedPerson<H>>),
-	Named(NamedPerson<H>),
-	Identifiable(IdentifiablePerson<H>),
+	Regular(Box<RegularPerson<H>>),
 }
 
-impl Person<()> {
+impl<H: PersonHydrations> Person<H> {
 	#[must_use]
-	pub(crate) const fn unknown_person() -> Self {
-		Self::Identifiable(IdentifiablePerson { id: PersonId::new(0), hydrations: () })
+	pub fn as_ballplayer(&self) -> Option<&Ballplayer<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x),
+			Self::Regular(_) => None,
+		}
+	}
+}
+
+impl<H: PersonHydrations> Person<H> {
+	#[must_use]
+	pub fn as_ballplayer_mut(&mut self) -> Option<&mut Ballplayer<H>> {
+		match self {
+			Self::Ballplayer(x) => Some(x),
+			Self::Regular(_) => None,
+		}
+	}
+}
+
+impl<H: PersonHydrations> Person<H> {
+	#[must_use]
+	pub fn into_ballplayer(self) -> Option<Box<Ballplayer<H>>> {
+		match self {
+			Self::Ballplayer(x) => Some(x),
+			Self::Regular(_) => None,
+		}
+	}
+}
+
+impl<H: PersonHydrations> Deref for Person<H> {
+	type Target = RegularPerson<H>;
+
+	fn deref(&self) -> &Self::Target {
+		match self {
+			Self::Ballplayer(x) => x,
+			Self::Regular(x) => x,
+		}
+	}
+}
+
+impl<H: PersonHydrations> DerefMut for Person<H> {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		match self {
+			Self::Ballplayer(x) => x,
+			Self::Regular(x) => x,
+		}
 	}
 }
 
@@ -213,65 +211,19 @@ impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<Person<H2>> for Perso
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-#[serde(bound = "H: PersonHydrations")]
-pub enum NamedOrBetterPerson<H: PersonHydrations = ()> {
-	Ballplayer(Box<Ballplayer<H>>),
-	Hydrated(Box<HydratedPerson<H>>),
-	Named(NamedPerson<H>),
-}
-
-impl NamedOrBetterPerson<()> {
-	#[must_use]
-	pub(crate) const fn unknown_person() -> Self {
-		Self::Named(NamedPerson {
-			full_name: String::new(),
-			inner: IdentifiablePerson { id: PersonId::new(0), hydrations: () },
-		})
-	}
-}
-
-impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<NamedOrBetterPerson<H2>> for NamedOrBetterPerson<H1> {
-	fn eq(&self, other: &NamedOrBetterPerson<H2>) -> bool {
+impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<Ballplayer<H2>> for Ballplayer<H1> {
+	fn eq(&self, other: &Ballplayer<H2>) -> bool {
 		self.id == other.id
 	}
 }
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-#[serde(bound = "H: PersonHydrations")]
-pub enum HydratedOrBetterPerson<H: PersonHydrations = ()> {
-	Ballplayer(Box<Ballplayer<H>>),
-	Hydrated(Box<HydratedPerson<H>>),
-}
-
-impl<H: PersonHydrations> Person<H> {
-	#[must_use]
-	pub fn try_into_named_or_better(self) -> Option<NamedOrBetterPerson<H>> {
-		match self {
-			Self::Ballplayer(inner) => Some(NamedOrBetterPerson::Ballplayer(inner)),
-			Self::Hydrated(inner) => Some(NamedOrBetterPerson::Hydrated(inner)),
-			Self::Named(inner) => Some(NamedOrBetterPerson::Named(inner)),
-			Self::Identifiable(_) => None,
-		}
-	}
-
-	#[must_use]
-	pub fn try_into_hydrated_or_better(self) -> Option<HydratedOrBetterPerson<H>> {
-		match self {
-			Self::Ballplayer(inner) => Some(HydratedOrBetterPerson::Ballplayer(inner)),
-			Self::Hydrated(inner) => Some(HydratedOrBetterPerson::Hydrated(inner)),
-			Self::Named(_) | Self::Identifiable(_) => None,
-		}
-	}
-}
-
-impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<HydratedOrBetterPerson<H2>> for HydratedOrBetterPerson<H1> {
-	fn eq(&self, other: &HydratedOrBetterPerson<H2>) -> bool {
+impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<RegularPerson<H2>> for RegularPerson<H1> {
+	fn eq(&self, other: &RegularPerson<H2>) -> bool {
 		self.id == other.id
 	}
 }
+
+id_only_eq_impl!(NamedPerson, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -289,10 +241,11 @@ impl<H: PersonHydrations, S: person_request_builder::State + person_request_buil
 
 impl<H: PersonHydrations> Display for PersonRequest<H> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		if let Some(request_text) = H::request_text() {
-			write!(f, "http://statsapi.mlb.com/api/v1/people/{}?hydrate={request_text}", self.id)
-		} else {
+		let hydration_text = H::hydration_text();
+		if hydration_text.is_empty() {
 			write!(f, "http://statsapi.mlb.com/api/v1/people/{}", self.id)
+		} else {
+			write!(f, "http://statsapi.mlb.com/api/v1/people/{}?hydrate={hydration_text}", self.id)
 		}
 	}
 }
@@ -301,12 +254,58 @@ impl<H: PersonHydrations> StatsAPIRequestUrl for PersonRequest<H> {
 	type Response = PeopleResponse<H>;
 }
 
+#[repr(transparent)]
+#[derive(Debug, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
+pub struct JerseyNumber(u8);
+
+impl<'de> Deserialize<'de> for JerseyNumber {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		String::deserialize(deserializer)?.parse::<u8>().map(JerseyNumber).map_err(D::Error::custom)
+	}
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BirthData {
+	pub birth_date: NaiveDate,
+	pub birth_city: String,
+	#[serde(rename = "birthStateProvince")]
+	pub birth_state_or_province: Option<String>,
+	pub birth_country: String,
+}
+
+impl BirthData {
+	#[must_use]
+	pub fn current_age(&self) -> u16 {
+		Local::now().naive_local().date().years_since(self.birth_date).and_then(|x| u16::try_from(x).ok()).unwrap_or(0)
+	}
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BodyMeasurements {
+	pub height: HeightMeasurement,
+	pub weight: u16,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct StrikeZoneMeasurements {
+	pub strike_zone_top: f64,
+	pub strike_zone_bottom: f64,
+}
+
+impl Eq for StrikeZoneMeasurements {}
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PreferredTeamData {
 	pub jersey_number: JerseyNumber,
-	pub position: Position,
-	pub team: Team,
+	pub position: NamedPosition,
+	pub team: NamedTeam,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -315,7 +314,7 @@ pub struct Relative {
 	pub has_stats: bool,
 	pub relation: String,
 	#[serde(flatten)]
-	pub person: Person<()>,
+	pub person: NamedPerson,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
@@ -339,142 +338,126 @@ pub trait PersonHydrations: Hydrations {}
 
 impl PersonHydrations for () {}
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __person_hydrations_hydration_text {
+    () => { "" };
+	($first:literal $(, $rest:literal)* $(,)?) => {
+		::core::concat!(
+			::core::stringify!($first),
+			$(",", ::core::stringify!($rest),)*
+		)
+	};
+}
+
 /// Creates hydrations for a person, ex:
 /// ```rs
 /// person_hydrations! {
-///     pub struct ExampleHydrations {   ->    pub struct ExampleHydrations {
-///         stats: MyStats,              ->        stats: MyStats,
-///         awards,                      ->        awards: Vec<Award>,
-///         social,                      ->        social: HashMap<String, Vec<String>>,
-///     }                                ->    }
+///     pub struct ExampleHydrations {  ->  pub struct ExampleHydrations {
+///         awards,                     ->      awards: Vec<Award>,
+///         social,                     ->      social: HashMap<String, Vec<String>>,
+///         stats: MyStats,             ->      stats: MyStats,
+///     }                               ->  }
 /// }
 /// ```
 ///
 /// The list of valid hydrations are:
-/// - `stats`
 /// - `awards`
 /// - `current_team`
+/// - `depth_charts`
+/// - `draft`
+/// - `education`
+/// - `jobs`
+/// - `nicknames`
 /// - `preferred_team`
-/// - `roster_entries`
 /// - `relatives`
+/// - `roster_entries`
 /// - `transactions`
 /// - `social`
-/// - `education`
-/// - `draft`
+/// - `stats`
 /// - `xref_id`
-/// - `nicknames`
-/// - `depth_charts`
 ///
-/// Note: the others can appear in any order, but stats must go first (and is also the only one with a type assigned)
+/// Note: these must appear in exactly this order)
 #[macro_export]
 macro_rules! person_hydrations {
     (
-		$vis:vis struct $hydrations_name:ident {
-			stats: $stats:path, $($hydration:ident),* $(,)?
+		$vis:vis struct $name:ident {
+			$(awards $awards_comma:tt)?
+			$(current_team $current_team_comma:tt)?
+			$(depth_charts $depth_charts_comma:tt)?
+			$(draft $draft_comma:tt)?
+			$(education $education_comma:tt)?
+			$(jobs $jobs_comma:tt)?
+			$(nicknames $nicknames_comma:tt)?
+			$(preferred_team $preferred_team_comma:tt)?
+			$(relatives $relatives_comma:tt)?
+			$(roster_entries $roster_entries_comma:tt)?
+			$(transactions $transactions_comma:tt)?
+			$(social $social_comma:tt)?
+			$(stats: $stats:path ,)?
+			$(xref_id $xref_id_comma:tt)?
 		}
     ) => {
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[serde(rename_all = "camelCase")]
+		$vis struct $name {
+			$(#[serde(default)] pub awards: ::std::vec::Vec<$crate::awards::Award> $awards_comma)?
+			$(pub current_team: ::core::option::Option<$crate::team::NamedTeam> $current_team_comma)?
+			$(#[serde(default)] pub depth_charts: ::std::vec::Vec<$crate::team::roster::RosterEntry> $depth_charts_comma)?
+			$(#[serde(default, rename = "drafts")] pub draft: ::std::vec::Vec<$crate::draft::DraftPick> $draft_comma)?
+			$(#[serde(default)] pub education: $crate::person::Education $education_comma)?
+			$(#[serde(default, rename = "jobEntries")] pub jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson> $jobs_comma)?
+			$(#[serde(default)] pub nicknames: ::std::vec::Vec<String> $nicknames_comma)?
+			$(pub preferred_team: ::core::option::Option<$crate::person::PreferredTeamData> $preferred_team_comma)?
+			$(#[serde(default)] pub relatives: ::std::vec::Vec<$crate::person::Relative> $relatives_comma)?
+			$(#[serde(default)] pub roster_entries: ::std::vec::Vec<$crate::team::roster::RosterEntry> $roster_entries_comma)?
+			$(#[serde(default)] pub transactions: ::std::vec::Vec<$crate::transactions::Transaction> $transactions_comma)?
+			$(#[serde(flatten)] pub stats: $stats ,)?
+			$(#[serde(default)] pub social: ::std::collections::HashMap<String, Vec<String>> $social_comma)?
+			$(#[serde(default, rename = "xrefIds")] pub xref_id: ::std::vec::Vec<ExternalReference> $xref_id_comma)?
+		}
 
-	    #[::mlb_api_proc::filter_fields]
-	    #[keep($($hydration),*)]
-	    #[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
-	    #[serde(rename_all = "camelCase")]
-	    $vis struct $hydrations_name {
-		    #[keep]
-		    pub stats: $stats,
-		    #[serde(default)]
-		    pub awards: ::std::vec::Vec<$crate::awards::Award>,
-		    pub current_team: $crate::requests::team::Team,
-			pub preferred_team: $crate::person::PreferredTeamData,
-		    // team: $crate::teams::team::Team,
-		    #[serde(default)]
-		    pub roster_entries: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
-		    #[serde(default, rename = "jobEntries")]
-		    pub jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
-		    #[serde(default)]
-		    pub relatives: ::std::vec::Vec<$crate::person::Relative>,
-		    #[serde(default)]
-		    pub transactions: ::std::vec::Vec<$crate::transactions::Transaction>,
-		    #[serde(default)]
-		    pub social: ::std::collections::HashMap<String, Vec<String>>,
-		    #[serde(default)]
-		    pub education: $crate::person::Education,
-		    #[serde(default, rename = "drafts")]
-		    pub draft: ::std::vec::Vec<$crate::draft::DraftPick>,
-		    #[serde(default, rename = "xrefIds")]
-		    pub xref_id: ::std::vec::Vec<ExternalReference>,
-		    #[serde(default)]
-		    pub nicknames: ::std::vec::Vec<String>,
-		    #[serde(default)]
-		    pub depth_charts: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
-	    }
+		impl $crate::person::PersonHydrations for $name {}
 
-	    impl $crate::hydrations::Hydrations for $hydrations_name {
-		    fn request_text() -> ::core::option::Option<::std::borrow::Cow<'static, str>> {
-			    let base = ::mlb_api_proc::concat_camel_case!($($hydration)*);
-			    Some(::std::borrow::Cow::Owned(::std::string::String::from(base) + "stats(" + <$stats as $crate::stats::Stats>::request_text() + ")"))
-            }
-	    }
+		impl $crate::hydrations::Hydrations for $name {}
 
-	    impl $crate::person::PersonHydrations for $hydrations_name {}
+		impl $crate::hydrations::HydrationText for $name {
+			fn hydration_text() -> ::std::borrow::Cow<'static, str> {
+				let text = ::std::borrow::Cow::Borrowed($crate::__person_hydrations_hydration_text!(
+					$("awards" $awards_comma)?
+					$("currentTeam" $current_team_comma)?
+					$("depthCharts" $depth_charts_comma)?
+					$("draft" $draft_comma)?
+					$("education" $education_comma)?
+					$("jobs" $jobs_comma)?
+					$("nicknames" $nicknames_comma)?
+					$("preferredTeam" $preferred_team_comma)?
+					$("relatives" $relatives_comma)?
+					$("rosterEntries" $roster_entries_comma)?
+					$("transactions" $transactions_comma)?
+					$("social" $social_comma)?
+					$("xrefId" $xref_id_comma)?
+				));
+
+				$(
+				let text = if text.is_empty() {
+					::std::borrow::Cow::Owned(::std::format!("stats({})", <$stats as $crate::hydrations::HydrationText>::hydration_text()))
+				} else {
+					::std::borrow::Cow::Owned(::std::format!("{text},stats({})", <$stats as $crate::hydrations::HydrationText>::hydration_text()))
+				};
+				)?
+
+				text
+			}
+		}
     };
-	(
-		$vis:vis struct $hydrations_name:ident {
-			$($hydration:ident),* $(,)?
-		}
-    ) => {
-		#[::mlb_api_proc::filter_fields]
-	    #[keep($($hydration),*)]
-	    #[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
-	    #[serde(rename_all = "camelCase")]
-	    $vis struct $hydrations_name {
-		    #[serde(default)]
-		    pub awards: ::std::vec::Vec<$crate::awards::Award>,
-		    pub current_team: $crate::requests::team::Team,
-			pub preferred_team: $crate::person::PreferredTeamData,
-		    // team: $crate::teams::team::Team,
-		    #[serde(default)]
-		    pub roster_entries: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
-		    #[serde(default, rename = "jobEntries")]
-		    pub jobs: ::std::vec::Vec<$crate::jobs::EmployedPerson>,
-		    #[serde(default)]
-		    pub relatives: ::std::vec::Vec<$crate::person::Relative>,
-		    #[serde(default)]
-		    pub transactions: ::std::vec::Vec<$crate::transactions::Transaction>,
-		    #[serde(default)]
-		    pub social: ::std::collections::HashMap<String, Vec<String>>,
-		    #[serde(default)]
-		    pub education: $crate::person::Education,
-		    #[serde(default, rename = "drafts")]
-		    pub draft: ::std::vec::Vec<$crate::draft::DraftPick>,
-		    #[serde(default, rename = "xrefIds")]
-		    pub xref_id: ::std::vec::Vec<ExternalReference>,
-		    #[serde(default)]
-		    pub nicknames: ::std::vec::Vec<String>,
-		    #[serde(default)]
-		    pub depth_charts: ::std::vec::Vec<$crate::requests::team::roster::RosterEntry>,
-	    }
-
-		impl $crate::hydrations::Hydrations for $hydrations_name {
-		    fn request_text() -> ::core::option::Option<::std::borrow::Cow<'static, str>> {
-			    let base = ::mlb_api_proc::concat_camel_case!($($hydration)*);
-			    Some(::std::borrow::Cow::Borrowed(base))
-            }
-	    }
-
-	    impl $crate::person::PersonHydrations for $hydrations_name {}
-    }
 }
 
-static CACHE: RwLock<HydratedCacheTable<Person<()>>> = rwlock_const_new(HydratedCacheTable::new());
+static CACHE: RwLock<CacheTable<Person<()>>> = rwlock_const_new(CacheTable::new());
 
 impl RequestEntryCache for Person<()> {
-	type HydratedVariant = HydratedOrBetterPerson<()>;
 	type Identifier = PersonId;
 	type URL = PersonRequest<()>;
-
-	fn into_hydrated_variant(self) -> Option<Self::HydratedVariant> {
-		self.try_into_hydrated_or_better()
-	}
 
 	fn id(&self) -> &Self::Identifier {
 		&self.id
@@ -488,10 +471,10 @@ impl RequestEntryCache for Person<()> {
 	where
 		Self: Sized,
 	{
-		response.people
+		response.people.into_iter().map(Box::new).map(Person::Ballplayer)
 	}
 
-	fn get_hydrated_cache_table() -> &'static RwLock<HydratedCacheTable<Self>>
+	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized,
 	{
@@ -499,18 +482,28 @@ impl RequestEntryCache for Person<()> {
 	}
 }
 
+entrypoint!(PersonId => Person);
+entrypoint!(NamedPerson.id => Person);
+entrypoint!(for < H > RegularPerson < H > . id => Person < > where H: PersonHydrations);
+entrypoint!(for < H > Ballplayer < H > . id => Person < > where H: PersonHydrations);
+
 #[cfg(test)]
 mod tests {
 	use crate::request::StatsAPIRequestUrlBuilderExt;
 	use crate::roster_types::RosterType;
 	use super::*;
-	use crate::requests::team::roster::RosterRequest;
-	use crate::requests::team::teams::TeamsRequest;
+	use crate::team::roster::RosterRequest;
+	use crate::team::teams::TeamsRequest;
 	use crate::{stats, TEST_YEAR};
 
 	#[tokio::test]
 	async fn no_hydrations() {
+		person_hydrations! {
+			pub struct EmptyHydrations {}
+		}
+
 		let _ = PersonRequest::<()>::builder(665_489).build_and_get().await.unwrap();
+		let _ = PersonRequest::<EmptyHydrations>::builder(665_489).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
@@ -519,20 +512,21 @@ mod tests {
 			pub struct AllButStatHydrations {
 				awards,
 				current_team,
+				depth_charts,
+				draft,
+				education,
+				jobs,
+				nicknames,
 				preferred_team,
-				roster_entries,
 				relatives,
+				roster_entries,
 				transactions,
 				social,
-				education,
-				draft,
 				xref_id,
-				nicknames,
-				depth_charts,
 			}
 		}
 
-		let _ = PersonRequest::<AllButStatHydrations>::builder(665_489).build_and_get().await.unwrap();
+		let _person = PersonRequest::<AllButStatHydrations>::builder(665_489).build_and_get().await.unwrap().people.into_iter().next().unwrap();
 	}
 
 	#[rustfmt::skip]
@@ -540,7 +534,7 @@ mod tests {
 	async fn only_stats_hydrations() {
 		stats! {
 			pub struct BasicStats {
-				[Career] = [Hitting]
+				[Season] = [Hitting, Pitching]
 			}
 		}
 
@@ -557,7 +551,7 @@ mod tests {
 			.unwrap()
 			.teams
 			.into_iter()
-			.find(|team| team.try_as_named().is_some_and(|team| team.name.name == "Toronto Blue Jays"))
+			.find(|team| team.name.full_name == "Toronto Blue Jays")
 			.unwrap();
 
 		let roster = RosterRequest::builder()
@@ -567,13 +561,15 @@ mod tests {
 			.await
 			.unwrap();
 
-		let bautista = roster
+		let player = roster
 			.roster
 			.into_iter()
-			.find(|player| player.person.try_as_named().is_some_and(|person| person.full_name.rsplit_once(' ').is_some_and(|(_, last_name)| last_name == "Bautista")))
+			.find(|player| player.person.full_name == "Vladimir Guerrero Jr.")
 			.unwrap();
 
-		let player = PersonRequest::<StatOnlyHydrations>::builder(bautista.person.id)
+		PersonRequest::<StatOnlyHydrations>::builder(player.person.id).build_and_get().await.unwrap();
+
+		let player = PersonRequest::<StatOnlyHydrations>::builder(player.person.id)
 			.build_and_get()
 			.await
 			.unwrap()
@@ -581,7 +577,7 @@ mod tests {
 			.into_iter()
 			.next()
 			.unwrap();
-	
-		let _ = player.stats;
+
+		dbg!(&player.extras.stats);
 	}
 }

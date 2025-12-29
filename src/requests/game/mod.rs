@@ -1,5 +1,3 @@
-use derive_more::From;
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 
 pub mod boxscore;
@@ -15,21 +13,7 @@ pub mod timestamps;
 pub mod uniforms;
 pub mod win_probability;
 
-integer_id!(GameId);
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
-pub struct IdentifiableGame {
-	#[serde(rename = "gamePk")]
-	pub id: GameId,
-}
-
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum Game {
-	Identifiable(IdentifiableGame),
-}
-
-id_only_eq_impl!(Game, id);
+id!(GameId { gamePk: u32 });
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum DoubleHeaderKind {

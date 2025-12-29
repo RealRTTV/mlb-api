@@ -1,14 +1,15 @@
-use crate::person::{Person, PersonId};
-use crate::requests::team::{Team, TeamId};
+use crate::person::{NamedPerson, PersonId};
+use crate::team::{TeamId};
 use crate::types::{Copyright, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use chrono::NaiveDate;
 use itertools::Itertools;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use crate::sports::SportId;
+use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -43,292 +44,361 @@ pub enum Transaction {
 	Assigned {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
 		#[serde(rename = "fromTeam")]
-		source_team: Option<Team>,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team_opt")]
+		#[serde(default)]
+		source_team: Option<NamedTeam>,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "SC", rename_all = "camelCase")]
 	StatusChange {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "SFA", rename_all = "camelCase")]
 	SignedAsFreeAgent {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "DES", rename_all = "camelCase")]
 	DesignatedForAssignment {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "TR", rename_all = "camelCase")]
 	Trade {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		/// No person here indicates a trade occured that gave the team cash.
-		person: Option<Person>,
-		#[serde(default = "Team::unknown_team")]
+		/// No person here indicates a trade occurred that gave the team cash.
+		#[serde(deserialize_with = "deserialize_named_person_opt")]
+		#[serde(default)]
+		person: Option<NamedPerson>,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "NUM", rename_all = "camelCase")]
 	NumberChange {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "OUT", rename_all = "camelCase")]
 	Outrighted {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "CLW", rename_all = "camelCase")]
 	ClaimedOffWaivers {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "SGN", rename_all = "camelCase")]
 	Signed {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "REL", rename_all = "camelCase")]
 	Released {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "DFA", rename_all = "camelCase")]
 	DeclaredFreeAgency {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		source_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
 	},
 	#[serde(rename = "OPT", rename_all = "camelCase")]
 	Optioned {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "RTN", rename_all = "camelCase")]
 	Returned {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "SE", rename_all = "camelCase")]
 	Selected {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
 		#[serde(rename = "fromTeam")]
-		source_team: Option<Team>,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team_opt")]
+		#[serde(default)]
+		source_team: Option<NamedTeam>,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "CU", rename_all = "camelCase")]
 	Recalled {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
 		#[serde(rename = "fromTeam")]
-		source_team: Option<Team>,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team_opt")]
+		#[serde(default)]
+		source_team: Option<NamedTeam>,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "SU", rename_all = "camelCase")]
 	Suspension {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "RET", rename_all = "camelCase")]
 	Retired {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "PUR", rename_all = "camelCase")]
 	Purchase {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
 		#[serde(rename = "fromTeam")]
-		source_team: Option<Team>,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team_opt")]
+		#[serde(default)]
+		source_team: Option<NamedTeam>,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "R5", rename_all = "camelCase")]
 	RuleFiveDraft {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "RE", rename_all = "camelCase")]
 	Reinstated {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "LON", rename_all = "camelCase")]
 	Loan {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "CP", rename_all = "camelCase")]
 	ContractPurchased {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "DR", rename_all = "camelCase")]
 	Drafted {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "DEI", rename_all = "camelCase")]
 	DeclaredIneligible {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 	#[serde(rename = "R5M", rename_all = "camelCase")]
 	RuleFiveDraftMinors {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "fromTeam")]
-		source_team: Team,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_team")]
+		source_team: NamedTeam,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		destination_team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		destination_team: NamedTeam,
 	},
 	#[serde(rename = "RES", rename_all = "camelCase")]
 	Reserved {
 		#[serde(flatten)]
 		common: TransactionCommon,
-		#[serde(default = "Person::unknown_person")]
-		person: Person,
-		#[serde(default = "Team::unknown_team")]
+		#[serde(deserialize_with = "deserialize_named_person")]
+		#[serde(default = "NamedPerson::unknown_person")]
+		person: NamedPerson,
+		#[serde(default = "NamedTeam::unknown_team")]
 		#[serde(rename = "toTeam")]
-		team: Team,
+		#[serde(deserialize_with = "deserialize_named_team")]
+		team: NamedTeam,
 	},
 }
 
@@ -408,7 +478,75 @@ impl Display for Transaction {
 	}
 }
 
-integer_id!(TransactionId);
+id!(TransactionId { id: u32 });
+
+fn deserialize_named_person<'de, D: Deserializer<'de>>(deserializer: D) -> Result<NamedPerson, D::Error> {
+	#[derive(Deserialize)]
+	#[serde(rename = "camelCase")]
+	struct NamedPersonWrapper {
+		#[serde(alias = "name")]
+		full_name: Option<String>,
+		#[serde(flatten)]
+		id: Option<PersonId>,
+	}
+
+	let NamedPersonWrapper { full_name, id } = NamedPersonWrapper::deserialize(deserializer)?;
+	Ok(NamedPerson {
+		full_name: full_name.unwrap_or(String::new()),
+		id: id.unwrap_or(PersonId::new(0))
+	})
+}
+
+fn deserialize_named_person_opt<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<NamedPerson>, D::Error> {
+	#[derive(Deserialize)]
+	#[serde(rename = "camelCase")]
+	struct NamedPersonWrapper {
+		#[serde(alias = "name")]
+		full_name: Option<String>,
+		#[serde(flatten)]
+		id: Option<PersonId>,
+	}
+
+	let wrapped = NamedPersonWrapper::deserialize(deserializer)?;
+	match wrapped {
+		NamedPersonWrapper { full_name, id: Some(id) } => Ok(Some(NamedPerson { full_name: full_name.unwrap_or(String::new()), id })),
+		_ => Ok(None)
+	}
+}
+
+fn deserialize_named_team<'de, D: Deserializer<'de>>(deserializer: D) -> Result<NamedTeam, D::Error> {
+	#[derive(Deserialize)]
+	#[serde(rename = "camelCase")]
+	struct NamedTeamWrapper {
+		#[serde(alias = "name")]
+		full_name: Option<String>,
+		#[serde(flatten)]
+		id: Option<TeamId>,
+	}
+
+	let NamedTeamWrapper { full_name, id } = NamedTeamWrapper::deserialize(deserializer)?;
+	Ok(NamedTeam {
+		full_name: full_name.unwrap_or(String::new()),
+		id: id.unwrap_or(TeamId::new(0))
+	})
+}
+
+fn deserialize_named_team_opt<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<NamedTeam>, D::Error> {
+	#[derive(Deserialize)]
+	#[serde(rename = "camelCase")]
+	struct NamedTeamWrapper {
+		#[serde(alias = "name")]
+		full_name: Option<String>,
+		#[serde(flatten)]
+		id: Option<TeamId>,
+	}
+
+	let wrapped = NamedTeamWrapper::deserialize(deserializer)?;
+	match wrapped {
+		NamedTeamWrapper { full_name, id: Some(id) } => Ok(Some(NamedTeam { full_name: full_name.unwrap_or(String::new()), id })),
+		_ => Ok(None),
+	}
+}
 
 pub enum TransactionsRequestKind {
 	Team(TeamId),
@@ -486,19 +624,22 @@ impl StatsAPIRequestUrl for TransactionsRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::person::Person;
-	use crate::requests::person::players::PlayersRequest;
-	use crate::requests::team::Team;
-	use crate::requests::team::teams::TeamsRequest;
+	use crate::person::players::PlayersRequest;
+	use crate::team::teams::TeamsRequest;
 	use crate::transactions::TransactionsRequest;
-	use crate::{serde_path_to_error_parse, TEST_YEAR};
+	use crate::TEST_YEAR;
 	use chrono::NaiveDate;
 	use crate::request::StatsAPIRequestUrlBuilderExt;
 	use crate::sports::SportId;
 
 	#[tokio::test]
 	async fn parse_current_year() {
-		let _ = serde_path_to_error_parse(TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).unwrap()).sport_id(SportId::MLB).build()).await;
+		let _ = TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).unwrap()).sport_id(SportId::MLB).build_and_get().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn test_single_transaction() {
+		let _ = TransactionsRequest::for_ids(vec![809_972.into()]).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
@@ -510,7 +651,6 @@ mod tests {
 			.unwrap()
 			.teams
 			.into_iter()
-			.filter_map(Team::try_into_named)
 			.find(|team| team.name.as_str() == "Toronto Blue Jays")
 			.unwrap();
 		let bo_bichette = PlayersRequest::builder()
@@ -520,12 +660,10 @@ mod tests {
 			.unwrap()
 			.people
 			.into_iter()
-			.filter_map(Person::try_into_named)
 			.find(|person| person.full_name == "Bo Bichette")
 			.unwrap();
 
-		let request = TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).unwrap()).build();
-		let response = serde_path_to_error_parse(request).await;
+		let response = TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).unwrap()).build_and_get().await.unwrap();
 		let transaction_ids = response.transactions.into_iter().take(20).map(|transaction| transaction.id).collect::<Vec<_>>();
 		let _response = TransactionsRequest::for_team(blue_jays.id).build_and_get().await.unwrap();
 		let _response = TransactionsRequest::for_player(bo_bichette.id).build_and_get().await.unwrap();

@@ -2,11 +2,12 @@ use crate::season::SeasonId;
 use crate::types::Copyright;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut};
 use itertools::Itertools;
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::cache::{CacheTable, RequestEntryCache};
+use crate::{rwlock_const_new, RwLock};
 use crate::sports::SportId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -16,41 +17,31 @@ pub struct VenuesResponse {
 	pub venues: Vec<Venue>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableVenue {
-	pub id: VenueId,
-}
-
-impl Default for IdentifiableVenue {
-	fn default() -> Self {
-		Self { id: VenueId(0) }
-	}
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedVenue {
 	pub name: String,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableVenue,
+	pub id: VenueId,
 }
 
-impl Default for NamedVenue {
-	fn default() -> Self {
+impl NamedVenue {
+	pub(crate) fn unknown_venue() -> Self {
 		Self {
 			name: "null".to_owned(),
-			inner: IdentifiableVenue::default(),
+			id: VenueId::new(0),
 		}
+	}
+
+	#[must_use]
+	pub fn is_unknown(&self) -> bool {
+		*self.id == 0
 	}
 }
 
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedVenue {
+pub struct Venue {
 	pub active: bool,
 	pub season: SeasonId,
 
@@ -60,24 +51,44 @@ pub struct HydratedVenue {
 	pub inner: NamedVenue,
 }
 
-integer_id!(VenueId);
+id!(VenueId { id: u32 });
+id_only_eq_impl!(NamedVenue, id);
+id_only_eq_impl!(Venue, id);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum Venue {
-	Hydrated(Box<HydratedVenue>),
-	Named(NamedVenue),
-	Identifiable(IdentifiableVenue),
-}
+static CACHE: RwLock<CacheTable<Venue>> = rwlock_const_new(CacheTable::new());
 
-impl Venue {
-	#[must_use]
-	pub fn unknown_venue() -> Self {
-		Self::Named(NamedVenue::default())
+impl RequestEntryCache for Venue {
+	type Identifier = VenueId;
+	type URL = VenuesRequest;
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	#[cfg(feature = "aggressive_cache")]
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		VenuesRequest::builder().build()
+	}
+
+	#[cfg(not(feature = "aggressive_cache"))]
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		VenuesRequest::builder().venue_ids(vec![*id]).build()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.venues
+	}
+
+	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
 	}
 }
-
-id_only_eq_impl!(Venue, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -102,8 +113,6 @@ impl Display for VenuesRequest {
 impl StatsAPIRequestUrl for VenuesRequest {
 	type Response = VenuesResponse;
 }
-
-tiered_request_entry_cache_impl!(VenuesRequest => |id: VenueId| { VenuesRequest::builder().venue_ids(vec![*id]).build() }.venues => Venue => Box<HydratedVenue>);
 
 #[cfg(test)]
 mod tests {

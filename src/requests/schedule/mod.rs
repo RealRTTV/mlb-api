@@ -3,9 +3,9 @@
 use crate::game::{DoubleHeaderKind, GameId};
 use crate::league::LeagueId;
 use crate::season::SeasonId;
-use crate::requests::team::{Team, TeamId};
+use crate::team::TeamId;
 use crate::types::{Copyright, HomeAwaySplits, NaiveDateRange, MLB_API_DATE_FORMAT};
-use crate::venue::{Venue, VenueId};
+use crate::venue::{NamedVenue, VenueId};
 use crate::game_status::GameStatus;
 use crate::game_types::GameType;
 use crate::request::StatsAPIRequestUrl;
@@ -20,6 +20,7 @@ use serde_with::serde_as;
 use serde_with::DefaultOnError;
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
+use crate::team::NamedTeam;
 
 pub mod postseason;
 pub mod tied;
@@ -51,7 +52,7 @@ pub struct ScheduleGame {
 	pub official_date: NaiveDate,
 	pub status: GameStatus,
 	pub teams: HomeAwaySplits<TeamWithStandings>,
-	pub venue: Venue,
+	pub venue: NamedVenue,
 	pub is_tie: bool,
 
 	/// Refers to the ordinal in the day? (maybe season?).
@@ -88,7 +89,7 @@ struct __ScheduleGameStruct {
 	status: GameStatus,
 	teams: HomeAwaySplits<TeamWithStandings>,
 	#[serde_as(deserialize_as = "DefaultOnError")]
-	venue: Option<Venue>,
+	venue: Option<NamedVenue>,
 	is_tie: Option<bool>,
 	#[serde(rename = "gameNumber")]
 	game_ordinal: u32,
@@ -147,7 +148,7 @@ impl From<__ScheduleGameStruct> for ScheduleGame {
 			official_date,
 			status,
 			teams,
-			venue: venue.unwrap_or_else(Venue::unknown_venue),
+			venue: venue.unwrap_or_else(NamedVenue::unknown_venue),
 			is_tie: is_tie.unwrap_or(false),
 			game_ordinal,
 			is_public_facing,
@@ -175,7 +176,7 @@ pub struct SeriesData {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamWithStandings {
-	pub team: Team,
+	pub team: NamedTeam,
 	#[serde(rename = "leagueRecord")]
 	pub standings: Standings,
 	#[serde(flatten)]

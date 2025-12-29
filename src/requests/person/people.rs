@@ -1,6 +1,6 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
 
-use crate::person::{Person, PersonHydrations};
+use crate::person::{Ballplayer, PersonHydrations};
 use crate::types::Copyright;
 use serde::Deserialize;
 
@@ -10,5 +10,5 @@ use serde::Deserialize;
 pub struct PeopleResponse<H: PersonHydrations> {
     pub copyright: Copyright,
     #[serde(default)]
-    pub people: Vec<Person<H>>,
+    pub people: Vec<Ballplayer<H>>,
 }

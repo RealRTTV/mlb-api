@@ -1,7 +1,6 @@
-use crate::game::Game;
 use crate::league::LeagueId;
 use crate::season::SeasonId;
-use crate::requests::team::TeamId;
+use crate::team::TeamId;
 use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
@@ -13,6 +12,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::iter::Sum;
 use std::num::NonZeroU32;
 use std::ops::Add;
+use crate::game::GameId;
 use crate::game_types::GameType;
 use crate::request::StatsAPIRequestUrl;
 
@@ -209,10 +209,10 @@ struct AnnualRecordStruct {
 	// attendance_average_ytd: u32,
 	attendance_high: Option<u32>,
 	attendance_high_date: Option<NaiveDateTime>,
-	attendance_high_game: Option<Game>,
+	attendance_high_game: Option<GameId>,
 	attendance_low: Option<u32>,
 	attendance_low_date: Option<NaiveDateTime>,
-	attendance_low_game: Option<Game>,
+	attendance_low_game: Option<GameId>,
 	// attendance_opening_average: u32,
 	// attendance_total: u32,
 	attendance_total_away: Option<u32>,
@@ -302,7 +302,7 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 pub struct DatedAttendance {
 	pub value: u32,
 	pub date: NaiveDate,
-	pub game: Game,
+	pub game: GameId,
 }
 
 impl PartialOrd<Self> for DatedAttendance {
@@ -372,7 +372,7 @@ impl StatsAPIRequestUrl for AttendanceRequest {
 mod tests {
 	use crate::attendance::AttendanceRequest;
 	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
-	use crate::requests::team::teams::TeamsRequest;
+	use crate::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]

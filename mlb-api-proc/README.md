@@ -1,1 +1,0 @@
-Intended for private use by [`mlb-api`](https://crates.io/crate/mlb-api) only.

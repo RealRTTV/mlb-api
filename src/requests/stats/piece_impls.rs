@@ -1,7 +1,7 @@
 #![allow(clippy::cast_lossless, reason = "this crate is not obsessed with producing the most accurate floating point representations of data, it's close enough for what we need.")]
 
-use crate::requests::stats::pieces::{AtBatPiece, BaseOnBallsPiece, DecisionsPiece, EarnedRunsPiece, ExtraBaseHitsPiece, GamesPitchedPiece, HitByPitchPiece, HitsPiece, InningsPitchedPiece, IntentionalWalksPiece, PitchQuantityPiece, PlateAppearancePiece, RunsPiece, SacrificeHitsPiece, StealingPiece, StrikeoutsPiece, StrikesPiece, SwingDataPiece, TotalBasesPiece};
-use crate::requests::stats::units::{PercentageStat, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use crate::stats::pieces::{AtBatPiece, BaseOnBallsPiece, DecisionsPiece, EarnedRunsPiece, ExtraBaseHitsPiece, GamesPitchedPiece, HitByPitchPiece, HitsPiece, InningsPitchedPiece, IntentionalWalksPiece, PitchQuantityPiece, PlateAppearancePiece, RunsPiece, SacrificeHitsPiece, StealingPiece, StrikeoutsPiece, StrikesPiece, SwingDataPiece, TotalBasesPiece};
+use crate::stats::units::{PercentageStat, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 
 pub trait AVGPiece {
 	/// # Batting Average

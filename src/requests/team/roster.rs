@@ -1,14 +1,15 @@
-use crate::person::Person;
+use crate::person::NamedPerson;
 use crate::season::SeasonId;
-use crate::requests::team::{Team, TeamId};
+use crate::team::TeamId;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::positions::Position;
+use crate::positions::NamedPosition;
 use crate::request::StatsAPIRequestUrl;
 use crate::roster_types::RosterType;
+use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -23,10 +24,10 @@ pub struct RosterResponse {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RosterPlayer {
-    pub person: Person,
+    pub person: NamedPerson,
     #[serde(deserialize_with = "crate::types::try_from_str")]
     pub jersey_number: Option<u8>,
-    pub position: Position,
+    pub position: NamedPosition,
     pub status: RosterStatus,
     pub parent_team_id: Option<TeamId>,
 }
@@ -120,9 +121,9 @@ impl StatsAPIRequestUrl for RosterRequest {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RosterEntry {
-    pub position: Position,
+    pub position: NamedPosition,
     pub status: RosterStatus,
-    pub team: Team,
+    pub team: NamedTeam,
     pub is_active: bool,
     pub is_active_forty_man: bool,
     pub start_date: NaiveDate,
@@ -135,8 +136,8 @@ mod tests {
 	use crate::meta::MetaRequest;
     use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
     use crate::roster_types::RosterType;
-    use crate::requests::team::roster::RosterRequest;
-	use crate::requests::team::teams::TeamsRequest;
+    use crate::team::roster::RosterRequest;
+	use crate::team::teams::TeamsRequest;
     use crate::TEST_YEAR;
 
     #[tokio::test]
@@ -147,7 +148,7 @@ mod tests {
         let roster_types = MetaRequest::<RosterType>::new().get().await.unwrap().entries;
         for team in teams {
             for roster_type in &roster_types {
-                let _ = crate::serde_path_to_error_parse(RosterRequest::builder().team_id(team.id).season(season).roster_type(*roster_type).build()).await;
+                let _ = RosterRequest::builder().team_id(team.id).season(season).roster_type(*roster_type).build_and_get().await.unwrap();
             }
         }
     }

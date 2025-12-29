@@ -1,6 +1,6 @@
-use crate::requests::person::people::PeopleResponse;
+use crate::person::people::PeopleResponse;
 use crate::season::SeasonId;
-use crate::requests::team::TeamId;
+use crate::team::TeamId;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
@@ -31,8 +31,8 @@ impl StatsAPIRequestUrl for AlumniRequest {
 #[cfg(test)]
 mod tests {
 	use crate::request::StatsAPIRequestUrlBuilderExt;
-	use crate::requests::team::alumni::AlumniRequest;
-	use crate::requests::team::teams::TeamsRequest;
+	use crate::team::alumni::AlumniRequest;
+	use crate::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]
@@ -41,7 +41,7 @@ mod tests {
 		let season = TEST_YEAR;
 		let teams = TeamsRequest::mlb_teams().season(season).build_and_get().await.unwrap();
 		for team in teams.teams {
-			let _ = crate::serde_path_to_error_parse(AlumniRequest::builder().team_id(team.id).season(season).build()).await;
+			let _ = AlumniRequest::builder().team_id(team.id).season(season).build_and_get().await.unwrap();
 		}
 	}
 }

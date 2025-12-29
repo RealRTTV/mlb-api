@@ -1,11 +1,11 @@
 use crate::season::SeasonId;
-use crate::requests::team::Team;
 use crate::types::Copyright;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::sports::SportId;
+use crate::team::Team;
 
 /// Hydrations:
 /// * `previousSchedule`
@@ -87,9 +87,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn parse_all_mlb_teams_this_season() {
-		let _response = TeamsRequest::mlb_teams()
-		.build_and_get()
-		.await
-		.unwrap();
+		let _ = TeamsRequest::mlb_teams().build_and_get().await.unwrap();
 	}
 }

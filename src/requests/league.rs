@@ -1,11 +1,12 @@
-use crate::sports::{NamedSport, SportId};
-use crate::request::StatsAPIRequestUrl;
+use crate::sports::SportId;
+use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
 use bon::Builder;
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut};
 use itertools::Itertools;
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::cache::{CacheTable, RequestEntryCache};
+use crate::{rwlock_const_new, RwLock};
 use crate::season::{Season, SeasonState};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -15,42 +16,18 @@ pub struct LeagueResponse {
 	pub leagues: Vec<League>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentifiableLeague {
-	pub id: LeagueId,
-}
-
-impl Default for IdentifiableLeague {
-	fn default() -> Self {
-		Self { id: LeagueId(0) }
-	}
-}
-
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedLeague {
 	pub name: String,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableLeague,
-}
-
-impl Default for NamedLeague {
-	fn default() -> Self {
-		Self {
-			name: "null".to_owned(),
-			inner: IdentifiableLeague::default(),
-		}
-	}
+	pub id: LeagueId,
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedLeague {
+pub struct League {
 	pub abbreviation: String,
 	#[serde(rename = "nameShort")]
 	pub short_name: Option<String>,
@@ -70,7 +47,7 @@ pub struct HydratedLeague {
 	pub has_conferences: bool,
 	#[serde(rename = "divisionsInUse")]
 	pub has_divisions: bool,
-	pub sport: Option<NamedSport>,
+	pub sport: Option<SportId>,
 	pub active: bool,
 
 	#[deref]
@@ -94,41 +71,46 @@ fn bad_league_season_schema_deserializer<'de, D: serde::Deserializer<'de>>(deser
 	Ok(rest)
 }
 
-integer_id!(LeagueId);
+id!(LeagueId { id: u32 });
+id_only_eq_impl!(League, id);
+id_only_eq_impl!(NamedLeague, id);
 
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum League {
-	Hydrated(Box<HydratedLeague>),
-	Named(NamedLeague),
-	Identifiable(IdentifiableLeague),
-}
-
-impl League {
+impl NamedLeague {
 	#[must_use]
-	pub(crate) const fn unknown_league() -> Self {
-		Self::Identifiable(IdentifiableLeague { id: LeagueId::new(0) })
+	pub(crate) fn unknown_league() -> Self {
+		Self {
+			name: "null".to_owned(),
+			id: LeagueId::new(0),
+		}
+	}
+
+	#[must_use]
+	pub fn is_unknown(&self) -> bool {
+		*self.id == 0
 	}
 }
 
-id_only_eq_impl!(League, id);
-
 #[derive(Builder)]
-pub struct LeagueRequest {
+#[builder(derive(Into))]
+pub struct LeaguesRequest {
 	#[builder(into)]
 	sport_id: Option<SportId>,
 	#[builder(setters(vis = "", name = league_ids_internal))]
 	league_ids: Option<Vec<LeagueId>>,
 }
 
-impl<S: league_request_builder::State> LeagueRequestBuilder<S> {
+impl<S: leagues_request_builder::State + leagues_request_builder::IsComplete> StatsAPIRequestUrlBuilderExt for LeaguesRequestBuilder<S> {
+	type Built = LeaguesRequest;
+}
+
+impl<S: leagues_request_builder::State> LeaguesRequestBuilder<S> {
 	#[allow(dead_code)]
-	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeagueRequestBuilder<league_request_builder::SetLeagueIds<S>> where S::LeagueIds: league_request_builder::IsUnset {
+	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeaguesRequestBuilder<leagues_request_builder::SetLeagueIds<S>> where S::LeagueIds: leagues_request_builder::IsUnset {
 		self.league_ids_internal(league_ids.into_iter().map(T::into).collect::<Vec<_>>())
 	}
 }
 
-impl Display for LeagueRequest {
+impl Display for LeaguesRequest {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "http://statsapi.mlb.com/api/v1/leagues{}", gen_params! {
 			"sportId"?: self.sport_id,
@@ -137,8 +119,45 @@ impl Display for LeagueRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for LeagueRequest {
+impl StatsAPIRequestUrl for LeaguesRequest {
 	type Response = LeagueResponse;
 }
 
-tiered_request_entry_cache_impl!(LeagueRequest => |id: LeagueId| { LeagueRequest::builder().league_ids(vec![*id]).build() }.leagues => League => Box<HydratedLeague>);
+static CACHE: RwLock<CacheTable<League>> = rwlock_const_new(CacheTable::new());
+
+impl RequestEntryCache for League {
+	type Identifier = LeagueId;
+	type URL = LeaguesRequest;
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	#[cfg(feature = "aggressive_cache")]
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		LeaguesRequest::builder().build()
+	}
+
+	#[cfg(not(feature = "aggressive_cache"))]
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		LeaguesRequest::builder().league_ids_internal(vec![*id]).build()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.leagues
+	}
+
+	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
+}
+
+entrypoint!(LeagueId => League);
+entrypoint!(NamedLeague.id => League);
+entrypoint!(League.id => League);

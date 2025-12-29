@@ -1,9 +1,9 @@
-use crate::requests::stats::pieces::{bWARData, fWARData, xFIPData, AtBatData, BalksData, BaseOnBallsData, BattersFacedData, CatchersInterferenceData, CompleteGamesData, DecisionsData, ERAMinusData, EarnedRunsData, ExtraBaseHitsData, FIPData, FIPMinusData, FieldOutsData, FlyoutsData, GIDPData, GamesFinishedData, GamesPitchedData, GamesPlayedData, GamesStartedData, HitByPitchData, HitsData, InheritedRunnersData, InningsPitchedData, IntentionalWalksData, PassedBallData, PickoffsData, PitchQuantityData, RARData, RBIData, RunsData, SacrificeHitsData, ShutdownsAndMeltdownsData, StealingData, StrikeoutsData, StrikesData, WildPitchData};
-use crate::requests::stats::units::PercentageStat;
-use crate::requests::stats::BaseStat;
+use crate::stats::pieces::{bWARData, fWARData, xFIPData, AtBatData, BalksData, BaseOnBallsData, BattersFacedData, CatchersInterferenceData, CompleteGamesData, DecisionsData, ERAMinusData, EarnedRunsData, ExtraBaseHitsData, FIPData, FIPMinusData, FieldOutsData, FlyoutsData, GIDPData, GamesFinishedData, GamesPitchedData, GamesPlayedData, GamesStartedData, HitByPitchData, HitsData, InheritedRunnersData, InningsPitchedData, IntentionalWalksData, PassedBallData, PickoffsData, PitchQuantityData, RARData, RBIData, RunsData, SacrificeHitsData, ShutdownsAndMeltdownsData, StealingData, StrikeoutsData, StrikesData, WildPitchData};
+use crate::stats::units::PercentageStat;
+use crate::stats::SingletonWrappedEntryStat;
 use derive_more::{Add, AddAssign, AsRef};
 use serde::Deserialize;
-use crate::pitch_types::PitchType;
+use crate::pitch_types::PitchTypeId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Add, AddAssign, Default, AsRef)]
 #[serde(rename_all = "camelCase")]
@@ -102,7 +102,18 @@ pub struct PitchUsage {
 	pub count: u32,
 	pub total_pitches: u32,
 	pub average_speed: uom::si::f64::Velocity,
-	pub pitch_type: PitchType,
+	pub pitch_type: PitchTypeId,
+}
+
+impl Default for PitchUsage {
+	fn default() -> Self {
+		Self {
+			count: 0,
+			total_pitches: 0,
+			average_speed: uom::si::f64::Velocity::new::<uom::si::velocity::mile_per_hour>(0.0),
+			pitch_type: PitchTypeId::new("4SFB"),
+		}
+	}
 }
 
 #[derive(Deserialize)]
@@ -111,7 +122,7 @@ struct __PitchUsageStruct {
 	count: u32,
 	total_pitches: u32,
 	average_speed: f64,
-	pitch_type: PitchType,
+	pitch_type: PitchTypeId,
 }
 
 impl From<__PitchUsageStruct> for PitchUsage {
@@ -127,7 +138,7 @@ impl From<__PitchUsageStruct> for PitchUsage {
 
 impl Eq for PitchUsage {}
 
-impl BaseStat for PitchUsage {}
+impl SingletonWrappedEntryStat for PitchUsage {}
 
 impl PitchUsage {
 	/// Percentage of total pitches that are this pitch.

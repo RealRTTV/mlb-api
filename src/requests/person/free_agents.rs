@@ -1,6 +1,4 @@
-use crate::person::Person;
 use crate::season::SeasonId;
-use crate::requests::team::Team;
 use crate::types::Copyright;
 use bon::Builder;
 use chrono::NaiveDate;
@@ -8,8 +6,10 @@ use serde::Deserialize;
 use serde_with::serde_as;
 use serde_with::DefaultOnError;
 use std::fmt::{Display, Formatter};
-use crate::positions::Position;
+use crate::person::NamedPerson;
+use crate::positions::NamedPosition;
 use crate::request::StatsAPIRequestUrl;
+use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -23,35 +23,35 @@ pub struct FreeAgentsResponse {
 #[serde(rename_all = "camelCase")]
 #[doc(hidden)]
 struct __FreeAgentStruct {
-	player: Person,
+	player: NamedPerson,
 	#[serde_as(deserialize_as = "DefaultOnError")]
-	original_team: Option<Team>,
+	original_team: Option<NamedTeam>,
 	#[serde_as(deserialize_as = "DefaultOnError")]
-	new_team: Option<Team>,
+	new_team: Option<NamedTeam>,
 	notes: Option<String>,
 	date_signed: Option<NaiveDate>,
 	date_declared: Option<NaiveDate>,
-	position: Position,
+	position: NamedPosition,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__FreeAgentStruct")]
 pub struct FreeAgent {
-	pub player: Person,
-	pub original_team: Team,
-	pub new_team: Team,
+	pub player: NamedPerson,
+	pub original_team: NamedTeam,
+	pub new_team: NamedTeam,
 	pub notes: Option<String>,
 	pub date_signed: NaiveDate,
 	pub date_declared: NaiveDate,
-	pub position: Position,
+	pub position: NamedPosition,
 }
 
 impl From<__FreeAgentStruct> for FreeAgent {
 	fn from(value: __FreeAgentStruct) -> Self {
 		Self {
 			player: value.player,
-			original_team: value.original_team.unwrap_or_else(Team::unknown_team),
-			new_team: value.new_team.unwrap_or_else(Team::unknown_team),
+			original_team: value.original_team.unwrap_or_else(NamedTeam::unknown_team),
+			new_team: value.new_team.unwrap_or_else(NamedTeam::unknown_team),
 			notes: value.notes,
 			date_signed: value.date_signed.or(value.date_declared).unwrap_or_default(),
 			date_declared: value.date_declared.or(value.date_signed).unwrap_or_default(),
@@ -84,7 +84,7 @@ impl StatsAPIRequestUrl for FreeAgentsRequest {
 #[cfg(test)]
 mod tests {
 	use crate::request::StatsAPIRequestUrlBuilderExt;
-	use crate::requests::person::free_agents::FreeAgentsRequest;
+	use crate::person::free_agents::FreeAgentsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]

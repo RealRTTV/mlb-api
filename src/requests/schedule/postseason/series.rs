@@ -1,6 +1,6 @@
 use crate::schedule::ScheduleGame;
 use crate::season::SeasonId;
-use crate::requests::team::TeamId;
+use crate::team::TeamId;
 use crate::types::Copyright;
 use bon::Builder;
 use itertools::Itertools;

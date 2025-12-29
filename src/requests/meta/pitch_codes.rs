@@ -1,18 +1,11 @@
-use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
 use serde::Deserialize;
 
-string_id!(PitchCodeId);
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct IdentifiablePitchCode {
-	#[serde(rename = "code")] pub id: PitchCodeId,
-}
+id!(PitchCodeId { code: String });
 
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedPitchCode {
+pub struct PitchCode {
 	pub description: String,
 	#[serde(rename = "swingStatus")]
 	pub has_swing: bool,
@@ -31,21 +24,11 @@ pub struct HydratedPitchCode {
 	pub is_bunt_attempt: bool,
 	#[serde(rename = "contactStatus")]
 	pub made_contact: bool,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiablePitchCode,
-}
-
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum PitchCode {
-	Hydrated(HydratedPitchCode),
-	Identifiable(IdentifiablePitchCode),
+	pub id: PitchCodeId,
 }
 
 id_only_eq_impl!(PitchCode, id);
 meta_kind_impl!("pitchCodes" => PitchCode);
-tiered_request_entry_cache_impl!(PitchCode => HydratedPitchCode; id: PitchCodeId);
+tiered_request_entry_cache_impl!(PitchCode.id: PitchCodeId);
 test_impl!(PitchCode);

@@ -1,13 +1,14 @@
-use crate::league::League;
+use crate::league::LeagueId;
 use crate::season::SeasonId;
-use crate::sports::Sport;
+use crate::sports::SportId;
 use crate::types::Copyright;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
-use derive_more::{Deref, DerefMut, From};
-use mlb_api_proc::{EnumDeref, EnumDerefMut, EnumTryAs, EnumTryAsMut, EnumTryInto};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use crate::cache::{CacheTable, RequestEntryCache};
+use crate::{rwlock_const_new, RwLock};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -16,15 +17,15 @@ pub struct ConferencesResponse {
 	pub conferences: Vec<Conference>,
 }
 
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct HydratedConference {
+pub struct Conference {
 	pub abbreviation: String,
 	#[serde(rename = "nameShort")]
 	pub short_name: String,
 	pub has_wildcard: bool,
-	pub league: League,
-	pub sport: Sport,
+	pub league: LeagueId,
+	pub sport: SportId,
 
 	#[deref]
 	#[deref_mut]
@@ -32,33 +33,18 @@ pub struct HydratedConference {
 	inner: NamedConference,
 }
 
-#[derive(Debug, Deserialize, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedConference {
 	pub name: String,
-
-	#[deref]
-	#[deref_mut]
 	#[serde(flatten)]
-	inner: IdentifiableConference,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct IdentifiableConference {
 	pub id: ConferenceId,
 }
 
-integer_id!(ConferenceId);
-
-#[derive(Debug, Deserialize, Eq, Clone, From, EnumTryAs, EnumTryAsMut, EnumTryInto, EnumDeref, EnumDerefMut)]
-#[serde(untagged)]
-pub enum Conference {
-	Hydrated(Box<HydratedConference>),
-	Named(NamedConference),
-	Identifiable(IdentifiableConference),
-}
+id!(ConferenceId { id: u32 });
 
 id_only_eq_impl!(Conference, id);
+id_only_eq_impl!(NamedConference, id);
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -83,7 +69,44 @@ impl StatsAPIRequestUrl for ConferencesRequest {
 	type Response = ConferencesResponse;
 }
 
-tiered_request_entry_cache_impl!(ConferencesRequest => |id: ConferenceId| { ConferencesRequest::builder().conference_id(*id).build() }.conferences => Conference => Box<HydratedConference>);
+static CACHE: RwLock<CacheTable<Conference>> = rwlock_const_new(CacheTable::new());
+
+impl RequestEntryCache for Conference {
+	type Identifier = ConferenceId;
+	type URL = ConferencesRequest;
+
+	fn id(&self) -> &Self::Identifier {
+		&self.id
+	}
+
+	#[cfg(feature = "aggressive_cache")]
+	fn url_for_id(_id: &Self::Identifier) -> Self::URL {
+		ConferencesRequest::builder().build()
+	}
+
+	#[cfg(not(feature = "aggressive_cache"))]
+	fn url_for_id(id: &Self::Identifier) -> Self::URL {
+		ConferencesRequest::builder().conference_id(*id).build()
+	}
+
+	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	where
+		Self: Sized
+	{
+		response.conferences
+	}
+
+	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
+	where
+		Self: Sized
+	{
+		&CACHE
+	}
+}
+
+entrypoint!(Conference.id => Conference);
+entrypoint!(NamedConference.id => Conference);
+entrypoint!(ConferenceId => Conference);
 
 #[cfg(test)]
 mod tests {

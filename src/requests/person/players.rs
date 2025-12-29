@@ -1,4 +1,4 @@
-use crate::requests::person::people::PeopleResponse;
+use crate::person::people::PeopleResponse;
 use crate::season::SeasonId;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
@@ -10,7 +10,7 @@ use crate::sports::SportId;
 pub struct PlayersRequest {
 	#[builder(into)]
 	#[builder(default)]
-	id: SportId,
+	sport_id: SportId,
 	#[builder(into)]
 	season: Option<SeasonId>,
 }
@@ -21,7 +21,7 @@ impl<S: players_request_builder::State + players_request_builder::IsComplete> cr
 
 impl Display for PlayersRequest {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/sports/{}/players{}", self.id, gen_params! { "sportId": self.id, "season"?: self.season })
+		write!(f, "http://statsapi.mlb.com/api/v1/sports/{}/players{}", self.sport_id, gen_params! { "sportId": self.sport_id, "season"?: self.season })
 	}
 }
 
@@ -39,12 +39,12 @@ mod tests {
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_players_all_seasons_mlb() {
 		for season in 1876..=TEST_YEAR {
-			let _response = PlayersRequest::builder().season(season).build_and_get().await.unwrap();
+			let _response = PlayersRequest::builder().sport_id(SportId::MLB).season(season).build_and_get().await.unwrap();
 		}
 	}
 
 	#[tokio::test]
 	async fn parse_all_players_mlb() {
-		let _response = PlayersRequest::builder().build_and_get().await.unwrap();
+		let _response = PlayersRequest::builder().sport_id(SportId::MLB).build_and_get().await.unwrap();
 	}
 }

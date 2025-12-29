@@ -1,22 +1,22 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
-use crate::requests::person::PersonId;
-use crate::requests::sports::SportId;
-use crate::requests::stats::Stats;
-use crate::requests::team::TeamId;
+use crate::game_types::GameType;
+use crate::person::PersonId;
+use crate::request::StatsAPIRequestUrl;
+use crate::season::SeasonId;
+use crate::sports::SportId;
+use crate::stat_groups::StatGroup;
+use crate::stat_types::StatType;
+use crate::stats::Stats;
+use crate::team::TeamId;
 use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use bon::Builder;
 use chrono::NaiveDate;
+use either::Either;
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
-use bon::Builder;
-use either::Either;
-use crate::game_types::GameType;
-use crate::request::StatsAPIRequestUrl;
-use crate::season::SeasonId;
-use crate::stat_groups::StatGroup;
-use crate::stat_types::StatType;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(bound = "S: Stats")]

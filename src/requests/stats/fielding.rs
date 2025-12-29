@@ -1,4 +1,4 @@
-use crate::requests::stats::units::{InningsPitched, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use crate::stats::units::{InningsPitched, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
 use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 use serde_with::serde_as;
