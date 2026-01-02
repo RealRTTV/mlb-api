@@ -4,7 +4,7 @@ use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::team::Team;
 
 /// Hydrations:

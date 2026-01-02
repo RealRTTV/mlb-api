@@ -17,7 +17,7 @@ use crate::venue::{NamedVenue, VenueId};
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use serde_with::serde_as;
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 #[serde_as]
 #[derive(Deserialize)]

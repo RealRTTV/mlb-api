@@ -10,7 +10,7 @@ use crate::game_status::GameStatus;
 use crate::game_types::GameType;
 use crate::request::StatsAPIRequestUrl;
 use crate::sky::Sky;
-use crate::sports::SportId;
+use crate::sport::SportId;
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, Utc};
 use either::Either;

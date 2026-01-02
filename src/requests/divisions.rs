@@ -2,7 +2,7 @@ use crate::cache::{CacheTable, RequestEntryCache};
 use crate::league::LeagueId;
 use crate::request::StatsAPIRequestUrl;
 use crate::season::SeasonId;
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::types::Copyright;
 use crate::{rwlock_const_new, RwLock};
 use bon::Builder;

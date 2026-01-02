@@ -37,6 +37,7 @@ pub enum GameType {
 	#[display("World Series")]
 	WorldSeries,
 
+	/// Also known as the postseason
 	#[display("Playoffs")]
 	Playoffs,
 

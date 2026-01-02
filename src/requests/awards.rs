@@ -1,7 +1,7 @@
 use crate::league::LeagueId;
 use crate::request::StatsAPIRequestUrl;
 use crate::season::SeasonId;
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::types::Copyright;
 use bon::Builder;
 use serde::Deserialize;

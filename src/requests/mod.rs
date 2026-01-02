@@ -58,26 +58,26 @@ macro_rules! id {
 macro_rules! gen_params {
     (@ $builder:ident $key:literal: $value:expr $(, $($rest:tt)*)?) => {
         let is_empty = $builder.is_empty();
-        let _ = write!(&mut $builder, "{prefix}{key}={value}", key = $key, value = $value, prefix = if is_empty { '?' } else { '&' });
+        let _ = ::core::write!(&mut $builder, "{prefix}{key}={value}", key = $key, value = $value, prefix = if is_empty { '?' } else { '&' });
         gen_params!(@ $builder $($($rest)*)? );
     };
     (@ $builder:ident $key:literal?: $value:expr $(, $($rest:tt)*)?) => {
-        if let Option::Some(value) = $value {
-            let is_empty = $builder.is_empty();
-            let _ = write!(&mut $builder, "{prefix}{key}={value}", key = $key, prefix = if is_empty { '?' } else { '&' });
+        if let ::core::option::Option::Some(value) = $value {
+            let is_empty = str::is_empty(&$builder);
+            let _ = ::core::write!(&mut $builder, "{prefix}{key}={value}", key = $key, prefix = if is_empty { '?' } else { '&' });
         }
         gen_params!(@ $builder $($($rest)*)? );
     };
     (@ $builder:ident $value:expr $(, $($rest:tt)*)?) => {
         let is_empty = $builder.is_empty();
-        let _ = write!(&mut $builder, "{prefix}{value}", value = $value, prefix = if is_empty { '?' } else { '&' });
+        let _ = ::core::write!(&mut $builder, "{prefix}{value}", value = $value, prefix = if is_empty { '?' } else { '&' });
         gen_params!(@ $builder $($($rest)*)?);
     };
     (@ $builder:ident $($args:tt)*) => {};
     ($($args:tt)*) => {{
         use ::core::fmt::Write;
 
-        let mut builder = String::new();
+        let mut builder = ::std::string::String::new();
         gen_params! { @ builder $($args)* }
         builder
     }};
@@ -131,7 +131,7 @@ pub mod meta;
 pub mod person;
 pub mod schedule;
 pub mod season;
-pub mod sports;
+pub mod sport;
 pub mod standings;
 pub mod stats;
 pub mod transactions;

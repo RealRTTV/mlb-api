@@ -54,7 +54,7 @@ optional = true
 [features]
 default = ["reqwest", "cache", "aggressive_cache"]
 cache = []
-aggressive_cache = ["cache"] # todo: make certain lookups cache the whole thing like a meta lookup
+aggressive_cache = ["cache"]
 _heavy_tests = []
 
 reqwest = ["dep:reqwest", "dep:tokio"]

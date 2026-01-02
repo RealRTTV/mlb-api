@@ -8,7 +8,7 @@ use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::cache::{CacheTable, RequestEntryCache};
 use crate::{rwlock_const_new, RwLock};
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]

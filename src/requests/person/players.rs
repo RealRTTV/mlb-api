@@ -3,7 +3,7 @@ use crate::season::SeasonId;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 #[derive(Builder)]
 #[builder(derive(Into))]

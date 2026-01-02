@@ -1,4 +1,36 @@
+// todo: make static
+///```
+///pub enum SituationCategory {
+///
+///}
+///pub trait SituationMarker {
+///    const CODE: &'static str;
+///
+///    const CATEGORY: SituationCategory;
+///}
+///pub trait TeamSituation: SituationMarker {}
+///pub trait BattingSituation: SituationMarker {}
+///pub trait PitchingSituation: SituationMarker {}
+///pub trait FieldingSituation: SituationMarker {}
+///
+///pub struct HomeGames;
+///
+///impl SituationMarker for HomeGames {
+///    const CODE: &'static str = "h";
+///}
+///```
+
 use serde::Deserialize;
+
+#[derive(Copy, Clone, Default, PartialEq, Eq)]
+pub enum SituationCodeFilter {
+	/// Display results that match <u>all</u> the [SituationCode]s selected.
+	All,
+
+	/// Display results that match <u>any</u> the [SituationCode]s selected.
+	#[default]
+	Any,
+}
 
 id!(SituationCodeId { code: String });
 

@@ -1,6 +1,6 @@
 use crate::league::LeagueId;
 use crate::season::SeasonId;
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::types::Copyright;
 use crate::request::StatsAPIRequestUrl;
 use bon::Builder;

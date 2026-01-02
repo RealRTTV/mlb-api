@@ -162,13 +162,13 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     let conference_response = crate::conferences::ConferencesRequest::builder().build_and_get();
     let venue_response = crate::venue::VenuesRequest::builder().build_and_get();
     let league_response = crate::league::LeaguesRequest::builder().build_and_get();
-    let sport_response = crate::sports::SportsRequest::builder().build_and_get();
+    let sport_response = crate::sport::SportsRequest::builder().build_and_get();
     <crate::awards::Award as RequestEntryCache>::get_cache_table().write().await.add_entries(award_response.await?.awards);
     <crate::divisions::Division as RequestEntryCache>::get_cache_table().write().await.add_entries(division_response.await?.divisions);
     <crate::conferences::Conference as RequestEntryCache>::get_cache_table().write().await.add_entries(conference_response.await?.conferences);
     <crate::venue::Venue as RequestEntryCache>::get_cache_table().write().await.add_entries(venue_response.await?.venues);
     <crate::league::League as RequestEntryCache>::get_cache_table().write().await.add_entries(league_response.await?.leagues);
-    <crate::sports::Sport as RequestEntryCache>::get_cache_table().write().await.add_entries(sport_response.await?.sports);
+    <crate::sport::Sport as RequestEntryCache>::get_cache_table().write().await.add_entries(sport_response.await?.sports);
     
     <crate::baseball_stats::BaseballStat as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::baseball_stats::BaseballStat>::new().get().await?.entries);
     <crate::job_types::JobType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::job_types::JobType>::new().get().await?.entries);
@@ -181,7 +181,7 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     <crate::positions::Position as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::positions::Position>::new().get().await?.entries);
     <crate::review_reasons::ReviewReason as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::review_reasons::ReviewReason>::new().get().await?.entries);
     <crate::schedule_event_types::ScheduleEventType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::schedule_event_types::ScheduleEventType>::new().get().await?.entries);
-    <crate::situation_codes::SituationCode as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::situation_codes::SituationCode>::new().get().await?.entries);
+    <crate::situations::SituationCode as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::situations::SituationCode>::new().get().await?.entries);
     <crate::sky::SkyDescription as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::sky::SkyDescription>::new().get().await?.entries);
     <crate::standings_types::StandingsType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::standings_types::StandingsType>::new().get().await?.entries);
     <crate::wind_direction::WindDirection as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::wind_direction::WindDirection>::new().get().await?.entries);
@@ -201,7 +201,7 @@ pub fn precache() -> Result<(), crate::request::Error> {
     <crate::conferences::Conference as RequestEntryCache>::get_cache_table().write().add_entries(crate::conferences::ConferencesRequest::builder().build_and_get()?.conferences);
     <crate::venue::Venue as RequestEntryCache>::get_cache_table().write().add_entries(crate::venue::VenuesRequest::builder().build_and_get()?.venues);
     <crate::league::League as RequestEntryCache>::get_cache_table().write().add_entries(crate::league::LeaguesRequest::builder().build_and_get()?.leagues);
-    <crate::sports::Sport as RequestEntryCache>::get_cache_table().write().add_entries(crate::sports::SportsRequest::builder().build_and_get()?.sports);
+    <crate::sport::Sport as RequestEntryCache>::get_cache_table().write().add_entries(crate::sport::SportsRequest::builder().build_and_get()?.sports);
 
     <crate::baseball_stats::BaseballStat as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::baseball_stats::BaseballStat>::new().get()?.entries);
     <crate::job_types::JobType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::job_types::JobType>::new().get()?.entries);
@@ -214,7 +214,7 @@ pub fn precache() -> Result<(), crate::request::Error> {
     <crate::positions::Position as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::positions::Position>::new().get()?.entries);
     <crate::review_reasons::ReviewReason as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::review_reasons::ReviewReason>::new().get()?.entries);
     <crate::schedule_event_types::ScheduleEventType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::schedule_event_types::ScheduleEventType>::new().get()?.entries);
-    <crate::situation_codes::SituationCode as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::situation_codes::SituationCode>::new().get()?.entries);
+    <crate::situations::SituationCode as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::situations::SituationCode>::new().get()?.entries);
     <crate::sky::SkyDescription as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::sky::SkyDescription>::new().get()?.entries);
     <crate::standings_types::StandingsType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::standings_types::StandingsType>::new().get()?.entries);
     <crate::wind_direction::WindDirection as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::wind_direction::WindDirection>::new().get()?.entries);

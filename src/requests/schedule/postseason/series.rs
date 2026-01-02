@@ -9,7 +9,7 @@ use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
 use crate::game_types::GameType;
 use crate::request::StatsAPIRequestUrl;
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]

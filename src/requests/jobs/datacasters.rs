@@ -2,7 +2,7 @@ use crate::types::MLB_API_DATE_FORMAT;
 use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 #[derive(Builder)]
 pub struct JobsDatacastersRequest {

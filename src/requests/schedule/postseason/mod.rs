@@ -8,7 +8,7 @@ use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 use crate::game_types::GameType;
 use crate::request::StatsAPIRequestUrl;
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 #[derive(Builder)]
 #[builder(derive(Into))]

@@ -1,138 +1,12 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __stats_stat_type_definition {
-    ($parent_name:ident => $vis:vis struct $name:ident { $stat_type:ident => [$($stat_group:ident),+] }) => {
-		::pastey::paste! {
-			#[derive(Debug, PartialEq, Eq, Clone)]
-			$vis struct $name {
-				$($vis [< $stat_group:snake >]: ::std::boxed::Box<$crate::stats::PossiblyFallback<<$crate::stats::[< $stat_type Stats >] as $crate::stats::StatTypeStats>::$stat_group>>),+
-			}
-
-			impl [<__ $parent_name Split Parser>] for $name {
-				fn parse(parsed_stats: &mut $crate::stats::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String> {
-					Ok(Self {
-						$([<$stat_group:snake>]: ::std::boxed::Box::new(
-							$crate::stats::make_stat_split::<<$crate::stats::[< $stat_type Stats >] as $crate::stats::StatTypeStats>::$stat_group>(
-								parsed_stats, ::core::stringify!([<$stat_type:lower_camel>]), $crate::stat_groups::StatGroup::$stat_group
-							).map_err(|e| ::std::string::ToString::to_string(&e))?
-						)),+
-					})
-				}
-			}
-    	}
-	};
-}
-
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __stats_hydration_text {
-    ([$first_stat_type:ident $(, $stat_type:ident)* $(,)?] [$first_stat_group:ident $(, $stat_group:ident)* $(,)?]) => {
-		::pastey::paste! {
-			::core::concat!(
-				"type=[",
-				::core::stringify!([<$first_stat_type:lower_camel>]),
-				$(",", ::core::stringify!([<$stat_type:lower_camel>]), )*
-				"],group=[",
-				::core::stringify!([<$first_stat_group:lower_camel>]),
-				$(",", ::core::stringify!([<$stat_group:lower_camel>]), )*
-				"]"
-			)
-		}
-	};
-}
-
-/// Generates stat structs to be used in requests.
-///
-/// These are commonly associated with [`person_hydrations`](crate::person_hydrations) to create a [`PersonRequest`](crate::person::PersonRequest).
-///
-/// The list of [`StatType`](crate::stat_types::StatType)s can be found as implementors of [`StatTypeStats`](crate::stats::StatTypeStats).
-///
-/// The list of [`StatGroup`](crate::stat_groups::StatGroup)s can be found on its type.
-///
-/// # Examples
-/// ```rs
-/// stats! {
-///     pub struct MyStats {
-///         [Season, Career] = [Hitting, Pitching]
-///     }
-/// }
-///
-/// ---
-///
-/// pub struct BasicStats {
-///     season: BasicStatsSeasonSplit,
-///     career: BasicStatsCareerSplit,
-/// }
-///
-/// pub struct BasicStatsSeasonSplit {
-///     hitting: Box<<SeasonStats as StatTypeStats>::Hitting>, // Season<HittingStats>
-///     pitching: Box<<SeasonStats as StatTypeStats>::Pitching>, // Season<PitchingStats>
-/// }
-///
-/// pub struct BasicStatsCareerSplit {
-///     hitting: Box<<CareerStats as StatTypeStats>::Hitting>, // Career<HittingStats>
-///     pitching: Box<<CareerStats as StatTypeStats>::Pitching>, // Career<PitchingStats>
-/// }
-/// ```
-#[macro_export]
-macro_rules! stats {
-    ($vis:vis struct $name:ident {
-		[$($stat_type:ident),+] = $stat_groups:tt
-	}) => {
-		::pastey::paste! {
-			#[derive(Debug, PartialEq, Eq, Clone)]
-        	$vis struct $name {
-				$($vis [<$stat_type:snake>]: [<$name $stat_type Split>],)*
-			}
-
-			#[doc(hidden)]
-			trait [<__ $name Split Parser>] {
-				fn parse(parsed_stats: &mut $crate::stats::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String>
-				where
-					Self: Sized;
-			}
-
-			$($crate::__stats_stat_type_definition!($name => $vis struct [<$name $stat_type Split>] { $stat_type => $stat_groups });)+
-
-			impl<'de> ::serde::Deserialize<'de> for $name {
-				fn deserialize<D: ::serde::de::Deserializer<'de>>(deserializer: D) -> ::core::result::Result<Self, D::Error>
-				where
-					Self: Sized
-				{
-					let mut parsed_stats: $crate::stats::__ParsedStats = <$crate::stats::__ParsedStats as ::serde::Deserialize>::deserialize(deserializer)?;
-
-					Ok(Self {
-						$([<$stat_type:snake>]: <[<$name $stat_type Split>] as [<__ $name Split Parser>]>::parse(&mut parsed_stats).map_err(D::Error::custom)?),+
-					})
-				}
-			}
-
-			impl $crate::hydrations::Hydrations for $name {}
-
-			impl $crate::hydrations::HydrationText for $name {
-                fn hydration_text() -> ::std::borrow::Cow<'static, str> {
-					::std::borrow::Cow::Borrowed($crate::__stats_hydration_text!([$($stat_type),+] $stat_groups))
-				}
-            }
-		}
-    };
-}
-
-stats! {
-	pub struct MyStats {
-		[Season, Career] = [Hitting, Pitching]
-	}
-}
-
 use crate::league::NamedLeague;
 use crate::stats::catching::CatchingStats;
 use crate::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingStats};
 use crate::stats::hitting::{AdvancedHittingStats, HittingStats, SabermetricsHittingStats, SimplifiedGameLogHittingStats, VsPlayerHittingStats};
 use crate::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
 use crate::stats::units::PercentageStat;
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::types::{RGBAColor, SimpleTemperature};
 use chrono::{NaiveDate, Utc};
 use derive_more::{Deref, DerefMut, TryFrom};
@@ -158,6 +32,8 @@ use crate::stat_groups::StatGroup;
 use crate::stat_types::StatType;
 use crate::team::NamedTeam;
 
+pub mod macros;
+
 pub mod pieces;
 pub mod piece_impls;
 pub mod leaders;
@@ -174,11 +50,11 @@ impl Stats for () {}
 pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
 	type SplitWrappedVariant: DeserializeOwned;
 
-	type TryFromSplitWrappedVariantError;
+	type TryFromSplitWrappedError;
 
 	/// # Errors
-	/// See [`Self::TryFromSplitWrappedVariantError`]
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError> where Self: Sized;
+	/// See [`Self::TryFromSplitWrappedError`]
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError> where Self: Sized;
 }
 
 pub trait SingletonWrappedEntryStat: Debug + DeserializeOwned + Clone + PartialEq + Eq + Default {
@@ -191,27 +67,27 @@ pub trait SingletonWrappedEntryStat: Debug + DeserializeOwned + Clone + PartialE
 /// The solution is to give defaults for when the data doesn't exist. However, there are some problems with these defaults.
 /// Consider the case of [`VsPlayerStats`]. Here the data looks like:
 ///
-/// ```rs
-/// struct AccumulatedMatchup {
-///     stats: HittingStats,
-///     team: NamedTeam,
-///     opposing_team: NamedTeam,
-///     game_type: GameType
-/// }
-/// ```
+///```
+///struct AccumulatedMatchup {
+///    stats: HittingStats,
+///    team: NamedTeam,
+///    opposing_team: NamedTeam,
+///    game_type: GameType
+///}
+///```
 ///
 /// When creating defaults, for [`HittingStats`] is trivial.
 /// However for `opposing_team`, that is rather tricky. There has been no matchup with this hitter as the pitcher, so there is no most recent `opposing_team`.
 /// Because of this problem, the defaults are given the most sensible values possible, but some are still rather arbitrary ([`Weekday`] defaults to Monday).
 ///
-/// ```rs
-/// AccumulatedMatchup {
-///     stats: HittingStats::default(),
-///     team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
-///     opposing_team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
-///     game_type: GameType::RegularSeason,
-/// }
-/// ```
+///```
+///AccumulatedMatchup {
+///    stats: HittingStats::default(),
+///    team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
+///    opposing_team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
+///    game_type: GameType::RegularSeason,
+///}
+///```
 ///
 /// <u>As a solution</u>, this wrapper is created, if you are able to discard stats, then you can filter real stats from default ones with `is_fallback`. However, if you want to get the expected batting average of a player in the 1950s, better `.000` than `Option<T>` and `unwrap`-ifying your whole codebase.
 #[derive(Debug, PartialEq, Eq, Deref, DerefMut, Clone, Copy)]
@@ -244,9 +120,9 @@ impl<T: Default> Default for PossiblyFallback<T> {
 impl<T: SingletonWrappedEntryStat> Stat for T {
 	type SplitWrappedVariant = Self;
 
-	type TryFromSplitWrappedVariantError = &'static str;
+	type TryFromSplitWrappedError = &'static str;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
@@ -386,7 +262,7 @@ pub enum MakeStatSplitsError<S: Stat> {
 	FailedPartialDeserialize(serde_json::Error),
 	// FailedPartialDeserialize(serde_path_to_error::Error<serde_json::Error>),
 	#[error("Failed to deserialize splits into greater split type ({name}): {0}", name = core::any::type_name::<S>())]
-	FailedFullDeserialize(S::TryFromSplitWrappedVariantError),
+	FailedFullDeserialize(S::TryFromSplitWrappedError),
 }
 
 #[doc(hidden)]
@@ -401,29 +277,15 @@ pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str:
 			})
 			.collect::<Result<Vec<S::SplitWrappedVariant>, _>>()
 			.map_err(MakeStatSplitsError::FailedPartialDeserialize)?;
-		let deserialized = <S as Stat>::from_split_wrapped_variant(partially_deserialized).map_err(MakeStatSplitsError::FailedFullDeserialize)?;
-		Ok(PossiblyFallback::new(deserialized))
+		let partially_deserialized_is_empty = partially_deserialized.is_empty();
+		match <S as Stat>::from_split_wrapped(partially_deserialized) {
+			Ok(s) => Ok(PossiblyFallback::new(s)),
+			Err(_) if partially_deserialized_is_empty => Ok(PossiblyFallback::<S>::default()),
+			Err(e) => Err(MakeStatSplitsError::FailedFullDeserialize(e)),
+		}
 	} else {
 		Ok(PossiblyFallback::<S>::default())
 	}
-}
-
-macro_rules! stat_type_stats {
-    ($name:ident {
-	    $hitting:ty,
-	    $pitching:ty,
-	    $fielding:ty,
-	    $catching:ty $(,)?
-    }) => {
-	    pub struct $name;
-
-	    impl StatTypeStats for $name {
-		    type Hitting = $hitting;
-		    type Pitching = $pitching;
-		    type Fielding = $fielding;
-		    type Catching = $catching;
-	    }
-    };
 }
 
 impl SingletonWrappedEntryStat for () {}
@@ -435,9 +297,9 @@ pub struct Multiple<T: SingletonWrappedEntryStat> {
 
 impl<T: SingletonWrappedEntryStat> Stat for Multiple<T> {
 	type SplitWrappedVariant = T;
-	type TryFromSplitWrappedVariantError = Infallible;
+	type TryFromSplitWrappedError = Infallible;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
@@ -513,16 +375,16 @@ pub enum MultipleSeasonsFromSplitWrappedVariantError {
 
 impl<T: SingletonWrappedEntryStat> Stat for MultipleSeasons<T> {
 	type SplitWrappedVariant = Season<T>;
-	type TryFromSplitWrappedVariantError = MultipleSeasonsFromSplitWrappedVariantError;
+	type TryFromSplitWrappedError = MultipleSeasonsFromSplitWrappedVariantError;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
 		let mut this = Self { seasons: FxHashMap::default() };
 		for season in split_wrapped {
 			match this.seasons.entry(season.season) {
-				Entry::Occupied(_) => return Err (Self::TryFromSplitWrappedVariantError::DuplicateEntry { season: season.season }),
+				Entry::Occupied(_) => return Err (Self::TryFromSplitWrappedError::DuplicateEntry { season: season.season }),
 				Entry::Vacant(slot) => slot.insert(season),
 			};
 		}
@@ -824,9 +686,9 @@ pub enum HomeAndAwayFromSplitWrappedVariantError {
 
 impl<T: SingletonWrappedEntryStat> Stat for HomeAndAway<T> {
 	type SplitWrappedVariant = __HomeOrAwayStruct<T>;
-	type TryFromSplitWrappedVariantError = HomeAndAwayFromSplitWrappedVariantError;
+	type TryFromSplitWrappedError = HomeAndAwayFromSplitWrappedVariantError;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
@@ -880,9 +742,9 @@ pub enum WinLossFromSplitWrappedVariantError {
 
 impl<T: SingletonWrappedEntryStat> Stat for WinLoss<T> {
 	type SplitWrappedVariant = __WinOrLossStruct<T>;
-	type TryFromSplitWrappedVariantError = WinLossFromSplitWrappedVariantError;
+	type TryFromSplitWrappedError = WinLossFromSplitWrappedVariantError;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
@@ -1145,9 +1007,9 @@ pub enum HotColdZonesFromSplitWrappedError {
 
 impl Stat for HittingHotColdZones {
 	type SplitWrappedVariant = __HotColdZonesEntryStruct;
-	type TryFromSplitWrappedVariantError = HotColdZonesFromSplitWrappedError;
+	type TryFromSplitWrappedError = HotColdZonesFromSplitWrappedError;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
@@ -1200,9 +1062,9 @@ pub struct PitchingHotColdZones {
 
 impl Stat for PitchingHotColdZones {
 	type SplitWrappedVariant = __HotColdZonesEntryStruct;
-	type TryFromSplitWrappedVariantError = HotColdZonesFromSplitWrappedError;
+	type TryFromSplitWrappedError = HotColdZonesFromSplitWrappedError;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
@@ -1267,34 +1129,43 @@ impl SingletonWrappedEntryStat for PlayStat {}
 
 impl<T: Stat> Stat for Option<T> {
 	type SplitWrappedVariant = T::SplitWrappedVariant;
-	type TryFromSplitWrappedVariantError = Infallible;
+	type TryFromSplitWrappedError = Infallible;
 
-	fn from_split_wrapped_variant(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedVariantError>
+	fn from_split_wrapped(split_wrapped: Vec<Self::SplitWrappedVariant>) -> Result<Self, Self::TryFromSplitWrappedError>
 	where
 		Self: Sized
 	{
-		Ok(T::from_split_wrapped_variant(split_wrapped).ok())
+		Ok(T::from_split_wrapped(split_wrapped).ok())
 	}
 }
 
-stat_type_stats!(ProjectedStats { Season<HittingStats>, Season<PitchingStats>, (), () });
-stat_type_stats!(ProjectedRosStats { Season<HittingStats>, Season<PitchingStats>, (), () });
+macro_rules! stat_type_stats {
+    ($name:ident {
+	    $hitting:ty,
+	    $pitching:ty,
+	    $fielding:ty,
+	    $catching:ty $(,)?
+    }) => {
+	    pub struct $name;
+
+	    impl StatTypeStats for $name {
+		    type Hitting = $hitting;
+		    type Pitching = $pitching;
+		    type Fielding = $fielding;
+		    type Catching = $catching;
+	    }
+    };
+}
+
+stat_type_stats!(ProjectedStats { Season<HittingStats>, Season<PitchingStats>, (), () }); // todo: it has more than this in the data
 stat_type_stats!(YearByYearStats { MultipleSeasons<HittingStats>, MultipleSeasons<PitchingStats>, MultipleSeasons<FieldingStats>, MultipleSeasons<CatchingStats> });
 stat_type_stats!(YearByYearAdvancedStats { MultipleSeasons<AdvancedHittingStats>, MultipleSeasons<AdvancedPitchingStats>, (), () });
-stat_type_stats!(YearByYearPlayoffsStats { MultipleSeasons<HittingStats>, MultipleSeasons<PitchingStats>, MultipleSeasons<FieldingStats>, MultipleSeasons<CatchingStats> });
 stat_type_stats!(SeasonStats { Season<HittingStats>, Season<PitchingStats>, Season<FieldingStats>, Season<CatchingStats> });
-// `standard`?
-// `advanced`?
 stat_type_stats!(CareerStats { Career<HittingStats>, Career<PitchingStats>, Career<FieldingStats>, Career<CatchingStats> });
-stat_type_stats!(CareerRegularSeasonStats { MultipleSeasons<HittingStats>, MultipleSeasons<PitchingStats>, MultipleSeasons<FieldingStats>, MultipleSeasons<CatchingStats> });
-stat_type_stats!(CareerAdvancedStats { AdvancedHittingStats, AdvancedPitchingStats, (), () });
+stat_type_stats!(CareerAdvancedStats { Career<AdvancedHittingStats>, Career<AdvancedPitchingStats>, (), () });
 stat_type_stats!(SeasonAdvancedStats { Season<AdvancedHittingStats>, Season<AdvancedPitchingStats>, (), () });
-// 'careerStatSplit'?
-stat_type_stats!(CareerPlayoffsStats { MultipleSeasons<HittingStats>, MultipleSeasons<PitchingStats>, MultipleSeasons<FieldingStats>, MultipleSeasons<CatchingStats> });
-stat_type_stats!(SimplifiedGameLogStats { Option<SimplifiedGameLogHittingStats>, Option<SimplifiedGameLogPitchingStats>, Option<SimplifiedGameLogFieldingStats>, Option<CatchingStats> });
 stat_type_stats!(GameLogStats { Multiple<Game<HittingStats>>, Multiple<Game<PitchingStats>>, Multiple<Game<FieldingStats>>, Multiple<Game<CatchingStats>> });
 stat_type_stats!(PlayLogStats { Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>> });
-stat_type_stats!(SimplifiedPlayLogStats { Multiple<PlayStat>, Multiple<PlayStat>, Multiple<PlayStat>, Multiple<SingleMatchup<PlayStat>> });
 stat_type_stats!(PitchLogStats { Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>> });
 // 'metricLog'?
 // 'metricAverages'?
@@ -1304,35 +1175,27 @@ stat_type_stats!(ExpectedStatisticsStats { Player<ExpectedStats>, Player<Expecte
 stat_type_stats!(SabermetricsStats { Player<SabermetricsHittingStats>, Player<SabermetricsPitchingStats>, (), () });
 stat_type_stats!(SprayChartStats { SprayChart, SprayChart, (), () });
 // 'tracking'?
-stat_type_stats!(VsPlayerStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
-stat_type_stats!(VsPlayerTotalStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
+// stat_type_stats!(VsPlayerStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
+// stat_type_stats!(VsPlayerTotalStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
 stat_type_stats!(VsPlayer5YStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
-stat_type_stats!(VsTeamStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
-stat_type_stats!(VsTeam5YStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
-stat_type_stats!(VsTeamTotalStats { AccumulatedVsTeamTotalMatchup<HittingStats>, (), (), () });
+// stat_type_stats!(VsTeamStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
+// stat_type_stats!(VsTeam5YStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
+// stat_type_stats!(VsTeamTotalStats { AccumulatedVsTeamTotalMatchup<HittingStats>, (), (), () });
 stat_type_stats!(LastXGamesStats { HittingStats, PitchingStats, FieldingStats, CatchingStats });
 stat_type_stats!(ByDateRangeStats { HittingStats, PitchingStats, FieldingStats, CatchingStats });
-// 'byDateRangeAdvanced'?
+stat_type_stats!(ByDateRangeAdvancedStats { AdvancedHittingStats, AdvancedPitchingStats, (), () });
 stat_type_stats!(ByMonthStats { Month<HittingStats>, Month<PitchingStats>, Month<FieldingStats>, Month<CatchingStats> });
 stat_type_stats!(ByMonthPlayoffsStats { Month<HittingStats>, Month<PitchingStats>, Month<FieldingStats>, Month<CatchingStats> });
 stat_type_stats!(ByDayOfWeekStats { Weekday<HittingStats>, Weekday<PitchingStats>, Weekday<FieldingStats>, Weekday<CatchingStats> });
 stat_type_stats!(ByDayOfWeekPlayoffsStats { Weekday<HittingStats>, Weekday<PitchingStats>, Weekday<FieldingStats>, Weekday<CatchingStats> });
 stat_type_stats!(HomeAndAwayStats { HomeAndAway<HittingStats>, HomeAndAway<PitchingStats>, HomeAndAway<FieldingStats>, HomeAndAway<CatchingStats> });
-stat_type_stats!(HomeAndAwayPlayoffsStats { HomeAndAway<HittingStats>, HomeAndAway<PitchingStats>, HomeAndAway<FieldingStats>, HomeAndAway<CatchingStats> });
 stat_type_stats!(WinLossStats { WinLoss<HittingStats>, WinLoss<PitchingStats>, WinLoss<FieldingStats>, WinLoss<CatchingStats> });
-stat_type_stats!(WinLossPlayoffsStats { WinLoss<HittingStats>, WinLoss<PitchingStats>, WinLoss<FieldingStats>, WinLoss<CatchingStats> });
 // 'rankings'?
 // 'rankingsByYear'?
-// 'statsSingleSeason'?
-// 'statsSingleSeasonAdvanced'?
 stat_type_stats!(HotColdZonesStats { HittingHotColdZones, PitchingHotColdZones, (), () });
-// 'availableStats'?
 stat_type_stats!(OpponentsFacedStats { Multiple<FieldedMatchup>, Multiple<FieldedMatchup>, Multiple<FieldedMatchup>, Multiple<FieldedMatchup> });
-// 'gameTypeStats'?
-// 'firstYearStats'?
-// 'lastYearStats'?
-// 'statSplits'?
-// 'statSplitsAdvanced'?
+stat_type_stats!(StatSplitsStats { Season<HittingStats>, Season<PitchingStats>, Season<FieldingStats>, Season<CatchingStats> });
+stat_type_stats!(StatSplitsAdvancedStats { Season<AdvancedHittingStats>, Season<AdvancedPitchingStats>, (), () });
 stat_type_stats!(AtGameStartStats { Multiple<Game<HittingStats>>, Multiple<Game<PitchingStats>>, Multiple<Game<FieldingStats>>, Multiple<Game<CatchingStats>> });
 // 'vsOpponents'?
 

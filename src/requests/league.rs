@@ -1,4 +1,4 @@
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
 use bon::Builder;
 use derive_more::{Deref, DerefMut};

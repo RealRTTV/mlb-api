@@ -6,7 +6,7 @@ use std::fmt::{Display, Formatter};
 use bon::Builder;
 use serde::de::Error;
 use crate::request::StatsAPIRequestUrl;
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 #[derive(Debug, Default, Deref, Display, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash, From)]
 #[repr(transparent)]
@@ -198,7 +198,7 @@ impl StatsAPIRequestUrl for SeasonsRequest {
 #[cfg(test)]
 mod tests {
 	use crate::season::SeasonsRequest;
-	use crate::sports::SportsRequest;
+	use crate::sport::SportsRequest;
 	use crate::TEST_YEAR;
 	use crate::request::StatsAPIRequestUrlBuilderExt;
 

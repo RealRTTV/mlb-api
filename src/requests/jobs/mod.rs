@@ -6,7 +6,7 @@ use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::job_types::JobTypeId;
 use crate::request::StatsAPIRequestUrl;
-use crate::sports::SportId;
+use crate::sport::SportId;
 
 pub mod datacasters;
 pub mod official_scorers;

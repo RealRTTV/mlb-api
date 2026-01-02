@@ -8,7 +8,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -630,7 +630,7 @@ mod tests {
 	use crate::TEST_YEAR;
 	use chrono::NaiveDate;
 	use crate::request::StatsAPIRequestUrlBuilderExt;
-	use crate::sports::SportId;
+	use crate::sport::SportId;
 
 	#[tokio::test]
 	async fn parse_current_year() {

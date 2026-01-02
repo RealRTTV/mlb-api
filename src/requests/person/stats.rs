@@ -6,10 +6,15 @@ use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use serde::de::{Deserializer, Error};
+use crate::__stats__request_data;
 use crate::hydrations::{HydrationText, Hydrations};
-use crate::stats::{PossiblyFallback, StatTypeStats, __ParsedStats, make_stat_split, SimplifiedGameLogStats, SimplifiedPlayLogStats, VsPlayer5YStats};
+use crate::stats::{PossiblyFallback, StatTypeStats, __ParsedStats, make_stat_split, Multiple, PlayStat, VsPlayer5YStats};
 use crate::request::StatsAPIRequestUrl;
 use crate::stat_groups::StatGroup;
+use crate::stats::catching::CatchingStats;
+use crate::stats::fielding::SimplifiedGameLogFieldingStats;
+use crate::stats::hitting::SimplifiedGameLogHittingStats;
+use crate::stats::pitching::SimplifiedGameLogPitchingStats;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct PersonSingleGameStatsResponse {
@@ -25,6 +30,9 @@ pub struct PersonSingleGameStatsRequest {
 	person_id: PersonId,
 	#[builder(into)]
 	game_id: GameId,
+	#[builder(into)]
+	#[builder(default)]
+	bonus: SingleGameStatsRequestData,
 }
 
 impl<S: person_single_game_stats_request_builder::State + person_single_game_stats_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PersonSingleGameStatsRequestBuilder<S> {
@@ -33,7 +41,7 @@ impl<S: person_single_game_stats_request_builder::State + person_single_game_sta
 
 impl Display for PersonSingleGameStatsRequest {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/people/{}/stats/game/{}", self.person_id, self.game_id)
+		write!(f, "http://statsapi.mlb.com/api/v1/people/{}/stats/game/{}?{}", self.person_id, self.game_id, self.bonus)
 	}
 }
 
@@ -59,16 +67,16 @@ mod tests {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStats {
-	pub simplified_game_log: SingleGameStatsSimplifiedGameLogSplit,
+	pub game_log: SingleGameStatsSimplifiedGameLogSplit,
 	pub vs_player5_y: SingleGameStatsVsPlayer5YSplit,
-	pub simplified_play_log: SingleGameStatsSimplifiedPlayLogSplit,
+	pub play_log: SingleGameStatsSimplifiedPlayLogSplit,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsSimplifiedGameLogSplit {
-	pub hitting: Box<PossiblyFallback<<SimplifiedGameLogStats as StatTypeStats>::Hitting>>,
-	pub pitching: Box<PossiblyFallback<<SimplifiedGameLogStats as StatTypeStats>::Pitching>>,
-	pub fielding: Box<PossiblyFallback<<SimplifiedGameLogStats as StatTypeStats>::Fielding>>,
+	pub hitting: Box<PossiblyFallback<<GameLogStats as StatTypeStats>::Hitting>>,
+	pub pitching: Box<PossiblyFallback<<GameLogStats as StatTypeStats>::Pitching>>,
+	pub fielding: Box<PossiblyFallback<<GameLogStats as StatTypeStats>::Fielding>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -79,7 +87,7 @@ pub struct SingleGameStatsVsPlayer5YSplit {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsSimplifiedPlayLogSplit {
-	pub hitting: Box<PossiblyFallback<<SimplifiedPlayLogStats as StatTypeStats>::Hitting>>,
+	pub hitting: Box<PossiblyFallback<<PlayLogStats as StatTypeStats>::Hitting>>,
 }
 
 impl<'de> Deserialize<'de> for SingleGameStats {
@@ -90,19 +98,19 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 		let mut parsed_stats: __ParsedStats = <__ParsedStats as Deserialize>::deserialize(deserializer)?;
 
 		Ok(Self {
-			simplified_game_log: SingleGameStatsSimplifiedGameLogSplit {
+			game_log: SingleGameStatsSimplifiedGameLogSplit {
 				hitting: Box::new(
-					make_stat_split::<<SimplifiedGameLogStats as StatTypeStats>::Hitting>(
+					make_stat_split::<<GameLogStats as StatTypeStats>::Hitting>(
 						&mut parsed_stats, "gameLog", StatGroup::Hitting,
 					).map_err(D::Error::custom)?
 				),
 				pitching: Box::new(
-					make_stat_split::<<SimplifiedGameLogStats as StatTypeStats>::Pitching>(
+					make_stat_split::<<GameLogStats as StatTypeStats>::Pitching>(
 						&mut parsed_stats, "gameLog", StatGroup::Pitching,
 					).map_err(D::Error::custom)?
 				),
 				fielding: Box::new(
-					make_stat_split::<<SimplifiedGameLogStats as StatTypeStats>::Fielding>(
+					make_stat_split::<<GameLogStats as StatTypeStats>::Fielding>(
 						&mut parsed_stats, "gameLog", StatGroup::Fielding,
 					).map_err(D::Error::custom)?
 				),
@@ -119,9 +127,9 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 					).map_err(D::Error::custom)?
 				),
 			},
-			simplified_play_log: SingleGameStatsSimplifiedPlayLogSplit {
+			play_log: SingleGameStatsSimplifiedPlayLogSplit {
 				hitting: Box::new(
-					make_stat_split::<<SimplifiedPlayLogStats as StatTypeStats>::Hitting>(
+					make_stat_split::<<PlayLogStats as StatTypeStats>::Hitting>(
 						&mut parsed_stats, "playLog", StatGroup::Hitting,
 					).map_err(D::Error::custom)?
 				),
@@ -130,11 +138,33 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 	}
 }
 
+pub struct GameLogStats;
+
+impl StatTypeStats for GameLogStats {
+	type Hitting = Option<SimplifiedGameLogHittingStats>;
+	type Pitching = Option<SimplifiedGameLogPitchingStats>;
+	type Fielding = Option<SimplifiedGameLogFieldingStats>;
+	type Catching = Option<CatchingStats>;
+}
+
+pub struct PlayLogStats;
+
+impl StatTypeStats for PlayLogStats {
+	type Hitting = Multiple<PlayStat>;
+	type Pitching = Multiple<PlayStat>;
+	type Fielding = Multiple<PlayStat>;
+	type Catching = Multiple<PlayStat>;
+}
+
 impl Hydrations for SingleGameStats {}
 
+__stats__request_data!(pub SingleGameStats [Season]);
+
 impl HydrationText for SingleGameStats {
-	fn hydration_text() -> Cow<'static, str> {
-		// actually works lol
+	type RequestData = SingleGameStatsRequestData;
+
+	fn hydration_text(_: &Self::RequestData) -> Cow<'static, str> {
+		// actually works for us lol
 		Cow::Borrowed("ERROR")
 	}
 }

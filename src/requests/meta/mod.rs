@@ -117,7 +117,7 @@ pub mod positions;
 pub mod review_reasons;
 pub mod roster_types;
 pub mod schedule_event_types;
-pub mod situation_codes;
+pub mod situations;
 pub mod sky;
 pub mod standings_types;
 pub mod stat_groups;

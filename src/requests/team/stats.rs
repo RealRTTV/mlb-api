@@ -4,7 +4,7 @@ use crate::game_types::GameType;
 use crate::person::PersonId;
 use crate::request::StatsAPIRequestUrl;
 use crate::season::SeasonId;
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::stat_groups::StatGroup;
 use crate::stat_types::StatType;
 use crate::stats::Stats;

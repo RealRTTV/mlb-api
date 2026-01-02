@@ -1,5 +1,5 @@
 use crate::league::NamedLeague;
-use crate::sports::SportId;
+use crate::sport::SportId;
 use crate::types::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
