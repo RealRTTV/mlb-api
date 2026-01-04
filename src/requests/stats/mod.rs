@@ -1,10 +1,6 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
 use crate::league::NamedLeague;
-use crate::stats::catching::CatchingStats;
-use crate::stats::fielding::{FieldingStats, SimplifiedGameLogFieldingStats};
-use crate::stats::hitting::{AdvancedHittingStats, HittingStats, SabermetricsHittingStats, SimplifiedGameLogHittingStats, VsPlayerHittingStats};
-use crate::stats::pitching::{AdvancedPitchingStats, PitchUsage, PitchingStats, SabermetricsPitchingStats, SimplifiedGameLogPitchingStats, VsPlayerPitchingStats};
 use crate::stats::units::PercentageStat;
 use crate::sport::SportId;
 use crate::types::{RGBAColor, SimpleTemperature};
@@ -30,17 +26,14 @@ use crate::person::NamedPerson;
 use crate::season::SeasonId;
 use crate::stat_groups::StatGroup;
 use crate::stat_types::StatType;
+use crate::stats::groups::pitching::PitchUsage;
 use crate::team::NamedTeam;
 
 pub mod macros;
-
+pub mod groups;
 pub mod pieces;
 pub mod piece_impls;
 pub mod leaders;
-pub mod hitting;
-pub mod pitching;
-pub mod fielding;
-pub mod catching;
 pub mod units;
 
 pub trait Stats: 'static + Debug + PartialEq + Eq + Clone + Hydrations {}
@@ -61,62 +54,6 @@ pub trait SingletonWrappedEntryStat: Debug + DeserializeOwned + Clone + PartialE
 
 }
 
-/// Wrapper type due to stupidity; [`PossiblyFallback`] is the cleanest solution to MLB api's stat problem.
-///
-/// Consider the case where a batter is polled for pitching stats. Instead of returning pitching stats for the season with a sample of 0 IP, 0 ER, etc. The stats data is removed from the response altogether.
-/// The solution is to give defaults for when the data doesn't exist. However, there are some problems with these defaults.
-/// Consider the case of [`VsPlayerStats`]. Here the data looks like:
-///
-///```
-///struct AccumulatedMatchup {
-///    stats: HittingStats,
-///    team: NamedTeam,
-///    opposing_team: NamedTeam,
-///    game_type: GameType
-///}
-///```
-///
-/// When creating defaults, for [`HittingStats`] is trivial.
-/// However for `opposing_team`, that is rather tricky. There has been no matchup with this hitter as the pitcher, so there is no most recent `opposing_team`.
-/// Because of this problem, the defaults are given the most sensible values possible, but some are still rather arbitrary ([`Weekday`] defaults to Monday).
-///
-///```
-///AccumulatedMatchup {
-///    stats: HittingStats::default(),
-///    team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
-///    opposing_team: NamedTeam { full_name: String::new(), id: TeamId::new(0) },
-///    game_type: GameType::RegularSeason,
-///}
-///```
-///
-/// <u>As a solution</u>, this wrapper is created, if you are able to discard stats, then you can filter real stats from default ones with `is_fallback`. However, if you want to get the expected batting average of a player in the 1950s, better `.000` than `Option<T>` and `unwrap`-ifying your whole codebase.
-#[derive(Debug, PartialEq, Eq, Deref, DerefMut, Clone, Copy)]
-pub struct PossiblyFallback<T> {
-	#[deref]
-	#[deref_mut]
-	value: T,
-	pub is_fallback: bool,
-}
-
-impl<T> PossiblyFallback<T> {
-	#[must_use]
-	pub const fn new(value: T) -> Self {
-		Self {
-			value,
-			is_fallback: false,
-		}
-	}
-}
-
-impl<T: Default> Default for PossiblyFallback<T> {
-	fn default() -> Self {
-		Self {
-			value: T::default(),
-			is_fallback: true,
-		}
-	}
-}
-
 impl<T: SingletonWrappedEntryStat> Stat for T {
 	type SplitWrappedVariant = Self;
 
@@ -131,23 +68,6 @@ impl<T: SingletonWrappedEntryStat> Stat for T {
 			.map(|[x]| x)
 	}
 }
-
-impl SingletonWrappedEntryStat for HittingStats {}
-impl SingletonWrappedEntryStat for VsPlayerHittingStats {}
-impl SingletonWrappedEntryStat for SimplifiedGameLogHittingStats {}
-impl SingletonWrappedEntryStat for AdvancedHittingStats {}
-impl SingletonWrappedEntryStat for SabermetricsHittingStats {}
-
-impl SingletonWrappedEntryStat for PitchingStats {}
-impl SingletonWrappedEntryStat for VsPlayerPitchingStats {}
-impl SingletonWrappedEntryStat for SimplifiedGameLogPitchingStats {}
-impl SingletonWrappedEntryStat for SabermetricsPitchingStats {}
-impl SingletonWrappedEntryStat for AdvancedPitchingStats {}
-
-impl SingletonWrappedEntryStat for FieldingStats {}
-impl SingletonWrappedEntryStat for SimplifiedGameLogFieldingStats {}
-
-impl SingletonWrappedEntryStat for CatchingStats {}
 
 pub trait StatTypeStats {
 	type Hitting: Stat;
@@ -266,7 +186,7 @@ pub enum MakeStatSplitsError<S: Stat> {
 }
 
 #[doc(hidden)]
-pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str: &'static str, target_stat_group: StatGroup) -> Result<PossiblyFallback<S>, MakeStatSplitsError<S>> {
+pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str: &'static str, target_stat_group: StatGroup) -> Result<S, MakeStatSplitsError<S>> {
 	if let Some(idx) = stats.entries.iter().position(|entry| entry.stat_type.as_str().eq_ignore_ascii_case(target_stat_type_str) && entry.stat_group == target_stat_group) {
 		let entry = stats.entries.remove(idx);
 		let partially_deserialized = entry.splits
@@ -279,12 +199,12 @@ pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str:
 			.map_err(MakeStatSplitsError::FailedPartialDeserialize)?;
 		let partially_deserialized_is_empty = partially_deserialized.is_empty();
 		match <S as Stat>::from_split_wrapped(partially_deserialized) {
-			Ok(s) => Ok(PossiblyFallback::new(s)),
-			Err(_) if partially_deserialized_is_empty => Ok(PossiblyFallback::<S>::default()),
+			Ok(s) => Ok(S::default()),
+			Err(_) if partially_deserialized_is_empty => Ok(S::default()),
 			Err(e) => Err(MakeStatSplitsError::FailedFullDeserialize(e)),
 		}
 	} else {
-		Ok(PossiblyFallback::<S>::default())
+		Ok(S::default())
 	}
 }
 
@@ -362,6 +282,25 @@ impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for Season<T> {
 
 }
 
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[serde(bound = "T: SingletonWrappedEntryStat")]
+pub struct Team<T: SingletonWrappedEntryStat> {
+	#[deref]
+	#[deref_mut]
+	#[serde(rename = "stat")]
+	stats: T,
+	pub team: NamedTeam,
+}
+
+impl<T: SingletonWrappedEntryStat> Default for Team<T> {
+	fn default() -> Self {
+		Self {
+			stats: T::default(),
+			team: NamedTeam::unknown_team(),
+		}
+	}
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct MultipleSeasons<T: SingletonWrappedEntryStat> {
 	pub seasons: FxHashMap<SeasonId, Season<T>>,
@@ -430,7 +369,6 @@ pub struct Player<T: SingletonWrappedEntryStat> {
 	stats: Season<T>,
 	pub player: NamedPerson,
 	pub game_type: GameType,
-	pub rank: u32,
 }
 
 impl<T: SingletonWrappedEntryStat> Default for Player<T> {
@@ -439,7 +377,6 @@ impl<T: SingletonWrappedEntryStat> Default for Player<T> {
 			stats: Season::default(),
 			player: NamedPerson::unknown_person(),
 			game_type: GameType::default(),
-			rank: 0,
 		}
 	}
 }
@@ -476,9 +413,8 @@ impl<T: SingletonWrappedEntryStat> SingletonWrappedEntryStat for SingleMatchup<T
 pub struct AccumulatedMatchup<T: SingletonWrappedEntryStat> {
 	#[deref]
 	#[deref_mut]
-	#[serde(rename = "stat")]
-	pub stats: T,
-	pub team: NamedTeam,
+	#[serde(flatten)]
+	pub stats: Team<T>,
 	#[serde(rename = "opponent")]
 	pub opposing_team: NamedTeam,
 	pub game_type: GameType,
@@ -488,7 +424,6 @@ impl<T: SingletonWrappedEntryStat> Default for AccumulatedMatchup<T> {
 	fn default() -> Self {
 		Self {
 			stats: T::default(),
-			team: NamedTeam::unknown_team(),
 			opposing_team: NamedTeam::unknown_team(),
 			game_type: GameType::default(),
 		}
@@ -1122,7 +1057,7 @@ pub struct PlayStat {
 	// pub play: Play,
 }
 
-// todo: replace with real struct
+// todo: replace with real struct once game stuff is implemented
 pub type PitchStat = ();
 
 impl SingletonWrappedEntryStat for PlayStat {}
@@ -1139,63 +1074,82 @@ impl<T: Stat> Stat for Option<T> {
 	}
 }
 
-macro_rules! stat_type_stats {
-    ($name:ident {
-	    $hitting:ty,
-	    $pitching:ty,
-	    $fielding:ty,
-	    $catching:ty $(,)?
-    }) => {
-	    pub struct $name;
+pub mod stat_types {
+	use super::*;
 
-	    impl StatTypeStats for $name {
-		    type Hitting = $hitting;
-		    type Pitching = $pitching;
-		    type Fielding = $fielding;
-		    type Catching = $catching;
-	    }
-    };
+	macro_rules! stat_type_stats {
+		($name:ident {
+			$hitting:ty,
+			$pitching:ty,
+			$fielding:ty,
+			$catching:ty $(,)?
+		}) => {
+			pub struct $name;
+
+			impl StatTypeStats for $name {
+				type Hitting = stat_type_stats!(@ $name :: Hitting = $hitting);
+				type Pitching = stat_type_stats!(@ $name :: Pitching = $pitching);
+				type Fielding = stat_type_stats!(@ $name :: Fielding = $fielding);
+				type Catching = stat_type_stats!(@ $name :: Catching = $catching);
+			}
+		};
+		(raw $name:ident {
+			$hitting:ty,
+			$pitching:ty,
+			$fielding:ty,
+			$catching:ty $(,)?
+		}) => {
+			pub struct $name;
+
+			impl StatTypeStats for $name {
+				type Hitting = $hitting;
+				type Pitching = $pitching;
+				type Fielding = $fielding;
+				type Catching = $catching;
+			}
+		};
+		(@ $name:ident :: $group:ident = !) => { () };
+		(@ $name:ident :: $group:ident = self) => { ::pastey::paste!($crate::stats::groups::[<$group:snake>]::$name) };
+		(@ $name:ident :: $group:ident = $($wrapper:ident <)* $last_wrapper:ident $($t:tt)*) => { ::pastey::paste!($($wrapper <)* $last_wrapper <$crate::stats::groups::[<$group:snake>]::$name> $($t)*) };
+	}
+
+	stat_type_stats!(Projected { Season<Player>, Season<Player>, !, ! });
+	stat_type_stats!(YearByYear { MultipleSeasons, MultipleSeasons, MultipleSeasons, MultipleSeasons });
+	stat_type_stats!(YearByYearAdvanced { MultipleSeasons, MultipleSeasons, !, ! });
+	stat_type_stats!(Season { Season, Season, Season, Season });
+	stat_type_stats!(Career { Career, Career, Career, Career });
+	stat_type_stats!(SeasonAdvanced { Season, Season, Season, Season });
+	stat_type_stats!(CareerAdvanced { Career, Career, Career, Career });
+	stat_type_stats!(GameLog { Multiple<Game>, Multiple<Game>, Multiple<Game>, Multiple<Game> });
+	stat_type_stats!(raw PlayLog { Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>> });
+	stat_type_stats!(raw PitchLog { Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>> });
+	// 'metricLog'?
+	// 'metricAverages'?
+	stat_type_stats!(raw PitchArsenal { Multiple<PitchUsage>, Multiple<PitchUsage>, (), () });
+	// 'outsAboveAverage'?
+	stat_type_stats!(ExpectedStatistics { Player, Player, !, ! });
+	stat_type_stats!(Sabermetrics { Player, Player, !, ! });
+	// stat_type_stats!(raw SprayChart { SprayChart, SprayChart, (), () }); // todo: does not have statGroup on the response
+	// 'tracking'?
+	// stat_type_stats!(VsPlayerStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
+	// stat_type_stats!(VsPlayerTotalStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
+	// stat_type_stats!(VsPlayer5Y { AccumulatedMatchup, AccumulatedMatchup, (), () });
+	// stat_type_stats!(VsTeamStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
+	// stat_type_stats!(VsTeam5YStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
+	// stat_type_stats!(VsTeamTotalStats { AccumulatedVsTeamTotalMatchup<HittingStats>, (), (), () });
+	stat_type_stats!(LastXGames { Team, Team, Team, Team });
+	stat_type_stats!(ByDateRange { Team, Team, Team, Team });
+	stat_type_stats!(ByDateRangeAdvanced { Team, Team, Team, Team });
+	stat_type_stats!(ByMonth { Month, Month, Month, Month });
+	stat_type_stats!(ByDayOfWeek { Weekday, Weekday, Weekday, Weekday });
+	stat_type_stats!(HomeAndAway { HomeAndAway, HomeAndAway, HomeAndAway, HomeAndAway });
+	stat_type_stats!(WinLoss { WinLoss, WinLoss, WinLoss, WinLoss });
+	stat_type_stats!(Rankings { Season<Player<Team>>, Season<Player<Team>>, Season<Player<Team>>, Season<Player<Team>> });
+	stat_type_stats!(RankingsByYear { MultipleSeasons<Player<Team>>, MultipleSeasons<Player<Team>>, MultipleSeasons<Player<Team>>, MultipleSeasons<Player<Team>> });
+	stat_type_stats!(raw HotColdZones { HittingHotColdZones, PitchingHotColdZones, (), () });
+	stat_type_stats!(OpponentsFaced { Multiple<FieldedMatchup>, Multiple<FieldedMatchup>, Multiple<FieldedMatchup>, Multiple<FieldedMatchup> });
+	stat_type_stats!(StatSplits { Season, Season, Season, Season });
+	stat_type_stats!(StatSplitsAdvanced { Season, Season, Season, Season });
+	stat_type_stats!(AtGameStart { Multiple<Game>, Multiple<Game>, Multiple<Game>, Multiple<Game> });
+	// 'vsOpponents'?
 }
-
-stat_type_stats!(ProjectedStats { Season<HittingStats>, Season<PitchingStats>, (), () }); // todo: it has more than this in the data
-stat_type_stats!(YearByYearStats { MultipleSeasons<HittingStats>, MultipleSeasons<PitchingStats>, MultipleSeasons<FieldingStats>, MultipleSeasons<CatchingStats> });
-stat_type_stats!(YearByYearAdvancedStats { MultipleSeasons<AdvancedHittingStats>, MultipleSeasons<AdvancedPitchingStats>, (), () });
-stat_type_stats!(SeasonStats { Season<HittingStats>, Season<PitchingStats>, Season<FieldingStats>, Season<CatchingStats> });
-stat_type_stats!(CareerStats { Career<HittingStats>, Career<PitchingStats>, Career<FieldingStats>, Career<CatchingStats> });
-stat_type_stats!(CareerAdvancedStats { Career<AdvancedHittingStats>, Career<AdvancedPitchingStats>, (), () });
-stat_type_stats!(SeasonAdvancedStats { Season<AdvancedHittingStats>, Season<AdvancedPitchingStats>, (), () });
-stat_type_stats!(GameLogStats { Multiple<Game<HittingStats>>, Multiple<Game<PitchingStats>>, Multiple<Game<FieldingStats>>, Multiple<Game<CatchingStats>> });
-stat_type_stats!(PlayLogStats { Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>>, Multiple<SingleMatchup<PlayStat>> });
-stat_type_stats!(PitchLogStats { Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>>, Multiple<SingleMatchup<PitchStat>> });
-// 'metricLog'?
-// 'metricAverages'?
-stat_type_stats!(PitchArsenalStats { Multiple<PitchUsage>, Multiple<PitchUsage>, (), () });
-// 'outsAboveAverage'?
-stat_type_stats!(ExpectedStatisticsStats { Player<ExpectedStats>, Player<ExpectedStats>, (), () });
-stat_type_stats!(SabermetricsStats { Player<SabermetricsHittingStats>, Player<SabermetricsPitchingStats>, (), () });
-stat_type_stats!(SprayChartStats { SprayChart, SprayChart, (), () });
-// 'tracking'?
-// stat_type_stats!(VsPlayerStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
-// stat_type_stats!(VsPlayerTotalStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
-stat_type_stats!(VsPlayer5YStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
-// stat_type_stats!(VsTeamStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
-// stat_type_stats!(VsTeam5YStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
-// stat_type_stats!(VsTeamTotalStats { AccumulatedVsTeamTotalMatchup<HittingStats>, (), (), () });
-stat_type_stats!(LastXGamesStats { HittingStats, PitchingStats, FieldingStats, CatchingStats });
-stat_type_stats!(ByDateRangeStats { HittingStats, PitchingStats, FieldingStats, CatchingStats });
-stat_type_stats!(ByDateRangeAdvancedStats { AdvancedHittingStats, AdvancedPitchingStats, (), () });
-stat_type_stats!(ByMonthStats { Month<HittingStats>, Month<PitchingStats>, Month<FieldingStats>, Month<CatchingStats> });
-stat_type_stats!(ByMonthPlayoffsStats { Month<HittingStats>, Month<PitchingStats>, Month<FieldingStats>, Month<CatchingStats> });
-stat_type_stats!(ByDayOfWeekStats { Weekday<HittingStats>, Weekday<PitchingStats>, Weekday<FieldingStats>, Weekday<CatchingStats> });
-stat_type_stats!(ByDayOfWeekPlayoffsStats { Weekday<HittingStats>, Weekday<PitchingStats>, Weekday<FieldingStats>, Weekday<CatchingStats> });
-stat_type_stats!(HomeAndAwayStats { HomeAndAway<HittingStats>, HomeAndAway<PitchingStats>, HomeAndAway<FieldingStats>, HomeAndAway<CatchingStats> });
-stat_type_stats!(WinLossStats { WinLoss<HittingStats>, WinLoss<PitchingStats>, WinLoss<FieldingStats>, WinLoss<CatchingStats> });
-// 'rankings'?
-// 'rankingsByYear'?
-stat_type_stats!(HotColdZonesStats { HittingHotColdZones, PitchingHotColdZones, (), () });
-stat_type_stats!(OpponentsFacedStats { Multiple<FieldedMatchup>, Multiple<FieldedMatchup>, Multiple<FieldedMatchup>, Multiple<FieldedMatchup> });
-stat_type_stats!(StatSplitsStats { Season<HittingStats>, Season<PitchingStats>, Season<FieldingStats>, Season<CatchingStats> });
-stat_type_stats!(StatSplitsAdvancedStats { Season<AdvancedHittingStats>, Season<AdvancedPitchingStats>, (), () });
-stat_type_stats!(AtGameStartStats { Multiple<Game<HittingStats>>, Multiple<Game<PitchingStats>>, Multiple<Game<FieldingStats>>, Multiple<Game<CatchingStats>> });
-// 'vsOpponents'?
-

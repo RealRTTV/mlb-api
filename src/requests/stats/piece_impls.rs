@@ -1,17 +1,17 @@
 #![allow(clippy::cast_lossless, reason = "this crate is not obsessed with producing the most accurate floating point representations of data, it's close enough for what we need.")]
 
 use crate::stats::pieces::{AtBatPiece, BaseOnBallsPiece, DecisionsPiece, EarnedRunsPiece, ExtraBaseHitsPiece, GamesPitchedPiece, HitByPitchPiece, HitsPiece, InningsPitchedPiece, IntentionalWalksPiece, PitchQuantityPiece, PlateAppearancePiece, RunsPiece, SacrificeHitsPiece, StealingPiece, StrikeoutsPiece, StrikesPiece, SwingDataPiece, TotalBasesPiece};
-use crate::stats::units::{PercentageStat, ThreeDecimalPlaceStat, TwoDecimalPlaceStat};
+use crate::stats::units::{PercentageStat, ThreeDecimalPlaceRateStat, TwoDecimalPlaceRateStat};
 
 pub trait AVGPiece {
 	/// # Batting Average
 	/// Describes the probability of a hit within an at bat, aka: the amount of hits per at bat
 	#[must_use]
-	fn avg(&self) -> ThreeDecimalPlaceStat;
+	fn avg(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: HitsPiece + AtBatPiece> AVGPiece for T {
-	fn avg(&self) -> ThreeDecimalPlaceStat {
+	fn avg(&self) -> ThreeDecimalPlaceRateStat {
 		(self.hits() as f64 / self.at_bats() as f64).into()
 	}
 }
@@ -20,11 +20,11 @@ pub trait SLGPiece {
 	/// # Slugging
 	/// Describes the amount of bases averaged per each at bat.
 	#[must_use]
-	fn slg(&self) -> ThreeDecimalPlaceStat;
+	fn slg(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: TotalBasesPiece + AtBatPiece> SLGPiece for T {
-	fn slg(&self) -> ThreeDecimalPlaceStat {
+	fn slg(&self) -> ThreeDecimalPlaceRateStat {
 		(self.total_bases() as f64 / self.at_bats() as f64).into()
 	}
 }
@@ -33,11 +33,11 @@ pub trait OBPPiece {
 	/// # On-Base Percentage
 	/// Describes the probability of getting on base by any form, HBP, Walk, Intentional Walk, etc. per each PA.
 	#[must_use]
-	fn obp(&self) -> ThreeDecimalPlaceStat;
+	fn obp(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: TimesOnBasePiece + OBPPlateAppearancesPiece> OBPPiece for T {
-	fn obp(&self) -> ThreeDecimalPlaceStat {
+	fn obp(&self) -> ThreeDecimalPlaceRateStat {
 		(self.times_on_base() as f64 / self.obp_plate_appearances() as f64).into()
 	}
 }
@@ -80,18 +80,18 @@ pub trait OPSPiece {
 	/// Adds OBP and SLG values together to make a new stat (yes, this means both components are weighted equally)
 	/// Typically this is used as a trivial way to rank performance, however if possible, using [`wOBAPiece::wOBA`]-like stats is recommended as they are generally more accurate.
 	#[must_use]
-	fn ops(&self) -> ThreeDecimalPlaceStat;
+	fn ops(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: OBPPiece + SLGPiece> OPSPiece for T {
-	fn ops(&self) -> ThreeDecimalPlaceStat {
+	fn ops(&self) -> ThreeDecimalPlaceRateStat {
 		self.obp() + self.slg()
 	}
 }
 
 pub trait TripleSlash: AVGPiece + OBPPiece + SLGPiece {
 	#[must_use]
-	fn triple_slash(&self) -> (ThreeDecimalPlaceStat, ThreeDecimalPlaceStat, ThreeDecimalPlaceStat) {
+	fn triple_slash(&self) -> (ThreeDecimalPlaceRateStat, ThreeDecimalPlaceRateStat, ThreeDecimalPlaceRateStat) {
 		(self.avg(), self.obp(), self.slg())
 	}
 }
@@ -100,20 +100,20 @@ pub trait StolenBasePctPiece {
 	/// # Stolen Base Percentage
 	/// Describes the probability of a stolen base, given an attempt
 	#[must_use]
-	fn stolen_base_pct(&self) -> ThreeDecimalPlaceStat;
+	fn stolen_base_pct(&self) -> ThreeDecimalPlaceRateStat;
 
 	/// # Caught Stealing Percentage
 	/// Describes the probability of failing to steal a base, given an attempt
 	#[must_use]
-	fn caught_stealing_pct(&self) -> ThreeDecimalPlaceStat;
+	fn caught_stealing_pct(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: StealingPiece> StolenBasePctPiece for T {
-	fn stolen_base_pct(&self) -> ThreeDecimalPlaceStat {
+	fn stolen_base_pct(&self) -> ThreeDecimalPlaceRateStat {
 		(self.stolen_bases() as f64 / self.stolen_base_attempts() as f64).into()
 	}
 
-	fn caught_stealing_pct(&self) -> ThreeDecimalPlaceStat {
+	fn caught_stealing_pct(&self) -> ThreeDecimalPlaceRateStat {
 		(self.caught_stealing() as f64 / self.stolen_base_attempts() as f64).into()
 	}
 }
@@ -135,11 +135,11 @@ pub trait BAFieldPiece {
 	/// This stat is typically used as a "luck-indicator" stat. Being around .400 or greater is generally considered lucky, however below .300 or so is considered unlucky.\
 	/// Using expected stats (ex: `xwOBA` or `xAVG`) and comparing to the actual-outcome stats (ex: `wOBA` and `AVG`) generally gives a clearer indicator of luck, however these numbers are harder to find.
 	#[must_use]
-	fn babip(&self) -> ThreeDecimalPlaceStat;
+	fn babip(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: HitsPiece + ExtraBaseHitsPiece + AtBatPiece + StrikeoutsPiece + SacrificeHitsPiece> BAFieldPiece for T {
-	fn babip(&self) -> ThreeDecimalPlaceStat {
+	fn babip(&self) -> ThreeDecimalPlaceRateStat {
 		// would be more accurate if we could account for inside-the-park home-runs
 		((self.hits() - self.home_runs()) as f64 / (self.at_bats() - self.strikeouts() - self.home_runs() + self.sac_flies()) as f64).into()
 	}
@@ -186,11 +186,11 @@ pub trait ISOPiece {
 	/// # Isolated Power
 	/// Describes the amount of extra bases hit per at bat.
 	#[must_use]
-	fn iso(&self) -> ThreeDecimalPlaceStat;
+	fn iso(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: AtBatPiece + ExtraBaseHitsPiece> ISOPiece for T {
-	fn iso(&self) -> ThreeDecimalPlaceStat {
+	fn iso(&self) -> ThreeDecimalPlaceRateStat {
 		(self.extra_bases() as f64 / self.at_bats() as f64).into()
 	}
 }
@@ -199,11 +199,11 @@ pub trait StrikeoutToWalkRatioPiece {
 	/// # K/BB Ratio (Strikeout to Walk Ratio)
 	/// Ratio between strikeouts and walks
 	#[must_use]
-	fn strikeout_to_walk_ratio(&self) -> TwoDecimalPlaceStat;
+	fn strikeout_to_walk_ratio(&self) -> TwoDecimalPlaceRateStat;
 }
 
 impl<T: StrikeoutsPiece + BaseOnBallsPiece> StrikeoutToWalkRatioPiece for T {
-	fn strikeout_to_walk_ratio(&self) -> TwoDecimalPlaceStat {
+	fn strikeout_to_walk_ratio(&self) -> TwoDecimalPlaceRateStat {
 		(self.base_on_balls() as f64 / self.strikeouts() as f64).into()
 	}
 }
@@ -238,11 +238,11 @@ pub trait ERAPiece {
 	/// # Earned Run Average
 	/// The expected number of earned runs to be given up over nine innings of pitching.
 	#[must_use]
-	fn era(&self) -> ThreeDecimalPlaceStat;
+	fn era(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: EarnedRunsPiece + InningsPitchedPiece> ERAPiece for T {
-	fn era(&self) -> ThreeDecimalPlaceStat {
+	fn era(&self) -> ThreeDecimalPlaceRateStat {
 		(self.earned_runs() as f64 / self.innings_pitched().as_fraction() * 9.0).into()
 	}
 }
@@ -251,11 +251,11 @@ pub trait WHIPPiece {
 	/// # Walks & Hits per Inning Pitched
 	/// Described in title.
 	#[must_use]
-	fn whip(&self) -> ThreeDecimalPlaceStat;
+	fn whip(&self) -> ThreeDecimalPlaceRateStat;
 }
 
 impl<T: BaseOnBallsPiece + HitsPiece + InningsPitchedPiece> WHIPPiece for T {
-	fn whip(&self) -> ThreeDecimalPlaceStat {
+	fn whip(&self) -> ThreeDecimalPlaceRateStat {
 		((self.base_on_balls() + self.hits()) as f64 / self.innings_pitched().as_fraction()).into()
 	}
 }
@@ -290,11 +290,11 @@ pub trait PitchesPerInningsPitchedPiece {
 	/// # Pitches per Inning Pitched
 	/// Described in title.
 	#[must_use]
-	fn pitches_per_inning(&self) -> TwoDecimalPlaceStat;
+	fn pitches_per_inning(&self) -> TwoDecimalPlaceRateStat;
 }
 
 impl<T: PitchQuantityPiece + InningsPitchedPiece> PitchesPerInningsPitchedPiece for T {
-	fn pitches_per_inning(&self) -> TwoDecimalPlaceStat {
+	fn pitches_per_inning(&self) -> TwoDecimalPlaceRateStat {
 		(self.num_pitches() as f64 / self.innings_pitched().as_fraction()).into()
 	}
 }
@@ -303,11 +303,11 @@ pub trait StrikeoutsPerNineInningsPitched {
 	/// # Strikeouts per 9 Innings
 	/// Described in title.
 	#[must_use]
-	fn strikeouts_per_nine_innings(&self) -> TwoDecimalPlaceStat;
+	fn strikeouts_per_nine_innings(&self) -> TwoDecimalPlaceRateStat;
 }
 
 impl<T: StrikeoutsPiece + InningsPitchedPiece> StrikeoutsPerNineInningsPitched for T {
-	fn strikeouts_per_nine_innings(&self) -> TwoDecimalPlaceStat {
+	fn strikeouts_per_nine_innings(&self) -> TwoDecimalPlaceRateStat {
 		(self.strikeouts() as f64 / self.innings_pitched().as_fraction() * 9.0).into()
 	}
 }
@@ -316,11 +316,11 @@ pub trait WalksPerNineInningsPitched {
 	/// # Walks per 9 Innings
 	/// Described in title.
 	#[must_use]
-	fn walks_per_nine_innings(&self) -> TwoDecimalPlaceStat;
+	fn walks_per_nine_innings(&self) -> TwoDecimalPlaceRateStat;
 }
 
 impl<T: BaseOnBallsPiece + InningsPitchedPiece> WalksPerNineInningsPitched for T {
-	fn walks_per_nine_innings(&self) -> TwoDecimalPlaceStat {
+	fn walks_per_nine_innings(&self) -> TwoDecimalPlaceRateStat {
 		(self.base_on_balls() as f64 / self.innings_pitched().as_fraction() * 9.0).into()
 	}
 }
@@ -329,11 +329,11 @@ pub trait HitsPerNineInningsPitched {
 	/// # Hits per 9 Innings
 	/// Described in title.
 	#[must_use]
-	fn hits_per_nine_innings(&self) -> TwoDecimalPlaceStat;
+	fn hits_per_nine_innings(&self) -> TwoDecimalPlaceRateStat;
 }
 
 impl<T: HitsPiece + InningsPitchedPiece> HitsPerNineInningsPitched for T {
-	fn hits_per_nine_innings(&self) -> TwoDecimalPlaceStat {
+	fn hits_per_nine_innings(&self) -> TwoDecimalPlaceRateStat {
 		(self.hits() as f64 / self.innings_pitched().as_fraction() * 9.0).into()
 	}
 }
@@ -342,11 +342,11 @@ pub trait RunAveragePerNineInningsPitched {
 	/// # Runs scored per 9 Innings
 	/// Described in title.
 	#[must_use]
-	fn runs_scored_per_nine_innings(&self) -> TwoDecimalPlaceStat;
+	fn runs_scored_per_nine_innings(&self) -> TwoDecimalPlaceRateStat;
 }
 
 impl<T: RunsPiece + InningsPitchedPiece> RunAveragePerNineInningsPitched for T {
-	fn runs_scored_per_nine_innings(&self) -> TwoDecimalPlaceStat {
+	fn runs_scored_per_nine_innings(&self) -> TwoDecimalPlaceRateStat {
 		(self.runs() as f64 / self.innings_pitched().as_fraction() * 9.0).into()
 	}
 }
@@ -355,11 +355,11 @@ pub trait HomeRunsPerNineInningsPitched {
 	/// # Home Runs per 9 Innings
 	/// Described in title.
 	#[must_use]
-	fn home_runs_per_nine_innings(&self) -> TwoDecimalPlaceStat;
+	fn home_runs_per_nine_innings(&self) -> TwoDecimalPlaceRateStat;
 }
 
 impl<T: ExtraBaseHitsPiece + InningsPitchedPiece> HomeRunsPerNineInningsPitched for T {
-	fn home_runs_per_nine_innings(&self) -> TwoDecimalPlaceStat {
+	fn home_runs_per_nine_innings(&self) -> TwoDecimalPlaceRateStat {
 		(self.home_runs() as f64 / self.innings_pitched().as_fraction() * 9.0).into()
 	}
 }

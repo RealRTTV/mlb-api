@@ -74,20 +74,20 @@ pub struct SingleGameStats {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsSimplifiedGameLogSplit {
-	pub hitting: Box<PossiblyFallback<<GameLogStats as StatTypeStats>::Hitting>>,
-	pub pitching: Box<PossiblyFallback<<GameLogStats as StatTypeStats>::Pitching>>,
-	pub fielding: Box<PossiblyFallback<<GameLogStats as StatTypeStats>::Fielding>>,
+	pub hitting: Box<<GameLogStats as StatTypeStats>::Hitting>,
+	pub pitching: Box<<GameLogStats as StatTypeStats>::Pitching>,
+	pub fielding: Box<<GameLogStats as StatTypeStats>::Fielding>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsVsPlayer5YSplit {
-	pub hitting: Box<PossiblyFallback<<VsPlayer5YStats as StatTypeStats>::Hitting>>,
-	pub pitching: Box<PossiblyFallback<<VsPlayer5YStats as StatTypeStats>::Pitching>>,
+	pub hitting: Box<<VsPlayer5YStats as StatTypeStats>::Hitting>,
+	pub pitching: Box<<VsPlayer5YStats as StatTypeStats>::Pitching>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsSimplifiedPlayLogSplit {
-	pub hitting: Box<PossiblyFallback<<PlayLogStats as StatTypeStats>::Hitting>>,
+	pub hitting: Box<<PlayLogStats as StatTypeStats>::Hitting>,
 }
 
 impl<'de> Deserialize<'de> for SingleGameStats {

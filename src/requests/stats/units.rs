@@ -7,16 +7,16 @@ use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Deref, DerefMut, From, Add, Copy, Clone)]
-pub struct ThreeDecimalPlaceStat(f64);
+pub struct ThreeDecimalPlaceRateStat(f64);
 
-impl ThreeDecimalPlaceStat {
+impl ThreeDecimalPlaceRateStat {
 	#[must_use]
 	pub const fn new(inner: f64) -> Self {
 		Self(inner)
 	}
 }
 
-impl Display for ThreeDecimalPlaceStat {
+impl Display for ThreeDecimalPlaceRateStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "{}", format!("{:.3}", self.0).trim_start_matches('0'))
 	}
@@ -78,16 +78,16 @@ impl Debug for PercentageStat {
 }
 
 #[derive(Deref, DerefMut, From, Add, Copy, Clone)]
-pub struct TwoDecimalPlaceStat(f64);
+pub struct TwoDecimalPlaceRateStat(f64);
 
-impl TwoDecimalPlaceStat {
+impl TwoDecimalPlaceRateStat {
 	#[must_use]
 	pub const fn new(inner: f64) -> Self {
 		Self(inner)
 	}
 }
 
-impl Display for TwoDecimalPlaceStat {
+impl Display for TwoDecimalPlaceRateStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "{:.2}", self.0)
 	}
@@ -191,5 +191,39 @@ impl FromStr for InningsPitched {
 		let whole_innings = major.parse::<u32>().map_err(|_| InningsPitchedFromStrError::InvalidWholeInningsQuantity(major.to_owned()))?;
 		let Ok(outs @ 0..3) = minor.parse::<u8>() else { return Err(InningsPitchedFromStrError::InvalidOutsQuantity(minor.to_owned())) };
 		Ok(Self::new(whole_innings, outs))
+	}
+}
+
+#[derive(Deref, DerefMut, From, Add, Copy, Clone)]
+pub struct PlusStat(f64);
+
+impl PlusStat {
+	#[must_use]
+	pub const fn new(x: f64) -> Self {
+		Self(x)
+	}
+}
+
+impl Display for PlusStat {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}", self.0.round() as i64)
+	}
+}
+
+/// Ex: Hits
+pub type CountingStat = u32;
+
+pub struct FloatCountingStat<const N: usize>(f64);
+
+impl<const N: usize> FloatCountingStat<N> {
+	#[must_use]
+	pub const fn new(x: f64) -> Self {
+		Self(x)
+	}
+}
+
+impl<const N: usize> Display for FloatCountingStat<N> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{:.N$}", self.0)
 	}
 }
