@@ -1,27 +1,44 @@
 use chrono::{NaiveDate, Utc};
-use derive_more::{AsMut, AsRef, Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use crate::game::GameId;
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
+use crate::stats::wrappers::{GamePiece, OpposingTeamPiece, SeasonPiece};
 use crate::team::NamedTeam;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut, AsRef, AsMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct WithGame<T: RawStat> {
 	pub opponent: NamedTeam,
 	pub date: NaiveDate,
 	pub is_home: bool,
-	#[as_ref] #[as_mut]
 	pub game: GameId,
-	#[as_ref] #[as_mut]
 	pub season: SeasonId,
 
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
 	stats: T,
+}
+
+impl<T: RawStat> SeasonPiece for WithGame<T> {
+	fn season(&self) -> &SeasonId {
+		&self.season
+	}
+}
+
+impl<T: RawStat> OpposingTeamPiece for WithGame<T> {
+	fn opposing_team(&self) -> &NamedTeam {
+		&self.opponent
+	}
+}
+
+impl<T: RawStat> GamePiece for WithGame<T> {
+	fn game(&self) -> &GameId {
+		&self.game
+	}
 }
 
 impl<T: RawStat> Default for WithGame<T> {

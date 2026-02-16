@@ -1,12 +1,11 @@
-use derive_more::{AsMut, AsRef, Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::team::NamedTeam;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut, AsRef, AsMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(bound = "T: RawStat")]
 pub struct WithTeam<T: RawStat> {
-	#[as_ref] #[as_mut]
 	pub team: NamedTeam,
 	
 	#[deref]

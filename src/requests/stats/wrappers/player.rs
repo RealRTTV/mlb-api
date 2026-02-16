@@ -1,25 +1,29 @@
-use derive_more::{AsMut, AsRef, Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use crate::game_types::GameType;
 use crate::person::NamedPerson;
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
+use crate::stats::wrappers::SeasonPiece;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut, AsRef, AsMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct WithPlayer<T: RawStat> {
-	#[as_ref] #[as_mut]
 	pub player: NamedPerson,
-	#[as_ref] #[as_mut]
 	pub game_type: GameType,
-	#[as_ref] #[as_mut]
 	pub season: SeasonId,
 
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
 	stats: T,
+}
+
+impl<T: RawStat> SeasonPiece for WithPlayer<T> {
+	fn season(&self) -> &SeasonId {
+		&self.season
+	}
 }
 
 impl<T: RawStat> Default for WithPlayer<T> {

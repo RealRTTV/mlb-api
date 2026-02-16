@@ -110,7 +110,7 @@ impl From<TeamRaw> for Team {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedTeam {
 	#[serde(alias = "name")]

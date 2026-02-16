@@ -18,7 +18,7 @@ pub struct LeagueResponse {
 	pub leagues: Vec<League>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedLeague {
 	pub name: String,

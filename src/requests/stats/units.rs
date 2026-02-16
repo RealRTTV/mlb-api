@@ -16,13 +16,73 @@ impl ThreeDecimalPlaceRateStat {
 	}
 }
 
+impl FromStr for ThreeDecimalPlaceRateStat {
+	type Err = <f64 as FromStr>::Err;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		if s == ".---" {
+			Ok(Self(f64::NAN))
+		} else {
+			Ok(Self(f64::from_str(s)?))
+		}
+	}
+}
+
+impl<'de> Deserialize<'de> for ThreeDecimalPlaceRateStat {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		struct StatVisitor;
+
+		impl Visitor<'_> for StatVisitor {
+			type Value = ThreeDecimalPlaceRateStat;
+
+			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+				formatter.write_str("a float or string or .---")
+			}
+
+			fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E> {
+				Ok(ThreeDecimalPlaceRateStat::new(v))
+			}
+
+			fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				ThreeDecimalPlaceRateStat::from_str(&v).map_err(E::custom)
+			}
+		}
+
+		deserializer.deserialize_any(StatVisitor)
+	}
+}
+
+impl PartialEq for ThreeDecimalPlaceRateStat {
+	fn eq(&self, other: &Self) -> bool {
+		self.0 == other.0 || self.is_nan() && other.is_nan()
+	}
+}
+
+impl Default for ThreeDecimalPlaceRateStat {
+	fn default() -> Self {
+		Self(f64::NAN)
+	}
+}
+
 impl Display for ThreeDecimalPlaceRateStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		if self.0.is_normal() {
-			write!(f, "{}", format!("{:.3}", self.0).trim_start_matches('0'))
-		} else {
+		if self.0.is_nan() {
 			write!(f, ".---")
+		} else {
+			write!(f, "{}", format!("{:.3}", self.0).trim_start_matches('0'))
 		}
+	}
+}
+
+impl Debug for ThreeDecimalPlaceRateStat {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		<Self as Display>::fmt(self, f)
 	}
 }
 
@@ -71,10 +131,10 @@ impl<'de> Deserialize<'de> for PercentageStat {
 
 impl Display for PercentageStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		if self.is_normal() {
-			write!(f, "{:.2}%", self.0 * 100.0)
-		} else {
+		if self.is_nan() {
 			write!(f, "--.-%")
+		} else {
+			write!(f, "{:.2}%", self.0 * 100.0)
 		}
 	}
 }
@@ -95,13 +155,67 @@ impl TwoDecimalPlaceRateStat {
 	}
 }
 
+impl<'de> Deserialize<'de> for TwoDecimalPlaceRateStat {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		struct StatVisitor;
+
+		impl Visitor<'_> for StatVisitor {
+			type Value = TwoDecimalPlaceRateStat;
+
+			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+				formatter.write_str("a float or string or -.--")
+			}
+
+			fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E> {
+				Ok(TwoDecimalPlaceRateStat::new(v))
+			}
+
+			fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				TwoDecimalPlaceRateStat::from_str(&v).map_err(E::custom)
+			}
+		}
+
+		deserializer.deserialize_any(StatVisitor)
+	}
+}
+
+impl FromStr for TwoDecimalPlaceRateStat {
+	type Err = <f64 as FromStr>::Err;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		if s == "-.--" {
+			Ok(Self(f64::NAN))
+		} else {
+			Ok(Self(f64::from_str(s)?))
+		}
+	}
+}
+
+impl PartialEq for TwoDecimalPlaceRateStat {
+	fn eq(&self, other: &Self) -> bool {
+		self.0 == other.0 || self.is_nan() && other.is_nan()
+	}
+}
+
 impl Display for TwoDecimalPlaceRateStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		if self.0.is_normal() {
-			write!(f, "{:.2}", self.0)
-		} else {
+		if self.is_nan() {
 			write!(f, "-.--")
+		} else {
+			write!(f, "{:.2}", self.0)
 		}
+	}
+}
+
+impl Debug for TwoDecimalPlaceRateStat {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		<Self as Display>::fmt(self, f)
 	}
 }
 
@@ -218,10 +332,10 @@ impl PlusStat {
 
 impl Display for PlusStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		if self.0.is_normal() {
-			write!(f, "{}", self.0.round() as i64)
-		} else {
+		if self.is_nan() {
 			write!(f, "-")
+		} else {
+			write!(f, "{}", self.0.round() as i64)
 		}
 	}
 }
@@ -229,7 +343,12 @@ impl Display for PlusStat {
 /// Ex: Hits
 pub type CountingStat = u32;
 
+#[derive(Deserialize, PartialEq, Copy, Clone, Deref, DerefMut)]
 pub struct FloatCountingStat<const N: usize>(f64);
+
+impl<const N: usize> Eq for FloatCountingStat<N> {
+
+}
 
 impl<const N: usize> FloatCountingStat<N> {
 	#[must_use]
@@ -240,10 +359,16 @@ impl<const N: usize> FloatCountingStat<N> {
 
 impl<const N: usize> Display for FloatCountingStat<N> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		if self.0.is_normal() {
-			write!(f, "{:.N$}", self.0)
-		} else {
+		if self.0.is_nan() {
 			write!(f, "{:.N$}", "")
+		} else {
+			write!(f, "{:->N$}", self.0)
 		}
+	}
+}
+
+impl<const N: usize> Debug for FloatCountingStat<N> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		<Self as Display>::fmt(self, f)
 	}
 }

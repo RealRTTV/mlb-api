@@ -121,7 +121,7 @@ impl<H: PersonHydrations> RegularPerson<H> {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPerson {
 	// todo: rework to be like name in Team
@@ -546,7 +546,6 @@ mod tests {
 	use crate::team::roster::RosterRequest;
 	use crate::team::teams::TeamsRequest;
 	use crate::{stats, TEST_YEAR};
-	use crate::situations::SituationCodeId;
 
 	#[tokio::test]
 	async fn no_hydrations() {
@@ -586,7 +585,7 @@ mod tests {
 	async fn only_stats_hydrations() {
 		stats! {
 			pub struct BasicStats {
-				[StatSplits] = [Hitting, Pitching]
+				[Sabermetrics] = [Pitching]
 			}
 		}
 
@@ -616,7 +615,7 @@ mod tests {
 		let player = roster
 			.roster
 			.into_iter()
-			.find(|player| player.person.full_name == "Vladimir Guerrero Jr.")
+			.find(|player| player.person.full_name == "Kevin Gausman")
 			.unwrap();
 
 		let request = PersonRequest::<StatOnlyHydrations>::builder()
@@ -624,7 +623,7 @@ mod tests {
 			.hydrations(StatOnlyHydrations::builder()
 				.stats(BasicStats::builder()
 					.season(2023)
-					.situation(SituationCodeId::new("h"))
+					// .situation(SituationCodeId::new("h"))
 				)
 			).build();
 		println!("{request}");

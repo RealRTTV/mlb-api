@@ -1,28 +1,51 @@
-use derive_more::{AsMut, AsRef, Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use crate::game_types::GameType;
 use crate::person::NamedPerson;
 use crate::stats::{RawStat, SingletonSplitStat};
+use crate::stats::wrappers::{AccumulatedMatchup, BatterPiece, GameTypePiece, OpposingTeamPiece, PitcherPiece, TeamPiece};
 use crate::team::NamedTeam;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut, AsRef, AsMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct AccumulatedVsPlayerMatchup<T: RawStat> {
 	pub pitcher: NamedPerson,
 	pub batter: NamedPerson,
 
-	#[serde(rename = "opponent")]
-	pub opposing_team: NamedTeam,
-	#[as_ref] #[as_mut]
-	pub game_type: GameType,
-	#[as_ref] #[as_mut]
-	pub team: NamedTeam,
-	
 	#[deref]
 	#[deref_mut]
-	#[serde(rename = "stat")]
-	stats: T,
+	inner: AccumulatedMatchup<T>,
+}
+
+impl<T: RawStat> OpposingTeamPiece for AccumulatedVsPlayerMatchup<T> {
+	fn opposing_team(&self) -> &NamedTeam {
+		&self.opposing_team
+	}
+}
+
+impl<T: RawStat> GameTypePiece for AccumulatedVsPlayerMatchup<T> {
+	fn game_type(&self) -> &GameType {
+		&self.game_type
+	}
+}
+
+impl<T: RawStat> TeamPiece for AccumulatedVsPlayerMatchup<T> {
+	fn team(&self) -> &NamedTeam {
+		&self.team
+	}
+}
+
+impl<T: RawStat> PitcherPiece for AccumulatedVsPlayerMatchup<T> {
+	fn pitcher(&self) -> &NamedPerson {
+		&self.pitcher
+	}
+}
+
+impl<T: RawStat> BatterPiece for AccumulatedVsPlayerMatchup<T> {
+	fn batter(&self) -> &NamedPerson {
+		&self.batter
+	}
 }
 
 impl<T: RawStat> Default for AccumulatedVsPlayerMatchup<T> {
@@ -31,11 +54,7 @@ impl<T: RawStat> Default for AccumulatedVsPlayerMatchup<T> {
 			pitcher: NamedPerson::unknown_person(),
 			batter: NamedPerson::unknown_person(),
 			
-			opposing_team: NamedTeam::unknown_team(),
-			game_type: GameType::default(),
-			team: NamedTeam::unknown_team(),
-			
-			stats: T::default(),
+			inner: AccumulatedMatchup::default(),
 		}
 	}
 }

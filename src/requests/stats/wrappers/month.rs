@@ -1,21 +1,33 @@
-use derive_more::{AsMut, AsRef, Deref, DerefMut};
+use chrono::Month;
+use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
+use crate::stats::wrappers::{MonthPiece, SeasonPiece};
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut, AsRef, AsMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct WithMonth<T: RawStat> {
-	#[as_ref] #[as_mut]
 	pub month: chrono::Month,
-	#[as_ref] #[as_mut]
 	pub season: SeasonId,
 
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
 	stats: T,
+}
+
+impl<T: RawStat> SeasonPiece for WithMonth<T> {
+	fn season(&self) -> &SeasonId {
+		&self.season
+	}
+}
+
+impl<T: RawStat> MonthPiece for WithMonth<T> {
+	fn month(&self) -> &Month {
+		&self.month
+	}
 }
 
 impl<T: RawStat> Default for WithMonth<T> {

@@ -1,205 +1,216 @@
 group_and_type!(YearByYear {
-	age
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	position
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"age" => age,
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(Season {
-	age
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	position
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"age" => age,
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(Career {
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	position
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(GameLog {
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	position
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(LastXGames {
-	gamesPlayed
-	gamesStarted
-	assists
-	putOuts
-	errors
-	chances
-	position
-	games
-	doublePlays
-	triplePlays
-	throwingErrors
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"games" => games,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"throwingErrors" => throwing_errors,
 });
 group_and_type!(ByDateRange {
-	gamesPlayed
-	gamesStarted
-	assists
-	putOuts
-	errors
-	chances
-	position
-	innings
-	games
-	doublePlays
-	triplePlays
-	throwingErrors
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"throwingErrors" => throwing_errors,
 });
 group_and_type!(ByDateRangeAdvanced {
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	position
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(ByMonth {
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(ByDayOfWeek {
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(HomeAndAway {
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
 });
 group_and_type!(WinLoss {
-	gamesPlayed
-	gamesStarted
-	caughtStealing
-	stolenBases
-	assists
-	putOuts
-	errors
-	chances
-	innings
-	games
-	passedBall
-	doublePlays
-	triplePlays
-	catchersInterference
-	wildPitches
-	throwingErrors
-	pickoffs
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"innings" => innings,
+	"games" => games,
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	"catchersInterference" => catchers_interference,
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	"pickoffs" => pickoffs,
+});
+group_and_type!(SimplifiedGameLog {
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"passedBall" => passed_balls,
+	"pickoffs" => pickoffs,
 });

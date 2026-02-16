@@ -1,4 +1,4 @@
-use crate::stats::{RawStat, SingletonSplitStat, Stat};
+use crate::stats::{SingletonSplitStat, Stat};
 use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
 use std::collections::hash_map::Entry;
@@ -6,26 +6,48 @@ use std::fmt::{Debug, Formatter};
 use std::hash::Hash;
 use thiserror::Error;
 
-#[derive(Debug, PartialEq, Eq, Clone, Deref, DerefMut)]
-pub struct Map<T, A: Hash + Clone + Debug + Eq> where T: AsRef<A> {
-	inner: FxHashMap<A, T>,
+#[derive(Deref, DerefMut)]
+pub struct Map<T: SingletonSplitStat, A: MapKey<T>> {
+	inner: FxHashMap<A::Key, T>,
+}
+
+impl<T: SingletonSplitStat, A: MapKey<T>> Debug for Map<T, A> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		self.inner.fmt(f)
+	}
+}
+
+impl<T: SingletonSplitStat, A: MapKey<T>> PartialEq for Map<T, A> {
+	fn eq(&self, other: &Self) -> bool {
+		self.inner == other.inner
+	}
+}
+
+impl<T: SingletonSplitStat, A: MapKey<T>> Eq for Map<T, A> {}
+
+impl<T: SingletonSplitStat, A: MapKey<T>> Clone for Map<T, A> {
+	fn clone(&self) -> Self {
+		Self {
+			inner: self.inner.clone(),
+		}
+	}
 }
 
 #[derive(Debug, Error)]
-pub enum MapFromSplitWrappedVariantError<A: Hash + Clone + Debug + Eq> {
+pub enum MapFromSplitWrappedVariantError<T, A: MapKey<T>> {
 	#[error("Duplicate entry for key {key:?} found")]
-	DuplicateEntry { key: A },
+	DuplicateEntry { key: A::Key },
 }
 
-impl<A: Hash + Clone + Debug + Eq, T: AsRef<A>> Default for Map<T, A> {
+impl<T: SingletonSplitStat, A: MapKey<T>> Default for Map<T, A> {
 	fn default() -> Self {
 		Self { inner: FxHashMap::default() }
 	}
 }
 
-impl<A: Hash + Clone + Debug + Eq, T: AsRef<A> + SingletonSplitStat> Stat for Map<T, A> {
+impl<T: SingletonSplitStat, A: MapKey<T>> Stat for Map<T, A> {
 	type Split = T;
-	type TryFromSplitError = MapFromSplitWrappedVariantError<A>;
+	type TryFromSplitError = MapFromSplitWrappedVariantError<T, A>;
 
 	fn from_splits(splits: impl Iterator<Item=T>) -> Result<Self, Self::TryFromSplitError>
 	where
@@ -33,7 +55,7 @@ impl<A: Hash + Clone + Debug + Eq, T: AsRef<A> + SingletonSplitStat> Stat for Ma
 	{
 		let mut this = Self::default();
 		for split in splits {
-			let id: &A = T::as_ref(&split);
+			let id: A::Key = A::get_key(&split);
 			let id = id.clone();
 			match this.inner.entry(id.clone()) {
 				Entry::Occupied(_) => return Err(Self::TryFromSplitError::DuplicateEntry { key: id }),
@@ -46,20 +68,42 @@ impl<A: Hash + Clone + Debug + Eq, T: AsRef<A> + SingletonSplitStat> Stat for Ma
 	}
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Deref, DerefMut)]
-pub struct Map2D<T: SingletonSplitStat, A: Hash + Clone + Eq + Debug, B: Hash + Clone + Eq + Debug> where T: AsRef<A> + AsRef<B> {
-	inner: FxHashMap<A, FxHashMap<B, T>>,
+#[derive(Deref, DerefMut)]
+pub struct Map2D<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> {
+	inner: FxHashMap<A::Key, FxHashMap<B::Key, T>>,
 }
 
-impl<A: Hash + Clone + Eq + Debug, B: Hash + Clone + Eq + Debug, T: AsRef<A> + AsRef<B> + SingletonSplitStat> Default for Map2D<T, A, B> {
+impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Clone for Map2D<T, A, B> {
+	fn clone(&self) -> Self {
+		Self {
+			inner: self.inner.clone(),
+		}
+	}
+}
+
+impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Debug for Map2D<T, A, B> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		self.inner.fmt(f)
+	}
+}
+
+impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> PartialEq for Map2D<T, A, B> {
+	fn eq(&self, other: &Self) -> bool {
+		self.inner == other.inner
+	}
+}
+
+impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Eq for Map2D<T, A, B> {}
+
+impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Default for Map2D<T, A, B> {
 	fn default() -> Self {
 		Self { inner: FxHashMap::default() }
 	}
 }
 
-impl<A: Hash + Clone + Eq + Debug, B: Hash + Clone + Eq + Debug, T: AsRef<A> + AsRef<B> + SingletonSplitStat> Stat for Map2D<T, A, B> {
+impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Stat for Map2D<T, A, B> {
 	type Split = T;
-	type TryFromSplitError = MapFromSplitWrappedVariantError<B>;
+	type TryFromSplitError = MapFromSplitWrappedVariantError<T, B>;
 
 	fn from_splits(splits: impl Iterator<Item=Self::Split>) -> Result<Self, Self::TryFromSplitError>
 	where
@@ -67,8 +111,8 @@ impl<A: Hash + Clone + Eq + Debug, B: Hash + Clone + Eq + Debug, T: AsRef<A> + A
 	{
 		let mut this = Self::default();
 		for split in splits {
-			let id: A = <T as AsRef<A>>::as_ref(&split).clone();
-			let inner_id: B = <T as AsRef<B>>::as_ref(&split).clone();
+			let id: A::Key = A::get_key(&split);
+			let inner_id: B::Key = B::get_key(&split);
 			match this.inner.entry(id).or_insert_with(FxHashMap::default).entry(inner_id.clone()) {
 				Entry::Occupied(_) => return Err(Self::TryFromSplitError::DuplicateEntry { key: inner_id }),
 				Entry::Vacant(slot) => {
@@ -78,4 +122,10 @@ impl<A: Hash + Clone + Eq + Debug, B: Hash + Clone + Eq + Debug, T: AsRef<A> + A
 		}
 		Ok(this)
 	}
+}
+
+pub trait MapKey<T> {
+	type Key: Hash + Clone + Debug + Eq;
+
+	fn get_key(this: &T) -> Self::Key;
 }

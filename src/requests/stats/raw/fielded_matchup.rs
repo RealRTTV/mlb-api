@@ -1,7 +1,7 @@
-use serde::Deserialize;
 use crate::person::NamedPerson;
-use crate::stats::RawStat;
+use crate::stats::SingletonSplitStat;
 use crate::team::NamedTeam;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -21,4 +21,4 @@ impl Default for FieldedMatchup {
 	}
 }
 
-impl RawStat for FieldedMatchup {}
+impl SingletonSplitStat for FieldedMatchup {}

@@ -1,6 +1,6 @@
 //! Shared types across multiple requests
 
-use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
+use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
 use compact_str::CompactString;
 use derive_more::{Display, FromStr};
 use serde::de::Error;
@@ -148,12 +148,13 @@ pub enum PlayerPool {
 	QualifiedAndCurrent,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
 pub enum Gender {
 	#[serde(rename = "M")]
 	Male,
 	#[serde(rename = "F")]
 	Female,
+	#[default]
 	#[serde(other)]
 	Other,
 }
@@ -198,19 +199,21 @@ pub(crate) const MLB_API_DATE_FORMAT: &str = "%m/%d/%Y";
 /// # Errors
 /// 1. If a string cannot be deserialized
 /// 2. If the data does not appear in the format `%Y-%m-%dT%H:%M:%SZ(%#z)?`. Why the MLB removes the +00:00 or -00:00 sometimes? I have no clue.
-pub fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -> Result<NaiveDateTime, D::Error> {
+pub(crate) fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -> Result<NaiveDateTime, D::Error> {
 	let string = String::deserialize(deserializer)?;
-	if string.ends_with('Z') {
-		NaiveDateTime::parse_from_str(&string, "%FT%TZ").map_err(D::Error::custom)
-	} else {
-		NaiveDateTime::parse_from_str(&string, "%FT%TZ%#z").map_err(D::Error::custom)
-	}
+	let fmt = match (string.ends_with('Z'), string.contains('.')) {
+		(false, false) => "%FT%TZ%#z",
+		(false, true) => "%FT%TZ%.3f%#z",
+		(true, false) => "%FT%TZ",
+		(true, true) => "%FT%T%.3fZ",
+	};
+	NaiveDateTime::parse_from_str(&string, fmt).map_err(D::Error::custom)
 }
 
 /// # Errors
 /// 1. If a string cannot be deserialized
 /// 2. If the data does not appear in the format of `/(?:<t parser here>,)*<t parser here>?/g`
-pub fn deserialize_comma_separated_vec<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Vec<T>, D::Error>
+pub(crate) fn deserialize_comma_separated_vec<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
 	<T as FromStr>::Err: Debug,
 {
@@ -280,7 +283,7 @@ impl PartialEq for IntegerOrFloatStat {
 			(Self::Integer(int), Self::Float(float)) | (Self::Float(float), Self::Integer(int)) => {
 				// fast way to check if the float is representable perfectly as an integer and if it's within range of `i64`
 				// we inline the f64 casts of i64::MIN and i64::MAX, and change the upper bound to be < as i64::MAX is not perfectly representable.
-				if float.is_normal() && float.floor() == float && (-9_223_372_036_854_775_808.0..9_223_372_036_854_775_808.0).contains(&float) {
+				if float.is_normal() && float.floor() == float && (i64::MIN as f64..-(i64::MIN as f64)).contains(&float) {
 					float as i64 == int
 				} else {
 					false
@@ -421,5 +424,47 @@ impl<'a> TryFrom<&'a str> for SimpleTemperature {
 
 	fn try_from(value: &'a str) -> Result<Self, Self::Error> {
 		<Self as FromStr>::from_str(value)
+	}
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, FromStr)]
+#[serde(try_from = "&str")]
+pub enum DayHalf {
+	AM,
+	PM,
+}
+
+impl DayHalf {
+	#[must_use]
+	pub fn into_24_hour_time(self, mut time: NaiveTime) -> NaiveTime {
+		if (self == Self::PM) ^ (time.hour() == 12) {
+			time += TimeDelta::hours(12);
+		}
+
+		time
+	}
+}
+
+impl<'a> TryFrom<&'a str> for DayHalf {
+	type Error = <Self as FromStr>::Err;
+
+	fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+		<Self as FromStr>::from_str(value)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_ampm() {
+		assert_eq!(NaiveTime::from_hms_opt(0, 0, 0).unwrap(), DayHalf::AM.into_24_hour_time(NaiveTime::from_hms_opt(12, 0, 0).unwrap()));
+		assert_eq!(NaiveTime::from_hms_opt(12, 0, 0).unwrap(), DayHalf::PM.into_24_hour_time(NaiveTime::from_hms_opt(12, 0, 0).unwrap()));
+		assert_eq!(NaiveTime::from_hms_opt(0, 1, 0).unwrap(), DayHalf::AM.into_24_hour_time(NaiveTime::from_hms_opt(12, 1, 0).unwrap()));
+		assert_eq!(NaiveTime::from_hms_opt(12, 1, 0).unwrap(), DayHalf::PM.into_24_hour_time(NaiveTime::from_hms_opt(12, 1, 0).unwrap()));
+		assert_eq!(NaiveTime::from_hms_opt(0, 1, 0).unwrap(), DayHalf::AM.into_24_hour_time(NaiveTime::from_hms_opt(12, 1, 0).unwrap()));
+		assert_eq!(NaiveTime::from_hms_opt(23, 59, 0).unwrap(), DayHalf::PM.into_24_hour_time(NaiveTime::from_hms_opt(11, 59, 0).unwrap()));
+		assert_eq!(NaiveTime::from_hms_opt(1, 1, 0).unwrap(), DayHalf::AM.into_24_hour_time(NaiveTime::from_hms_opt(1, 1, 0).unwrap()));
 	}
 }

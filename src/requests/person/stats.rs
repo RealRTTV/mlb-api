@@ -12,7 +12,9 @@ use crate::stats::{StatTypeStats, PlayStat};
 use crate::request::RequestURL;
 use crate::stat_groups::StatGroup;
 use crate::stats::parse::{__ParsedStats, make_stat_split};
-use crate::stats::raw::{hitting, pitching, catching, fielding};
+use crate::stats::raw::{fielding, hitting, pitching};
+use crate::stats::stat_types::__VsPlayer5YStatTypeStats;
+use crate::stats::wrappers::WithNone;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct PersonSingleGameStatsResponse {
@@ -79,8 +81,8 @@ pub struct SingleGameStatsSimplifiedGameLogSplit {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsVsPlayer5YSplit {
-	pub hitting: Box<<VsPlayer5YStats as StatTypeStats>::Hitting>,
-	pub pitching: Box<<VsPlayer5YStats as StatTypeStats>::Pitching>,
+	pub hitting: Box<<__VsPlayer5YStatTypeStats as StatTypeStats>::Hitting>,
+	pub pitching: Box<<__VsPlayer5YStatTypeStats as StatTypeStats>::Pitching>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -115,12 +117,12 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 			},
 			vs_player5_y: SingleGameStatsVsPlayer5YSplit {
 				hitting: Box::new(
-					make_stat_split::<<VsPlayer5YStats as StatTypeStats>::Hitting>(
+					make_stat_split::<<__VsPlayer5YStatTypeStats as StatTypeStats>::Hitting>(
 						&mut parsed_stats, "vsPlayer5Y", StatGroup::Hitting,
 					).map_err(D::Error::custom)?
 				),
 				pitching: Box::new(
-					make_stat_split::<<VsPlayer5YStats as StatTypeStats>::Pitching>(
+					make_stat_split::<<__VsPlayer5YStatTypeStats as StatTypeStats>::Pitching>(
 						&mut parsed_stats, "vsPlayer5Y", StatGroup::Pitching,
 					).map_err(D::Error::custom)?
 				),
@@ -139,19 +141,19 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 pub struct GameLogStats;
 
 impl StatTypeStats for GameLogStats {
-	type Hitting = Option<SimplifiedGameLogHittingStats>;
-	type Pitching = Option<SimplifiedGameLogPitchingStats>;
-	type Fielding = Option<SimplifiedGameLogFieldingStats>;
-	type Catching = Option<CatchingStats>;
+	type Hitting = WithNone<hitting::__SimplifiedGameLogStatsData>;
+	type Pitching = WithNone<pitching::__SimplifiedGameLogStatsData>;
+	type Fielding = WithNone<fielding::__SimplifiedGameLogStatsData>;
+	type Catching = ();
 }
 
 pub struct PlayLogStats;
 
 impl StatTypeStats for PlayLogStats {
-	type Hitting = Vec<PlayStat>;
-	type Pitching = Vec<PlayStat>;
-	type Fielding = Vec<PlayStat>;
-	type Catching = Vec<PlayStat>;
+	type Hitting = Vec<WithNone<PlayStat>>;
+	type Pitching = Vec<WithNone<PlayStat>>;
+	type Fielding = Vec<WithNone<PlayStat>>;
+	type Catching = ();
 }
 
 impl Hydrations for SingleGameStats {}
@@ -162,7 +164,6 @@ impl HydrationText for SingleGameStats {
 	type RequestData = SingleGameStatsRequestData;
 
 	fn hydration_text(_: &Self::RequestData) -> Cow<'static, str> {
-		// actually works for us lol
-		Cow::Borrowed("ERROR")
+		panic!("HydrationText::hydration_text() called on SingleGameStats. Must use `PersonSingleGameStatsRequest` instead.")
 	}
 }

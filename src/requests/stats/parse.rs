@@ -126,7 +126,7 @@ pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str:
 			.map_err(MakeStatSplitsError::FailedPartialDeserialize)?;
 		let partially_deserialized_is_empty = partially_deserialized.is_empty();
 		match <S as Stat>::from_splits(partially_deserialized.into_iter()) {
-			Ok(s) => Ok(S::default()),
+			Ok(s) => Ok(s),
 			Err(_) if partially_deserialized_is_empty => Ok(S::default()),
 			Err(e) => Err(MakeStatSplitsError::FailedFullDeserialize(e)),
 		}

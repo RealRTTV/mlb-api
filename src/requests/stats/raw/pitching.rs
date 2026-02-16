@@ -1,690 +1,769 @@
 group_and_type!(Projected {
-    gamesPlayed
-    gamesStarted
-    runs
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    avg
-    inningsPitched
-    wins
-    losses
-    saves
-    holds
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    hitBatsmen
-    fip
-    ra9War
-    rar
-    war
-    lobWins
-    bipWins
-    fdpWins
-    qualityStarts
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "runs" => runs,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "holds" => holds,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    // "hitBatsmen" => hit_batsmen,
+    "fip" => FIP,
+    "ra9War" => bWAR,
+    "rar" => RAR,
+    "war" => fWAR,
+    "lobWins" => lob_wins,
+    "bipWins" => bip_wins,
+    "fdpWins" => fdp_wins,
+    "qualityStarts" => quality_starts,
 });
 group_and_type!(YearByYear {
-    age
-    gamesPlayed
-    gamesStarted
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "age" => age,
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(YearByYearAdvanced {
-    age
-    battersFaced
-    inheritedRunners
-    inheritedRunnersScored
-    bequeathedRunners
-    bequeathedRunnersScored
-    stolenBases
-    caughtStealing
-    qualityStarts
-    gamesFinished
-    doubles
-    triples
-    gidp
-    gidpOpp
-    wildPitches
-    balks
-    pickoffs
-    totalSwings
-    swingAndMisses
-    buntsFailed
-    buntsMissedTipped
-    ballsInPlay
-    runSupport
-    flyOuts
-    popOuts
-    lineOuts
-    groundOuts
-    flyHits
-    popHits
-    lineHits
-    groundHits
+    "age" => age,
+    "battersFaced" => batters_faced,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "bequeathedRunners" => bequeathed_runners,
+    "bequeathedRunnersScored" => bequeathed_runners_scored,
+    "stolenBases" => stolen_bases,
+    "caughtStealing" => caught_stealing,
+    "qualityStarts" => quality_starts,
+    "gamesFinished" => games_finished,
+    "doubles" => doubles,
+    "triples" => triples,
+    "gidp" => grounded_into_double_play,
+    "gidpOpp" => grounded_into_double_play_opponent,
+    "wildPitches" => wild_pitches,
+    "balks" => balks,
+    "pickoffs" => pickoffs,
+    "totalSwings" => total_swings,
+    "swingAndMisses" => whiffs,
+    "buntsFailed" => bunts_failed,
+    "buntsMissedTipped" => bunts_missed_tipped,
+    "ballsInPlay" => balls_in_play,
+    "runSupport" => run_support,
+    "flyOuts" => flyouts,
+    "popOuts" => popouts,
+    "lineOuts" => lineouts,
+    "groundOuts" => groundouts,
+    "flyHits" => flyball_hits,
+    "popHits" => popfly_hits,
+    "lineHits" => line_drive_hits,
+    "groundHits" => groundball_hits,
 });
 group_and_type!(Season {
-    age
-    gamesPlayed
-    gamesStarted
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "age" => age,
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(Career {
-    gamesPlayed
-    gamesStarted
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(SeasonAdvanced {
-    age
-    battersFaced
-    inheritedRunners
-    inheritedRunnersScored
-    bequeathedRunners
-    bequeathedRunnersScored
-    stolenBases
-    caughtStealing
-    qualityStarts
-    gamesFinished
-    doubles
-    triples
-    gidp
-    gidpOpp
-    wildPitches
-    balks
-    pickoffs
-    totalSwings
-    swingAndMisses
-    buntsFailed
-    buntsMissedTipped
-    ballsInPlay
-    runSupport
-    flyOuts
-    popOuts
-    lineOuts
-    groundOuts
-    flyHits
-    popHits
-    lineHits
-    groundHits
+    "age" => age,
+    "battersFaced" => batters_faced,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "bequeathedRunners" => bequeathed_runners,
+    "bequeathedRunnersScored" => bequeathed_runners_scored,
+    "stolenBases" => stolen_bases,
+    "caughtStealing" => caught_stealing,
+    "qualityStarts" => quality_starts,
+    "gamesFinished" => games_finished,
+    "doubles" => doubles,
+    "triples" => triples,
+    "gidp" => grounded_into_double_play,
+    "gidpOpp" => grounded_into_double_play_opponent,
+    "wildPitches" => wild_pitches,
+    "balks" => balks,
+    "pickoffs" => pickoffs,
+    "totalSwings" => total_swings,
+    "swingAndMisses" => whiffs,
+    "buntsFailed" => bunts_failed,
+    "buntsMissedTipped" => bunts_missed_tipped,
+    "ballsInPlay" => balls_in_play,
+    "runSupport" => run_support,
+    "flyOuts" => flyouts,
+    "popOuts" => popouts,
+    "lineOuts" => lineouts,
+    "groundOuts" => groundouts,
+    "flyHits" => flyball_hits,
+    "popHits" => popfly_hits,
+    "lineHits" => line_drive_hits,
+    "groundHits" => groundball_hits,
 });
 group_and_type!(CareerAdvanced {
-    battersFaced
-    inheritedRunners
-    inheritedRunnersScored
-    bequeathedRunners
-    bequeathedRunnersScored
-    stolenBases
-    caughtStealing
-    qualityStarts
-    gamesFinished
-    doubles
-    triples
-    gidp
-    gidpOpp
-    wildPitches
-    balks
-    pickoffs
-    totalSwings
-    swingAndMisses
-    buntsFailed
-    buntsMissedTipped
-    ballsInPlay
-    runSupport
-    flyOuts
-    popOuts
-    lineOuts
-    groundOuts
-    flyHits
-    popHits
-    lineHits
-    groundHits
+    "battersFaced" => batters_faced,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "bequeathedRunners" => bequeathed_runners,
+    "bequeathedRunnersScored" => bequeathed_runners_scored,
+    "stolenBases" => stolen_bases,
+    "caughtStealing" => caught_stealing,
+    "qualityStarts" => quality_starts,
+    "gamesFinished" => games_finished,
+    "doubles" => doubles,
+    "triples" => triples,
+    "gidp" => grounded_into_double_play,
+    "gidpOpp" => grounded_into_double_play_opponent,
+    "wildPitches" => wild_pitches,
+    "balks" => balks,
+    "pickoffs" => pickoffs,
+    "totalSwings" => total_swings,
+    "swingAndMisses" => whiffs,
+    "buntsFailed" => bunts_failed,
+    "buntsMissedTipped" => bunts_missed_tipped,
+    "ballsInPlay" => balls_in_play,
+    "runSupport" => run_support,
+    "flyOuts" => flyouts,
+    "popOuts" => popouts,
+    "lineOuts" => lineouts,
+    "groundOuts" => groundouts,
+    "flyHits" => flyball_hits,
+    "popHits" => popfly_hits,
+    "lineHits" => line_drive_hits,
+    "groundHits" => groundball_hits,
 });
 group_and_type!(GameLog {
-    gamesPlayed
-    gamesStarted
-    flyOuts
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(ExpectedStatistics {
-    avg
-    slg
-    woba
-    wobaCon
+    "avg" => xAVG,
+    "slg" => xSLG,
+    "woba" => wOBA,
+    "wobaCon" => wOBACON,
 });
 group_and_type!(Sabermetrics {
-    fip
-    xfip
-    fipMinus
-    ra9War
-    rar
-    war
-    sd
-    md
-    pli
-    inli
-    gmli
-    exli
-    eraMinus
+    "fip" => FIP,
+    "xfip" => xFIP,
+    "fipMinus" => FIPm,
+    "ra9War" => bWAR,
+    "rar" => RAR,
+    "war" => fWAR,
+    "sd" => shutdowns,
+    "md" => meltdowns,
+    "pli" => leverage_index,
+    "inli" => inning_start_leverage_index,
+    "gmli" => game_leverage_index,
+    "exli" => exiting_leverage_index,
+    "eraMinus" => ERAm,
 });
 group_and_type!(LastXGames {
-    gamesPlayed
-    gamesStarted
-    flyOuts
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(ByDateRange {
-    gamesPlayed
-    gamesStarted
-    flyOuts
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(ByDateRangeAdvanced {
-    battersFaced
-    stolenBases
-    caughtStealing
-    gamesFinished
-    gidp
-    wildPitches
-    balks
-    pickoffs
-    groundOuts
+    "battersFaced" => batters_faced,
+    "stolenBases" => stolen_bases,
+    "caughtStealing" => caught_stealing,
+    "gamesFinished" => games_finished,
+    "gidp" => grounded_into_double_play,
+    "wildPitches" => wild_pitches,
+    "balks" => balks,
+    "pickoffs" => pickoffs,
+    "groundOuts" => groundouts,
 });
 group_and_type!(ByMonth {
-    gamesPlayed
-    gamesStarted
-    flyOuts
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(ByDayOfWeek {
-    gamesPlayed
-    gamesStarted
-    flyOuts
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(HomeAndAway {
-    gamesPlayed
-    gamesStarted
-    flyOuts
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(WinLoss {
-    gamesPlayed
-    gamesStarted
-    flyOuts
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "totalBases" => total_bases,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
-group_and_type!(Rankings {
-    wildPitches
-});
-group_and_type!(RankingsByYear {
-    wildPitches
-});
+// todo: add type for rankings
+// group_and_type!(Rankings {
+//     "wildPitches" => wild_pitches,
+// });
+// group_and_type!(RankingsByYear {
+//     "wildPitches" => wild_pitches,
+// });
 group_and_type!(StatSplits {
-    gamesPlayed
-    gamesStarted
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    outsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    balls
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    totalBases
-    rbi
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "outsPitched" => outs_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    "balls" => balls,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "totalBases" => total_bases,
+    "rbi" => rbi,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
 });
 group_and_type!(StatSplitsAdvanced {
-    battersFaced
-    inheritedRunners
-    inheritedRunnersScored
-    bequeathedRunners
-    bequeathedRunnersScored
-    stolenBases
-    caughtStealing
-    qualityStarts
-    gamesFinished
-    doubles
-    triples
-    gidp
-    wildPitches
-    balks
-    swingAndMisses
+    "battersFaced" => batters_faced,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "bequeathedRunners" => bequeathed_runners,
+    "bequeathedRunnersScored" => bequeathed_runners_scored,
+    "stolenBases" => stolen_bases,
+    "caughtStealing" => caught_stealing,
+    "qualityStarts" => quality_starts,
+    "gamesFinished" => games_finished,
+    "doubles" => doubles,
+    "triples" => triples,
+    "gidp" => grounded_into_double_play,
+    "wildPitches" => wild_pitches,
+    "balks" => balks,
+    "swingAndMisses" => whiffs,
+});
+group_and_type!(VsPlayer {
+    "gamesPlayed" => games_played,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "groundIntoDoublePlay" => grounded_into_double_play,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "outsPitched" => outs_pitched,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "balls" => balls,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "totalBases" => total_bases,
+    "rbi" => rbi,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
+});
+group_and_type!(SimplifiedGameLog {
+    "gamesPlayed" => games_played,
+    "gamesStarted" => games_started,
+    "flyOuts" => flyouts,
+    "groundOuts" => groundouts,
+    "airOuts" => airouts,
+    "runs" => runs,
+    "doubles" => doubles,
+    "triples" => triples,
+    "homeRuns" => home_runs,
+    "strikeOuts" => strikeouts,
+    "baseOnBalls" => base_on_balls,
+    "intentionalWalks" => intentional_walks,
+    "hits" => hits,
+    "hitByPitch" => hit_by_pitch,
+    "atBats" => at_bats,
+    "caughtStealing" => caught_stealing,
+    "stolenBases" => stolen_bases,
+    "numberOfPitches" => number_of_pitches,
+    "inningsPitched" => innings_pitched,
+    "wins" => wins,
+    "losses" => losses,
+    "saves" => saves,
+    "saveOpportunities" => save_opportunities,
+    "holds" => holds,
+    "blownSaves" => blown_saves,
+    "earnedRuns" => earned_runs,
+    "battersFaced" => batters_faced,
+    "outs" => outs,
+    "gamesPitched" => games_pitched,
+    "completeGames" => complete_games,
+    "shutouts" => shutouts,
+    // "pitchesThrown" => pitches_thrown,
+    "balls" => balls,
+    "strikes" => strikes,
+    // "hitBatsmen" => hit_batsmen,
+    "balks" => balks,
+    "wildPitches" => wild_pitches,
+    "pickoffs" => pickoffs,
+    "rbi" => rbi,
+    "gamesFinished" => games_finished,
+    "inheritedRunners" => inherited_runners,
+    "inheritedRunnersScored" => inherited_runners_scored,
+    "catchersInterference" => catchers_interference,
+    "sacBunts" => sac_bunts,
+    "sacFlies" => sac_flies,
+    "passedBall" => passed_balls,
 });

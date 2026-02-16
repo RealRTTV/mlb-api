@@ -1,24 +1,29 @@
 use std::fmt::Formatter;
-use derive_more::{AsMut, AsRef, Deref, DerefMut};
+use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Deserializer};
 use serde::de::{Error, Visitor};
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
+use crate::stats::wrappers::SeasonPiece;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut, AsRef, AsMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct WithWeekday<T: RawStat> {
-	#[as_ref] #[as_mut]
 	#[serde(deserialize_with = "deserialize_day_of_week")]
 	pub weekday: chrono::Weekday,
-	#[as_ref] #[as_mut]
 	pub season: SeasonId,
 
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
 	stats: T,
+}
+
+impl<T: RawStat> SeasonPiece for WithWeekday<T> {
+	fn season(&self) -> &SeasonId {
+		&self.season
+	}
 }
 
 impl<T: RawStat> Default for WithWeekday<T> {
