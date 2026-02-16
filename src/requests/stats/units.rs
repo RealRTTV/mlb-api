@@ -18,7 +18,11 @@ impl ThreeDecimalPlaceRateStat {
 
 impl Display for ThreeDecimalPlaceRateStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}", format!("{:.3}", self.0).trim_start_matches('0'))
+		if self.0.is_normal() {
+			write!(f, "{}", format!("{:.3}", self.0).trim_start_matches('0'))
+		} else {
+			write!(f, ".---")
+		}
 	}
 }
 
@@ -67,7 +71,11 @@ impl<'de> Deserialize<'de> for PercentageStat {
 
 impl Display for PercentageStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{:.2}%", self.0 * 100.0)
+		if self.is_normal() {
+			write!(f, "{:.2}%", self.0 * 100.0)
+		} else {
+			write!(f, "--.-%")
+		}
 	}
 }
 
@@ -89,7 +97,11 @@ impl TwoDecimalPlaceRateStat {
 
 impl Display for TwoDecimalPlaceRateStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{:.2}", self.0)
+		if self.0.is_normal() {
+			write!(f, "{:.2}", self.0)
+		} else {
+			write!(f, "-.--")
+		}
 	}
 }
 
@@ -206,7 +218,11 @@ impl PlusStat {
 
 impl Display for PlusStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}", self.0.round() as i64)
+		if self.0.is_normal() {
+			write!(f, "{}", self.0.round() as i64)
+		} else {
+			write!(f, "-")
+		}
 	}
 }
 
@@ -224,6 +240,10 @@ impl<const N: usize> FloatCountingStat<N> {
 
 impl<const N: usize> Display for FloatCountingStat<N> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{:.N$}", self.0)
+		if self.0.is_normal() {
+			write!(f, "{:.N$}", self.0)
+		} else {
+			write!(f, "{:.N$}", "")
+		}
 	}
 }

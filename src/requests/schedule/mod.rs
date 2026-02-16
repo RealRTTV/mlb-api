@@ -8,7 +8,7 @@ use crate::types::{Copyright, HomeAwaySplits, NaiveDateRange, MLB_API_DATE_FORMA
 use crate::venue::{NamedVenue, VenueId};
 use crate::game_status::GameStatus;
 use crate::game_types::GameType;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::sky::Sky;
 use crate::sport::SportId;
 use bon::Builder;
@@ -243,7 +243,7 @@ pub struct ScheduleRequest {
 }
 
 
-impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for ScheduleRequestBuilder<S> {
+impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::request::RequestURLBuilderExt for ScheduleRequestBuilder<S> {
     type Built = ScheduleRequest;
 }
 
@@ -286,7 +286,7 @@ impl Display for ScheduleRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for ScheduleRequest {
+impl RequestURL for ScheduleRequest {
 	type Response = ScheduleResponse;
 }
 
@@ -295,7 +295,7 @@ mod tests {
 	use crate::schedule::ScheduleRequest;
 	use crate::TEST_YEAR;
 	use chrono::NaiveDate;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	async fn test_one_date() {

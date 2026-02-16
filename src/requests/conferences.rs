@@ -2,13 +2,15 @@ use crate::league::LeagueId;
 use crate::season::SeasonId;
 use crate::sport::SportId;
 use crate::types::Copyright;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::cache::{CacheTable, RequestEntryCache};
-use crate::{rwlock_const_new, RwLock};
+use crate::cache::Requestable;
+
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -55,7 +57,7 @@ pub struct ConferencesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: conferences_request_builder::State + conferences_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for ConferencesRequestBuilder<S> {
+impl<S: conferences_request_builder::State + conferences_request_builder::IsComplete> crate::request::RequestURLBuilderExt for ConferencesRequestBuilder<S> {
     type Built = ConferencesRequest;
 }
 
@@ -65,13 +67,14 @@ impl Display for ConferencesRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for ConferencesRequest {
+impl RequestURL for ConferencesRequest {
 	type Response = ConferencesResponse;
 }
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Conference>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for Conference {
+impl Requestable for Conference {
 	type Identifier = ConferenceId;
 	type URL = ConferencesRequest;
 
@@ -89,13 +92,14 @@ impl RequestEntryCache for Conference {
 		ConferencesRequest::builder().conference_id(*id).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
 		response.conferences
 	}
 
+	#[cfg(feature = "cache")]
 	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized
@@ -111,7 +115,7 @@ entrypoint!(ConferenceId => Conference);
 #[cfg(test)]
 mod tests {
 	use crate::conferences::ConferencesRequest;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	async fn parse_all_conferences() {

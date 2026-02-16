@@ -342,11 +342,11 @@ impl<'de> Deserialize<'de> for IntegerOrFloatStat {
 
 #[derive(Debug, Deserialize, Display)]
 #[display("An error occurred parsing the statsapi http request: {message}")]
-pub struct StatsAPIError {
+pub struct MLBError {
 	message: String,
 }
 
-impl std::error::Error for StatsAPIError {}
+impl std::error::Error for MLBError {}
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
 #[serde(try_from = "&str")]

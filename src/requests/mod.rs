@@ -97,19 +97,19 @@ macro_rules! id_only_eq_impl {
 
 macro_rules! entrypoint {
 	(for<$($generic:ident)+> $name:ident <$($ty_generic_use:ident)*> $(. $field:ident)? => $complete:ident <$($complete_generic_use:ident)*> where $($t:tt)*) => {
-		impl<$($generic)+> $crate::cache::RequestEntryCacheEntrypoint for $name <$($ty_generic_use)+> where $($t)* {
+		impl<$($generic)+> $crate::cache::RequestableEntrypoint for $name <$($ty_generic_use)+> where $($t)* {
 			type Complete = $complete <$($complete_generic_use)*>;
 			
-			fn id(&self) -> &<<Self as $crate::cache::RequestEntryCacheEntrypoint>::Complete as $crate::cache::RequestEntryCache>::Identifier {
+			fn id(&self) -> &<<Self as $crate::cache::RequestableEntrypoint>::Complete as $crate::cache::Requestable>::Identifier {
 				&self$(.$field)?
 			}
 		}
 	};
     ($name:ident $(. $field:ident)? => $complete:ident) => {
-		impl $crate::cache::RequestEntryCacheEntrypoint for $name {
+		impl $crate::cache::RequestableEntrypoint for $name {
 			type Complete = $complete;
 			
-			fn id(&self) -> &<<Self as $crate::cache::RequestEntryCacheEntrypoint>::Complete as $crate::cache::RequestEntryCache>::Identifier {
+			fn id(&self) -> &<<Self as $crate::cache::RequestableEntrypoint>::Complete as $crate::cache::Requestable>::Identifier {
 				&self$(.$field)?
 			}
 		}

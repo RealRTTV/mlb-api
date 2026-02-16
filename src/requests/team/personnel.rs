@@ -2,7 +2,7 @@ use crate::person::people::PeopleResponse;
 use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::types::MLB_API_DATE_FORMAT;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
@@ -17,7 +17,7 @@ pub struct PersonnelRequest {
     date: Option<NaiveDate>,
 }
 
-impl<S: personnel_request_builder::State + personnel_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PersonnelRequestBuilder<S> {
+impl<S: personnel_request_builder::State + personnel_request_builder::IsComplete> crate::request::RequestURLBuilderExt for PersonnelRequestBuilder<S> {
     type Built = PersonnelRequest;
 }
 
@@ -27,13 +27,13 @@ impl Display for PersonnelRequest {
     }
 }
 
-impl StatsAPIRequestUrl for PersonnelRequest {
+impl RequestURL for PersonnelRequest {
     type Response = PeopleResponse<()>;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::request::StatsAPIRequestUrlBuilderExt;
+    use crate::request::RequestURLBuilderExt;
     use crate::team::personnel::PersonnelRequest;
 	use crate::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;

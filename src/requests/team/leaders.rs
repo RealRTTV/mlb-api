@@ -8,7 +8,7 @@ use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::baseball_stats::BaseballStatId;
 use crate::game_types::GameType;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +33,7 @@ pub struct TeamStatLeadersRequest {
 	pub game_types: Option<Vec<GameType>>,
 }
 
-impl<S: team_stat_leaders_request_builder::State + team_stat_leaders_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TeamStatLeadersRequestBuilder<S> {
+impl<S: team_stat_leaders_request_builder::State + team_stat_leaders_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamStatLeadersRequestBuilder<S> {
 	type Built = TeamStatLeadersRequest;
 }
 
@@ -53,7 +53,7 @@ impl Display for TeamStatLeadersRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for TeamStatLeadersRequest {
+impl RequestURL for TeamStatLeadersRequest {
 	type Response = TeamStatLeadersResponse;
 }
 
@@ -61,7 +61,7 @@ impl StatsAPIRequestUrl for TeamStatLeadersRequest {
 mod tests {
 	use crate::baseball_stats::BaseballStat;
 	use crate::meta::MetaRequest;
-	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+	use crate::request::{RequestURL, RequestURLBuilderExt};
 	use crate::team::leaders::TeamStatLeadersRequest;
 	use crate::team::teams::TeamsRequest;
 

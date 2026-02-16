@@ -8,13 +8,11 @@ use std::fmt::{Display, Formatter};
 use serde::de::{Deserializer, Error};
 use crate::__stats__request_data;
 use crate::hydrations::{HydrationText, Hydrations};
-use crate::stats::{PossiblyFallback, StatTypeStats, __ParsedStats, make_stat_split, Multiple, PlayStat, VsPlayer5YStats};
-use crate::request::StatsAPIRequestUrl;
+use crate::stats::{StatTypeStats, PlayStat};
+use crate::request::RequestURL;
 use crate::stat_groups::StatGroup;
-use crate::stats::catching::CatchingStats;
-use crate::stats::fielding::SimplifiedGameLogFieldingStats;
-use crate::stats::hitting::SimplifiedGameLogHittingStats;
-use crate::stats::pitching::SimplifiedGameLogPitchingStats;
+use crate::stats::parse::{__ParsedStats, make_stat_split};
+use crate::stats::raw::{hitting, pitching, catching, fielding};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct PersonSingleGameStatsResponse {
@@ -35,7 +33,7 @@ pub struct PersonSingleGameStatsRequest {
 	bonus: SingleGameStatsRequestData,
 }
 
-impl<S: person_single_game_stats_request_builder::State + person_single_game_stats_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PersonSingleGameStatsRequestBuilder<S> {
+impl<S: person_single_game_stats_request_builder::State + person_single_game_stats_request_builder::IsComplete> crate::request::RequestURLBuilderExt for PersonSingleGameStatsRequestBuilder<S> {
 	type Built = PersonSingleGameStatsRequest;
 }
 
@@ -45,14 +43,14 @@ impl Display for PersonSingleGameStatsRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for PersonSingleGameStatsRequest {
+impl RequestURL for PersonSingleGameStatsRequest {
 	type Response = PersonSingleGameStatsResponse;
 }
 
 #[cfg(test)]
 mod tests {
 	use crate::person::stats::PersonSingleGameStatsRequest;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	async fn single_sample() {
@@ -150,10 +148,10 @@ impl StatTypeStats for GameLogStats {
 pub struct PlayLogStats;
 
 impl StatTypeStats for PlayLogStats {
-	type Hitting = Multiple<PlayStat>;
-	type Pitching = Multiple<PlayStat>;
-	type Fielding = Multiple<PlayStat>;
-	type Catching = Multiple<PlayStat>;
+	type Hitting = Vec<PlayStat>;
+	type Pitching = Vec<PlayStat>;
+	type Fielding = Vec<PlayStat>;
+	type Catching = Vec<PlayStat>;
 }
 
 impl Hydrations for SingleGameStats {}

@@ -1,13 +1,15 @@
-use crate::cache::{CacheTable, RequestEntryCache, RequestEntryCacheEntrypoint};
+use crate::cache::{Requestable, RequestableEntrypoint};
 use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::types::Copyright;
-use crate::{rwlock_const_new, RwLock};
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct UniformsResponse {
@@ -53,7 +55,7 @@ pub struct UniformsRequest {
     season: Option<SeasonId>,
 }
 
-impl<S: uniforms_request_builder::State + uniforms_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for UniformsRequestBuilder<S> {
+impl<S: uniforms_request_builder::State + uniforms_request_builder::IsComplete> crate::request::RequestURLBuilderExt for UniformsRequestBuilder<S> {
     type Built = UniformsRequest;
 }
 
@@ -63,13 +65,14 @@ impl Display for UniformsRequest {
     }
 }
 
-impl StatsAPIRequestUrl for UniformsRequest {
+impl RequestURL for UniformsRequest {
     type Response = UniformsResponse;
 }
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<UniformAsset>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for UniformAsset {
+impl Requestable for UniformAsset {
     type Identifier = String;
     type URL = UniformsRequest;
 
@@ -83,13 +86,14 @@ impl RequestEntryCache for UniformAsset {
             .build()
     }
 
-    fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+    fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item=Self>
     where
         Self: Sized
     {
         response.teams.into_iter().flat_map(|team| team.uniform_assets)
     }
 
+    #[cfg(feature = "cache")]
     fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
     where
         Self: Sized
@@ -98,10 +102,10 @@ impl RequestEntryCache for UniformAsset {
     }
 }
 
-impl RequestEntryCacheEntrypoint for UniformAsset {
+impl RequestableEntrypoint for UniformAsset {
     type Complete = Self;
 
-    fn id(&self) -> &<<Self as RequestEntryCacheEntrypoint>::Complete as RequestEntryCache>::Identifier {
+    fn id(&self) -> &<<Self as RequestableEntrypoint>::Complete as Requestable>::Identifier {
         &self.code
     }
 }
@@ -110,7 +114,7 @@ impl RequestEntryCacheEntrypoint for UniformAsset {
 mod tests {
     use crate::team::uniforms::UniformsRequest;
     use crate::team::teams::TeamsRequest;
-    use crate::request::StatsAPIRequestUrlBuilderExt;
+    use crate::request::RequestURLBuilderExt;
 
     #[tokio::test]
     async fn parse_all_mlb_teams_this_season() {

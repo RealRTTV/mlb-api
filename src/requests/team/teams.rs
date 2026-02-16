@@ -1,6 +1,6 @@
 use crate::season::SeasonId;
 use crate::types::Copyright;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -57,7 +57,7 @@ impl TeamsRequest {
 	}
 }
 
-impl<S: teams_request_builder::State + teams_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TeamsRequestBuilder<S> {
+impl<S: teams_request_builder::State + teams_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamsRequestBuilder<S> {
 	type Built = TeamsRequest;
 }
 
@@ -67,13 +67,13 @@ impl Display for TeamsRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for TeamsRequest {
+impl RequestURL for TeamsRequest {
 	type Response = TeamsResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 	use crate::TEST_YEAR;
 	use super::*;
 

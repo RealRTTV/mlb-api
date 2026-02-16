@@ -8,7 +8,7 @@ use serde_with::DefaultOnError;
 use std::fmt::{Display, Formatter};
 use crate::person::NamedPerson;
 use crate::positions::NamedPosition;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -67,7 +67,7 @@ pub struct FreeAgentsRequest {
 	season: SeasonId,
 }
 
-impl<S: free_agents_request_builder::State + free_agents_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for FreeAgentsRequestBuilder<S> {
+impl<S: free_agents_request_builder::State + free_agents_request_builder::IsComplete> crate::request::RequestURLBuilderExt for FreeAgentsRequestBuilder<S> {
 	type Built = FreeAgentsRequest;
 }
 
@@ -77,13 +77,13 @@ impl Display for FreeAgentsRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for FreeAgentsRequest {
+impl RequestURL for FreeAgentsRequest {
 	type Response = FreeAgentsResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 	use crate::person::free_agents::FreeAgentsRequest;
 	use crate::TEST_YEAR;
 

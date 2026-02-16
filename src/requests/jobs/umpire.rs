@@ -1,6 +1,6 @@
 use crate::jobs::JobsResponse;
 use crate::types::MLB_API_DATE_FORMAT;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
@@ -21,6 +21,6 @@ impl Display for JobsUmpiresRequest {
     }
 }
 
-impl StatsAPIRequestUrl for JobsUmpiresRequest {
+impl RequestURL for JobsUmpiresRequest {
 	type Response = JobsResponse;
 }

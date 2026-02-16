@@ -1,4 +1,4 @@
-kind!(YearByYear {
+group_and_type!(YearByYear {
     age
     gamesPlayed
     runs
@@ -22,7 +22,7 @@ kind!(YearByYear {
     sacBunts
     sacFlies
 });
-kind!(Season {
+group_and_type!(Season {
     age
     gamesPlayed
     runs
@@ -48,7 +48,7 @@ kind!(Season {
     passedBall
     pickoffAttempts
 });
-kind!(Career {
+group_and_type!(Career {
     gamesPlayed
     runs
     homeRuns
@@ -72,7 +72,7 @@ kind!(Career {
     sacFlies
     passedBall
 });
-kind!(GameLog {
+group_and_type!(GameLog {
     gamesPlayed
     runs
     homeRuns
@@ -95,7 +95,7 @@ kind!(GameLog {
     sacBunts
     sacFlies
 });
-kind!(LastXGames {
+group_and_type!(LastXGames {
     gamesPlayed
     runs
     homeRuns
@@ -118,7 +118,7 @@ kind!(LastXGames {
     sacBunts
     sacFlies
 });
-kind!(ByDateRange {
+group_and_type!(ByDateRange {
     gamesPlayed
     runs
     homeRuns
@@ -141,14 +141,14 @@ kind!(ByDateRange {
     sacBunts
     sacFlies
 });
-kind!(ByDateRangeAdvanced {
+group_and_type!(ByDateRangeAdvanced {
     battersFaced
     stolenBases
     caughtStealing
     wildPitches
     pickoffs
 });
-kind!(ByMonth {
+group_and_type!(ByMonth {
     gamesPlayed
     runs
     homeRuns
@@ -171,7 +171,7 @@ kind!(ByMonth {
     sacBunts
     sacFlies
 });
-kind!(ByDayOfWeek {
+group_and_type!(ByDayOfWeek {
     gamesPlayed
     runs
     homeRuns
@@ -194,4 +194,50 @@ kind!(ByDayOfWeek {
     sacBunts
     sacFlies
 });
-kind!()
+group_and_type!(HomeAndAway {
+    gamesPlayed
+    runs
+    homeRuns
+    strikeOuts
+    baseOnBalls
+    intentionalWalks
+    hits
+    hitByPitch
+    atBats
+    caughtStealing
+    stolenBases
+    earnedRuns
+    battersFaced
+    gamesPitched
+    hitBatsmen
+    wildPitches
+    pickoffs
+    totalBases
+    catchersInterference
+    sacBunts
+    sacFlies
+});
+group_and_type!(WinLoss {
+    gamesPlayed
+    runs
+    homeRuns
+    strikeOuts
+    baseOnBalls
+    intentionalWalks
+    hits
+    hitByPitch
+    atBats
+    caughtStealing
+    stolenBases
+    earnedRuns
+    battersFaced
+    gamesPitched
+    hitBatsmen
+    wildPitches
+    pickoffs
+    totalBases
+    catchersInterference
+    sacBunts
+    sacFlies
+});
+

@@ -1,4 +1,4 @@
-kind!(Projected {
+group_and_type!(Projected {
     gamesPlayed
     gamesStarted
     runs
@@ -30,7 +30,7 @@ kind!(Projected {
     fdpWins
     qualityStarts
 });
-kind!(YearByYear {
+group_and_type!(YearByYear {
     age
     gamesPlayed
     gamesStarted
@@ -76,130 +76,7 @@ kind!(YearByYear {
     sacBunts
     sacFlies
 });
-kind!(YearByYearAdvanced {
-    age
-    battersFaced
-    inheritedRunners
-    inheritedRunnersScored
-    bequeathedRunners
-    bequeathedRunnersScored
-    stolenBases
-    caughtStealing
-    qualityStarts
-    gamesFinished
-    doubles
-    triples
-    gidp
-    gidpOpp
-    wildPitches
-    balks
-    pickoffs
-    totalSwings
-    swingAndMisses
-    buntsFailed
-    buntsMissedTipped
-    ballsInPlay
-    runSupport
-    flyOuts
-    popOuts
-    lineOuts
-    groundOuts
-    flyHits
-    popHits
-    lineHits
-    groundHits
-});
-kind!(Season {
-    age
-    gamesPlayed
-    gamesStarted
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
-});
-kind!(Career {
-    gamesPlayed
-    gamesStarted
-    groundOuts
-    airOuts
-    runs
-    doubles
-    triples
-    homeRuns
-    strikeOuts
-    baseOnBalls
-    intentionalWalks
-    hits
-    hitByPitch
-    atBats
-    caughtStealing
-    stolenBases
-    groundIntoDoublePlay
-    numberOfPitches
-    inningsPitched
-    wins
-    losses
-    saves
-    saveOpportunities
-    holds
-    blownSaves
-    earnedRuns
-    battersFaced
-    outs
-    gamesPitched
-    completeGames
-    shutouts
-    strikes
-    hitBatsmen
-    balks
-    wildPitches
-    pickoffs
-    totalBases
-    gamesFinished
-    inheritedRunners
-    inheritedRunnersScored
-    catchersInterference
-    sacBunts
-    sacFlies
-});
-kind!(SeasonAdvanced {
+group_and_type!(YearByYearAdvanced {
     age
     battersFaced
     inheritedRunners
@@ -232,7 +109,98 @@ kind!(SeasonAdvanced {
     lineHits
     groundHits
 });
-kind!(CareerAdvanced {
+group_and_type!(Season {
+    age
+    gamesPlayed
+    gamesStarted
+    groundOuts
+    airOuts
+    runs
+    doubles
+    triples
+    homeRuns
+    strikeOuts
+    baseOnBalls
+    intentionalWalks
+    hits
+    hitByPitch
+    atBats
+    caughtStealing
+    stolenBases
+    groundIntoDoublePlay
+    numberOfPitches
+    inningsPitched
+    wins
+    losses
+    saves
+    saveOpportunities
+    holds
+    blownSaves
+    earnedRuns
+    battersFaced
+    outs
+    gamesPitched
+    completeGames
+    shutouts
+    strikes
+    hitBatsmen
+    balks
+    wildPitches
+    pickoffs
+    totalBases
+    inheritedRunners
+    inheritedRunnersScored
+    catchersInterference
+    sacBunts
+    sacFlies
+});
+group_and_type!(Career {
+    gamesPlayed
+    gamesStarted
+    groundOuts
+    airOuts
+    runs
+    doubles
+    triples
+    homeRuns
+    strikeOuts
+    baseOnBalls
+    intentionalWalks
+    hits
+    hitByPitch
+    atBats
+    caughtStealing
+    stolenBases
+    groundIntoDoublePlay
+    numberOfPitches
+    inningsPitched
+    wins
+    losses
+    saves
+    saveOpportunities
+    holds
+    blownSaves
+    earnedRuns
+    battersFaced
+    outs
+    gamesPitched
+    completeGames
+    shutouts
+    strikes
+    hitBatsmen
+    balks
+    wildPitches
+    pickoffs
+    totalBases
+    gamesFinished
+    inheritedRunners
+    inheritedRunnersScored
+    catchersInterference
+    sacBunts
+    sacFlies
+});
+group_and_type!(SeasonAdvanced {
+    age
     battersFaced
     inheritedRunners
     inheritedRunnersScored
@@ -264,7 +232,39 @@ kind!(CareerAdvanced {
     lineHits
     groundHits
 });
-kind!(GameLog {
+group_and_type!(CareerAdvanced {
+    battersFaced
+    inheritedRunners
+    inheritedRunnersScored
+    bequeathedRunners
+    bequeathedRunnersScored
+    stolenBases
+    caughtStealing
+    qualityStarts
+    gamesFinished
+    doubles
+    triples
+    gidp
+    gidpOpp
+    wildPitches
+    balks
+    pickoffs
+    totalSwings
+    swingAndMisses
+    buntsFailed
+    buntsMissedTipped
+    ballsInPlay
+    runSupport
+    flyOuts
+    popOuts
+    lineOuts
+    groundOuts
+    flyHits
+    popHits
+    lineHits
+    groundHits
+});
+group_and_type!(GameLog {
     gamesPlayed
     gamesStarted
     flyOuts
@@ -310,13 +310,13 @@ kind!(GameLog {
     sacBunts
     sacFlies
 });
-kind!(ExpectedStatistics {
+group_and_type!(ExpectedStatistics {
     avg
     slg
     woba
     wobaCon
 });
-kind!(Sabermetrics {
+group_and_type!(Sabermetrics {
     fip
     xfip
     fipMinus
@@ -331,7 +331,7 @@ kind!(Sabermetrics {
     exli
     eraMinus
 });
-kind!(LastXGames {
+group_and_type!(LastXGames {
     gamesPlayed
     gamesStarted
     flyOuts
@@ -377,7 +377,7 @@ kind!(LastXGames {
     sacBunts
     sacFlies
 });
-kind!(ByDateRange {
+group_and_type!(ByDateRange {
     gamesPlayed
     gamesStarted
     flyOuts
@@ -423,7 +423,7 @@ kind!(ByDateRange {
     sacBunts
     sacFlies
 });
-kind!(ByDateRangeAdvanced {
+group_and_type!(ByDateRangeAdvanced {
     battersFaced
     stolenBases
     caughtStealing
@@ -434,7 +434,7 @@ kind!(ByDateRangeAdvanced {
     pickoffs
     groundOuts
 });
-kind!(ByMonth {
+group_and_type!(ByMonth {
     gamesPlayed
     gamesStarted
     flyOuts
@@ -480,7 +480,7 @@ kind!(ByMonth {
     sacBunts
     sacFlies
 });
-kind!(ByDayOfWeek {
+group_and_type!(ByDayOfWeek {
     gamesPlayed
     gamesStarted
     flyOuts
@@ -526,7 +526,7 @@ kind!(ByDayOfWeek {
     sacBunts
     sacFlies
 });
-kind!(HomeAndAway {
+group_and_type!(HomeAndAway {
     gamesPlayed
     gamesStarted
     flyOuts
@@ -572,7 +572,7 @@ kind!(HomeAndAway {
     sacBunts
     sacFlies
 });
-kind!(WinLoss {
+group_and_type!(WinLoss {
     gamesPlayed
     gamesStarted
     flyOuts
@@ -618,9 +618,73 @@ kind!(WinLoss {
     sacBunts
     sacFlies
 });
-kind!(Rankings {
+group_and_type!(Rankings {
     wildPitches
 });
-kind!(RankingsByYear {
+group_and_type!(RankingsByYear {
     wildPitches
+});
+group_and_type!(StatSplits {
+    gamesPlayed
+    gamesStarted
+    groundOuts
+    airOuts
+    runs
+    doubles
+    triples
+    homeRuns
+    strikeOuts
+    baseOnBalls
+    intentionalWalks
+    hits
+    hitByPitch
+    atBats
+    caughtStealing
+    stolenBases
+    groundIntoDoublePlay
+    numberOfPitches
+    inningsPitched
+    outsPitched
+    wins
+    losses
+    saves
+    saveOpportunities
+    holds
+    blownSaves
+    earnedRuns
+    battersFaced
+    outs
+    gamesPitched
+    completeGames
+    shutouts
+    balls
+    strikes
+    hitBatsmen
+    balks
+    wildPitches
+    totalBases
+    rbi
+    gamesFinished
+    inheritedRunners
+    inheritedRunnersScored
+    catchersInterference
+    sacBunts
+    sacFlies
+});
+group_and_type!(StatSplitsAdvanced {
+    battersFaced
+    inheritedRunners
+    inheritedRunnersScored
+    bequeathedRunners
+    bequeathedRunnersScored
+    stolenBases
+    caughtStealing
+    qualityStarts
+    gamesFinished
+    doubles
+    triples
+    gidp
+    wildPitches
+    balks
+    swingAndMisses
 });

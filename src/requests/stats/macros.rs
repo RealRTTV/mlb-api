@@ -5,14 +5,14 @@ macro_rules! __stats__stat_type_definition {
 		::pastey::paste! {
 			#[derive(Debug, PartialEq, Eq, Clone)]
 			$vis struct $name {
-				$($vis [< $stat_group:snake >]: ::std::boxed::Box<$crate::stats::PossiblyFallback<<$crate::stats::[< $stat_type Stats >] as $crate::stats::StatTypeStats>::$stat_group>>),+
+				$($vis [< $stat_group:snake >]: ::std::boxed::Box<<$crate::stats::stat_types::[<__ $stat_type StatTypeStats>] as $crate::stats::StatTypeStats>::$stat_group>),+
 			}
 
 			impl [<__ $parent_name Split Parser>] for $name {
-				fn parse(parsed_stats: &mut $crate::stats::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String> {
+				fn parse(parsed_stats: &mut $crate::stats::parse::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String> {
 					Ok(Self {
 						$([<$stat_group:snake>]: ::std::boxed::Box::new(
-							$crate::stats::make_stat_split::<<$crate::stats::[< $stat_type Stats >] as $crate::stats::StatTypeStats>::$stat_group>(
+							$crate::stats::parse::make_stat_split::<<$crate::stats::stat_types::[< __ $stat_type StatTypeStats >] as $crate::stats::StatTypeStats>::$stat_group>(
 								parsed_stats, ::core::stringify!([<$stat_type:lower_camel>]), $crate::stat_groups::StatGroup::$stat_group
 							).map_err(|e| ::std::string::ToString::to_string(&e))?
 						)),+
@@ -121,13 +121,13 @@ macro_rules! __stats__needle_haystack_situations {
 #[doc(hidden)]
 macro_rules! __stats__needle_haystack_games_back {
 	([$($haystack:ident),+ $(,)?] => { $($t:tt)* }) => {
-		$crate::__stats__needle_haystack_situations!([$($haystack),+] => { $($t)* } else {});
+		$crate::__stats__needle_haystack_games_back!([$($haystack),+] => { $($t)* } else {});
 	};
 	([LastXGames $(, $haystack:ident)* $(,)?] => { $($t1:tt)* } else { $($t2:tt)* }) => {
 		$($t1)*
 	};
 	([$first:ident $(, $haystack:ident)* $(,)?] => { $($t1:tt)* } else { $($t2:tt)* }) => {
-		$crate::__stats__needle_haystack_situations!([$($haystack),*] => { $($t1)* } else { $($t2)* });
+		$crate::__stats__needle_haystack_games_back!([$($haystack),*] => { $($t1)* } else { $($t2)* });
 	};
 	([$(,)?] => { $($t1:tt)* } else { $($t2:tt)* }) => { $($t2)* };
 }
@@ -229,7 +229,7 @@ macro_rules! __stats__request_data {
 						games_back: usize,
 					}
 					$($impl_tt)*
-				}
+				// }
 			} else {
 				// $crate::__stats__request_data! { @ ? [$($stat_type),+]
 					$(#[$m])*
@@ -238,7 +238,7 @@ macro_rules! __stats__request_data {
 					}
 					$($impl_tt)*
 				// }
-			}
+			}}
 		}
 	};
     ($vis:vis $name:ident [$($stat_type:ident),+]) => {
@@ -392,7 +392,7 @@ macro_rules! stats {
 
 			#[doc(hidden)]
 			trait [<__ $name Split Parser>] {
-				fn parse(parsed_stats: &mut $crate::stats::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String>
+				fn parse(parsed_stats: &mut $crate::stats::parse::__ParsedStats) -> ::core::result::Result<Self, ::std::string::String>
 				where
 					Self: Sized;
 			}
@@ -404,7 +404,7 @@ macro_rules! stats {
 				where
 					Self: Sized
 				{
-					let mut parsed_stats: $crate::stats::__ParsedStats = <$crate::stats::__ParsedStats as ::serde::Deserialize>::deserialize(deserializer)?;
+					let mut parsed_stats: $crate::stats::parse::__ParsedStats = <$crate::stats::parse::__ParsedStats as ::serde::Deserialize>::deserialize(deserializer)?;
 
 					Ok(Self {
 						$([<$stat_type:snake>]: <[<$name $stat_type Split>] as [<__ $name Split Parser>]>::parse(&mut parsed_stats).map_err(<D::Error as ::serde::de::Error>::custom)?),+

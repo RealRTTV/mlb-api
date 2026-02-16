@@ -1,13 +1,15 @@
 use crate::league::LeagueId;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::season::SeasonId;
 use crate::sport::SportId;
 use crate::types::Copyright;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::cache::{CacheTable, RequestEntryCache};
-use crate::{rwlock_const_new, RwLock};
+use crate::cache::Requestable;
+
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct AwardsResponse {
@@ -42,7 +44,7 @@ pub struct AwardRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: award_request_builder::State + award_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for AwardRequestBuilder<S> {
+impl<S: award_request_builder::State + award_request_builder::IsComplete> crate::request::RequestURLBuilderExt for AwardRequestBuilder<S> {
     type Built = AwardRequest;
 }
 
@@ -56,13 +58,14 @@ impl Display for AwardRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for AwardRequest {
+impl RequestURL for AwardRequest {
 	type Response = AwardsResponse;
 }
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Award>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for Award {
+impl Requestable for Award {
 	type Identifier = AwardId;
 	type URL = AwardRequest;
 
@@ -80,13 +83,14 @@ impl RequestEntryCache for Award {
 		AwardRequest::builder().award_id(id.clone()).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
 		response.awards
 	}
 
+	#[cfg(feature = "cache")]
 	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized
@@ -101,7 +105,7 @@ entrypoint!(Award.id => Award);
 #[cfg(test)]
 mod tests {
 	use crate::awards::AwardRequest;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	async fn parse_this_season() {

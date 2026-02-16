@@ -1,7 +1,7 @@
 use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::team::teams::TeamsResponse;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 
@@ -14,7 +14,7 @@ pub struct TeamAffiliatesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: team_affiliates_request_builder::State + team_affiliates_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TeamAffiliatesRequestBuilder<S> {
+impl<S: team_affiliates_request_builder::State + team_affiliates_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamAffiliatesRequestBuilder<S> {
 	type Built = TeamAffiliatesRequest;
 }
 
@@ -24,13 +24,13 @@ impl Display for TeamAffiliatesRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for TeamAffiliatesRequest {
+impl RequestURL for TeamAffiliatesRequest {
 	type Response = TeamsResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::request::{Error as RequestError, StatsAPIRequestUrlBuilderExt};
+	use crate::request::{Error as RequestError, RequestURLBuilderExt};
 	use crate::team::affiliates::TeamAffiliatesRequest;
 	use crate::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;
@@ -49,7 +49,7 @@ mod tests {
 			for team in TeamsRequest::mlb_teams().build_and_get().await.unwrap().teams {
 				let affiliates_result = TeamAffiliatesRequest::builder().team_id(team.id).season(season).build_and_get().await;
 				match affiliates_result {
-					Ok(_) | Err(RequestError::StatsAPI(_)) => {},
+					Ok(_) | Err(RequestError::MLB(_)) => {},
 					Err(e) => panic!("{e}"),
 				}
 			}

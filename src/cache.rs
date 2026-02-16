@@ -1,5 +1,5 @@
 use crate::{MetaRequest, RwLock};
-use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+use crate::request::{RequestURL, RequestURLBuilderExt};
 use fxhash::FxBuildHasher;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -10,32 +10,32 @@ use thiserror::Error;
 use crate::person::Person;
 use crate::person::players::PlayersRequest;
 
-pub trait RequestEntryCache: 'static + Send + Sync + DeserializeOwned + Debug + Clone + Eq {
+pub trait Requestable: 'static + Send + Sync + DeserializeOwned + Debug + Clone + Eq {
     type Identifier: Clone + Eq + Hash + Display + Sync + Debug;
-    type URL: StatsAPIRequestUrl;
+    type URL: RequestURL;
 
     fn id(&self) -> &Self::Identifier;
 
     fn url_for_id(id: &Self::Identifier) -> Self::URL;
 
-    fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
+    fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item = Self> where Self: Sized;
 
     #[cfg(feature = "cache")]
     fn get_cache_table() -> &'static RwLock<CacheTable<Self>> where Self: Sized;
 }
 
-pub trait RequestEntryCacheEntrypoint {
-    type Complete: RequestEntryCache;
+pub trait RequestableEntrypoint {
+    type Complete: Requestable;
 
-    fn id(&self) -> &<<Self as RequestEntryCacheEntrypoint>::Complete as RequestEntryCache>::Identifier;
+    fn id(&self) -> &<<Self as RequestableEntrypoint>::Complete as Requestable>::Identifier;
 
     #[cfg(feature = "reqwest")]
     #[cfg(feature = "cache")]
-    fn as_complete_or_request(&self) -> impl Future<Output = Result<Arc<<Self as RequestEntryCacheEntrypoint>::Complete>, Error<Self>>>
+    fn as_complete_or_request(&self) -> impl Future<Output = Result<Arc<<Self as RequestableEntrypoint>::Complete>, Error<Self>>>
     where
         Self: Sized,
     { async {
-        let cache_lock = <<Self as RequestEntryCacheEntrypoint>::Complete as RequestEntryCache>::get_cache_table();
+        let cache_lock = <<Self as RequestableEntrypoint>::Complete as Requestable>::get_cache_table();
         let id = self.id();
         let cache = cache_lock.read().await;
         if let Some(complete_entry) = cache.get(id).cloned() {
@@ -50,11 +50,11 @@ pub trait RequestEntryCacheEntrypoint {
 
     #[cfg(feature = "ureq")]
     #[cfg(feature = "cache")]
-    fn as_complete_or_request(&self) -> Result<Arc<<Self as RequestEntryCacheEntrypoint>::Complete>, Error<Self>>
+    fn as_complete_or_request(&self) -> Result<Arc<<Self as RequestableEntrypoint>::Complete>, Error<Self>>
     where
         Self: Sized
     {
-        let cache_lock = <<Self as RequestEntryCacheEntrypoint>::Complete as RequestEntryCache>::get_cache_table();
+        let cache_lock = <<Self as RequestableEntrypoint>::Complete as Requestable>::get_cache_table();
         let id = self.id();
         let cache = cache_lock.read();
         if let Some(complete_entry) = cache.get(id).cloned() {
@@ -68,42 +68,43 @@ pub trait RequestEntryCacheEntrypoint {
 
     #[cfg(feature = "reqwest")]
     #[cfg(not(feature = "cache"))]
-    fn as_complete_or_request(&self) -> impl Future<Output = Result<<Self as RequestEntryCacheEntrypoint>::Complete, Error<Self>>>
+    fn as_complete_or_request(&self) -> impl Future<Output = Result<<Self as RequestableEntrypoint>::Complete, Error<Self>>>
     where
         Self: Sized,
     { async {
         let id = self.id();
-        let url = <Self::Complete as RequestEntryCache>::url_for_id(id).to_string();
-        let response = crate::request::get::<<<Self::Complete as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url).await?;
-        response
+        let url = <Self::Complete as Requestable>::url_for_id(id).to_string();
+        let response: <<Self::Complete as Requestable>::URL as RequestURL>::Response = crate::request::get::<<<<Self as RequestableEntrypoint>::Complete as Requestable>::URL as RequestURL>::Response>(url).await?;
+        let entries = <Self::Complete as Requestable>::get_entries(response);
+        entries.into_iter().next().ok_or_else(|| Error::<Self>::NoMatchingVariant(id.clone()))
     } }
 
     #[cfg(feature = "ureq")]
     #[cfg(not(feature = "cache"))]
-    fn as_complete_or_request(&self) -> Result<Arc<<Self as RequestEntryCacheEntrypoint>::Complete>, Error<Self>> {
+    fn as_complete_or_request(&self) -> Result<Arc<<Self as RequestableEntrypoint>::Complete>, Error<Self>> {
         let id = self.id();
-        let url = <Self::Complete as RequestEntryCache>::url_for_id(id).to_string();
-        let response = crate::request::get::<<<Self::Complete as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url)?;
-        response
+        let url = <Self::Complete as Requestable>::url_for_id(id).to_string();
+        let response = crate::request::get::<<<Self::Complete as Requestable>::URL as RequestURL>::Response>(&url)?;
+        let entries = <Self::Complete as Requestable>::get_entries(response);
+        entries.into_iter().next().ok_or_else(|| Error::<Self>::NoMatchingVariant(id.clone()))
     }
 }
 
 #[cfg(feature = "cache")]
-pub struct CacheTable<T: RequestEntryCache> {
+pub struct CacheTable<T: Requestable> {
     cached_values: HashMap<T::Identifier, Arc<T>, FxBuildHasher>,
 }
 
 #[derive(Debug, Error)]
-pub enum Error<T: RequestEntryCacheEntrypoint> {
+pub enum Error<T: RequestableEntrypoint> {
     #[error(transparent)]
     Url(#[from] crate::request::Error),
-    #[cfg(feature = "cache")]
     #[error("No matching entry was found for id {0}")]
-    NoMatchingVariant(<T::Complete as RequestEntryCache>::Identifier),
+    NoMatchingVariant(<T::Complete as Requestable>::Identifier),
 }
 
 #[cfg(feature = "cache")]
-impl<T: RequestEntryCache> CacheTable<T> {
+impl<T: Requestable> CacheTable<T> {
     #[allow(clippy::new_without_default, reason = "needs to be const")]
     #[must_use]
     pub const fn new() -> Self {
@@ -135,17 +136,17 @@ impl<T: RequestEntryCache> CacheTable<T> {
     /// See variants of [`crate::request::Error`]
     #[cfg(feature = "reqwest")]
     pub async fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as RequestEntryCache>::url_for_id(id).to_string();
-        let response = crate::request::get::<<<T as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url).await?;
-        self.add_entries(<T as RequestEntryCache>::get_entries(response));
+        let url = <T as Requestable>::url_for_id(id).to_string();
+        let response = crate::request::get::<<<T as Requestable>::URL as RequestURL>::Response>(url).await?;
+        self.add_entries(<T as Requestable>::get_entries(response));
         Ok(())
     }
 
     #[cfg(feature = "ureq")]
     pub fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as RequestEntryCache>::url_for_id(id).to_string();
-        let response = crate::request::get::<<<T as RequestEntryCache>::URL as StatsAPIRequestUrl>::Response>(url)?;
-        self.add_entries(<T as RequestEntryCache>::get_entries(response));
+        let url = <T as Requestable>::url_for_id(id).to_string();
+        let response = crate::request::get::<<<T as Requestable>::URL as RequestURL>::Response>(url)?;
+        self.add_entries(<T as Requestable>::get_entries(response));
         Ok(())
     }
 }
@@ -163,30 +164,30 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     let venue_response = crate::venue::VenuesRequest::builder().build_and_get();
     let league_response = crate::league::LeaguesRequest::builder().build_and_get();
     let sport_response = crate::sport::SportsRequest::builder().build_and_get();
-    <crate::awards::Award as RequestEntryCache>::get_cache_table().write().await.add_entries(award_response.await?.awards);
-    <crate::divisions::Division as RequestEntryCache>::get_cache_table().write().await.add_entries(division_response.await?.divisions);
-    <crate::conferences::Conference as RequestEntryCache>::get_cache_table().write().await.add_entries(conference_response.await?.conferences);
-    <crate::venue::Venue as RequestEntryCache>::get_cache_table().write().await.add_entries(venue_response.await?.venues);
-    <crate::league::League as RequestEntryCache>::get_cache_table().write().await.add_entries(league_response.await?.leagues);
-    <crate::sport::Sport as RequestEntryCache>::get_cache_table().write().await.add_entries(sport_response.await?.sports);
+    <crate::awards::Award as Requestable>::get_cache_table().write().await.add_entries(award_response.await?.awards);
+    <crate::divisions::Division as Requestable>::get_cache_table().write().await.add_entries(division_response.await?.divisions);
+    <crate::conferences::Conference as Requestable>::get_cache_table().write().await.add_entries(conference_response.await?.conferences);
+    <crate::venue::Venue as Requestable>::get_cache_table().write().await.add_entries(venue_response.await?.venues);
+    <crate::league::League as Requestable>::get_cache_table().write().await.add_entries(league_response.await?.leagues);
+    <crate::sport::Sport as Requestable>::get_cache_table().write().await.add_entries(sport_response.await?.sports);
     
-    <crate::baseball_stats::BaseballStat as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::baseball_stats::BaseballStat>::new().get().await?.entries);
-    <crate::job_types::JobType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::job_types::JobType>::new().get().await?.entries);
-    <crate::event_types::EventType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::event_types::EventType>::new().get().await?.entries);
-    <crate::game_status::GameStatus as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::game_status::GameStatus>::new().get().await?.entries);
-    <crate::metrics::Metric as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::metrics::Metric>::new().get().await?.entries);
-    <crate::pitch_codes::PitchCode as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::pitch_codes::PitchCode>::new().get().await?.entries);
-    <crate::pitch_types::PitchType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::pitch_types::PitchType>::new().get().await?.entries);
-    <crate::platforms::Platform as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::platforms::Platform>::new().get().await?.entries);
-    <crate::positions::Position as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::positions::Position>::new().get().await?.entries);
-    <crate::review_reasons::ReviewReason as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::review_reasons::ReviewReason>::new().get().await?.entries);
-    <crate::schedule_event_types::ScheduleEventType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::schedule_event_types::ScheduleEventType>::new().get().await?.entries);
-    <crate::situations::SituationCode as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::situations::SituationCode>::new().get().await?.entries);
-    <crate::sky::SkyDescription as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::sky::SkyDescription>::new().get().await?.entries);
-    <crate::standings_types::StandingsType as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::standings_types::StandingsType>::new().get().await?.entries);
-    <crate::wind_direction::WindDirection as RequestEntryCache>::get_cache_table().write().await.add_entries(MetaRequest::<crate::wind_direction::WindDirection>::new().get().await?.entries);
+    <crate::baseball_stats::BaseballStat as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::baseball_stats::BaseballStat>::new().get().await?.entries);
+    <crate::job_types::JobType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::job_types::JobType>::new().get().await?.entries);
+    <crate::event_types::EventType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::event_types::EventType>::new().get().await?.entries);
+    <crate::game_status::GameStatus as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::game_status::GameStatus>::new().get().await?.entries);
+    <crate::metrics::Metric as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::metrics::Metric>::new().get().await?.entries);
+    <crate::pitch_codes::PitchCode as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::pitch_codes::PitchCode>::new().get().await?.entries);
+    <crate::pitch_types::PitchType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::pitch_types::PitchType>::new().get().await?.entries);
+    <crate::platforms::Platform as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::platforms::Platform>::new().get().await?.entries);
+    <crate::positions::Position as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::positions::Position>::new().get().await?.entries);
+    <crate::review_reasons::ReviewReason as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::review_reasons::ReviewReason>::new().get().await?.entries);
+    <crate::schedule_event_types::ScheduleEventType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::schedule_event_types::ScheduleEventType>::new().get().await?.entries);
+    <crate::situations::SituationCode as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::situations::SituationCode>::new().get().await?.entries);
+    <crate::sky::SkyDescription as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::sky::SkyDescription>::new().get().await?.entries);
+    <crate::standings_types::StandingsType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::standings_types::StandingsType>::new().get().await?.entries);
+    <crate::wind_direction::WindDirection as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::wind_direction::WindDirection>::new().get().await?.entries);
 
-    <crate::person::Person as RequestEntryCache>::get_cache_table().write().await.add_entries(people_response.await?.people.into_iter().map(Box::new).map(Person::Ballplayer));
+    <crate::person::Person as Requestable>::get_cache_table().write().await.add_entries(people_response.await?.people.into_iter().map(Box::new).map(Person::Ballplayer));
 
     Ok(())
 }
@@ -196,30 +197,30 @@ pub async fn precache() -> Result<(), crate::request::Error> {
 #[cfg(feature = "cache")]
 #[cfg(feature = "ureq")]
 pub fn precache() -> Result<(), crate::request::Error> {
-    <crate::awards::Award as RequestEntryCache>::get_cache_table().write().add_entries(crate::awards::AwardRequest::builder().build_and_get()?.awards);
-    <crate::divisions::Division as RequestEntryCache>::get_cache_table().write().add_entries(crate::divisions::DivisionsRequest::builder().build_and_get()?.divisions);
-    <crate::conferences::Conference as RequestEntryCache>::get_cache_table().write().add_entries(crate::conferences::ConferencesRequest::builder().build_and_get()?.conferences);
-    <crate::venue::Venue as RequestEntryCache>::get_cache_table().write().add_entries(crate::venue::VenuesRequest::builder().build_and_get()?.venues);
-    <crate::league::League as RequestEntryCache>::get_cache_table().write().add_entries(crate::league::LeaguesRequest::builder().build_and_get()?.leagues);
-    <crate::sport::Sport as RequestEntryCache>::get_cache_table().write().add_entries(crate::sport::SportsRequest::builder().build_and_get()?.sports);
+    <crate::awards::Award as Requestable>::get_cache_table().write().add_entries(crate::awards::AwardRequest::builder().build_and_get()?.awards);
+    <crate::divisions::Division as Requestable>::get_cache_table().write().add_entries(crate::divisions::DivisionsRequest::builder().build_and_get()?.divisions);
+    <crate::conferences::Conference as Requestable>::get_cache_table().write().add_entries(crate::conferences::ConferencesRequest::builder().build_and_get()?.conferences);
+    <crate::venue::Venue as Requestable>::get_cache_table().write().add_entries(crate::venue::VenuesRequest::builder().build_and_get()?.venues);
+    <crate::league::League as Requestable>::get_cache_table().write().add_entries(crate::league::LeaguesRequest::builder().build_and_get()?.leagues);
+    <crate::sport::Sport as Requestable>::get_cache_table().write().add_entries(crate::sport::SportsRequest::builder().build_and_get()?.sports);
 
-    <crate::baseball_stats::BaseballStat as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::baseball_stats::BaseballStat>::new().get()?.entries);
-    <crate::job_types::JobType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::job_types::JobType>::new().get()?.entries);
-    <crate::event_types::EventType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::event_types::EventType>::new().get()?.entries);
-    <crate::game_status::GameStatus as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::game_status::GameStatus>::new().get()?.entries);
-    <crate::metrics::Metric as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::metrics::Metric>::new().get()?.entries);
-    <crate::pitch_codes::PitchCode as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::pitch_codes::PitchCode>::new().get()?.entries);
-    <crate::pitch_types::PitchType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::pitch_types::PitchType>::new().get()?.entries);
-    <crate::platforms::Platform as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::platforms::Platform>::new().get()?.entries);
-    <crate::positions::Position as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::positions::Position>::new().get()?.entries);
-    <crate::review_reasons::ReviewReason as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::review_reasons::ReviewReason>::new().get()?.entries);
-    <crate::schedule_event_types::ScheduleEventType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::schedule_event_types::ScheduleEventType>::new().get()?.entries);
-    <crate::situations::SituationCode as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::situations::SituationCode>::new().get()?.entries);
-    <crate::sky::SkyDescription as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::sky::SkyDescription>::new().get()?.entries);
-    <crate::standings_types::StandingsType as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::standings_types::StandingsType>::new().get()?.entries);
-    <crate::wind_direction::WindDirection as RequestEntryCache>::get_cache_table().write().add_entries(MetaRequest::<crate::wind_direction::WindDirection>::new().get()?.entries);
+    <crate::baseball_stats::BaseballStat as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::baseball_stats::BaseballStat>::new().get()?.entries);
+    <crate::job_types::JobType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::job_types::JobType>::new().get()?.entries);
+    <crate::event_types::EventType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::event_types::EventType>::new().get()?.entries);
+    <crate::game_status::GameStatus as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::game_status::GameStatus>::new().get()?.entries);
+    <crate::metrics::Metric as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::metrics::Metric>::new().get()?.entries);
+    <crate::pitch_codes::PitchCode as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::pitch_codes::PitchCode>::new().get()?.entries);
+    <crate::pitch_types::PitchType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::pitch_types::PitchType>::new().get()?.entries);
+    <crate::platforms::Platform as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::platforms::Platform>::new().get()?.entries);
+    <crate::positions::Position as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::positions::Position>::new().get()?.entries);
+    <crate::review_reasons::ReviewReason as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::review_reasons::ReviewReason>::new().get()?.entries);
+    <crate::schedule_event_types::ScheduleEventType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::schedule_event_types::ScheduleEventType>::new().get()?.entries);
+    <crate::situations::SituationCode as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::situations::SituationCode>::new().get()?.entries);
+    <crate::sky::SkyDescription as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::sky::SkyDescription>::new().get()?.entries);
+    <crate::standings_types::StandingsType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::standings_types::StandingsType>::new().get()?.entries);
+    <crate::wind_direction::WindDirection as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::wind_direction::WindDirection>::new().get()?.entries);
 
-    <crate::person::Person as RequestEntryCache>::get_cache_table().write().add_entries(PlayersRequest::builder().build_and_get()?.people);
+    <crate::person::Person as Requestable>::get_cache_table().write().add_entries(PlayersRequest::builder().build_and_get()?.people);
 
     Ok(())
 }

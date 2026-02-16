@@ -13,7 +13,7 @@ macro_rules! test_impl {
 		#[cfg(test)]
 		mod tests {
 			use super::*;
-			use crate::request::StatsAPIRequestUrl;
+			use crate::request::RequestURL;
 
 			#[tokio::test]
 			async fn parse_meta() {
@@ -28,9 +28,10 @@ macro_rules! tiered_request_entry_cache_impl {
 		tiered_request_entry_cache_impl!([$complete].$id_field: $id);
 	};
 	([$complete:ident $(, $($others:ident)*)?].$id_field:ident: $id:ident) => {
+		#[cfg(feature = "cache")]
 		static CACHE: $crate::RwLock<$crate::cache::CacheTable<$complete>> = $crate::rwlock_const_new($crate::cache::CacheTable::new());
 
-		impl $crate::cache::RequestEntryCache for $complete {
+		impl $crate::cache::Requestable for $complete {
 			type Identifier = $id;
 			type URL = $crate::meta::MetaRequest<Self>;
 
@@ -42,13 +43,14 @@ macro_rules! tiered_request_entry_cache_impl {
 				$crate::meta::MetaRequest::new()
 			}
 
-			fn get_entries(response: <Self::URL as $crate::request::StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+			fn get_entries(response: <Self::URL as $crate::request::RequestURL>::Response) -> impl IntoIterator<Item=Self>
 			where
 				Self: Sized
 			{
 				response.entries
 			}
 
+			#[cfg(feature = "cache")]
 			fn get_cache_table() -> &'static $crate::RwLock<$crate::cache::CacheTable<Self>>
 			where
 				Self: Sized
@@ -67,9 +69,10 @@ macro_rules! tiered_request_entry_cache_impl {
 
 macro_rules! static_request_entry_cache_impl {
     ($name:ident) => {
+	    #[cfg(feature = "cache")]
 		static CACHE: $crate::RwLock<$crate::cache::CacheTable<$name>> = $crate::rwlock_const_new($crate::cache::CacheTable::new());
 
-		impl $crate::cache::RequestEntryCache for $name {
+		impl $crate::cache::Requestable for $name {
 			type Identifier = Self;
 			type URL = $crate::meta::MetaRequest<Self>;
 
@@ -81,13 +84,14 @@ macro_rules! static_request_entry_cache_impl {
 				$crate::meta::MetaRequest::new()
 			}
 
-			fn get_entries(response: <Self::URL as $crate::request::StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+			fn get_entries(response: <Self::URL as $crate::request::RequestURL>::Response) -> impl IntoIterator<Item=Self>
 			where
 				Self: Sized
 			{
 				response.entries
 			}
 
+			#[cfg(feature = "cache")]
 			fn get_cache_table() -> &'static $crate::RwLock<$crate::cache::CacheTable<Self>>
 			where
 				Self: Sized
@@ -124,7 +128,7 @@ pub mod stat_groups;
 pub mod stat_types;
 pub mod wind_direction;
 
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use derive_more::{Deref, DerefMut};
 use serde::de::{DeserializeOwned, Error, MapAccess, SeqAccess};
 use serde::{de, Deserialize, Deserializer};
@@ -210,6 +214,6 @@ impl<T: MetaKind> Display for MetaRequest<T> {
 	}
 }
 
-impl<T: MetaKind> StatsAPIRequestUrl for MetaRequest<T> {
+impl<T: MetaKind> RequestURL for MetaRequest<T> {
 	type Response = MetaResponse<T>;
 }

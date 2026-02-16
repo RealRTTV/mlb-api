@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
 use bon::Builder;
 use serde::de::Error;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::sport::SportId;
 
 #[derive(Debug, Default, Deref, Display, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash, From)]
@@ -181,7 +181,7 @@ pub struct SeasonsRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: seasons_request_builder::State + seasons_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for SeasonsRequestBuilder<S> {
+impl<S: seasons_request_builder::State + seasons_request_builder::IsComplete> crate::request::RequestURLBuilderExt for SeasonsRequestBuilder<S> {
 	type Built = SeasonsRequest;
 }
 
@@ -191,7 +191,7 @@ impl Display for SeasonsRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for SeasonsRequest {
+impl RequestURL for SeasonsRequest {
 	type Response = SeasonsResponse;
 }
 
@@ -200,7 +200,7 @@ mod tests {
 	use crate::season::SeasonsRequest;
 	use crate::sport::SportsRequest;
 	use crate::TEST_YEAR;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]

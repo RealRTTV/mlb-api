@@ -4,7 +4,7 @@ use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 use crate::game_types::GameType;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 
 #[derive(Builder)]
 #[builder(derive(Into))]
@@ -14,7 +14,7 @@ pub struct ScheduleTiedRequest {
     game_types: Option<Vec<GameType>>,
 }
 
-impl<S: schedule_tied_request_builder::State + schedule_tied_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for ScheduleTiedRequestBuilder<S> {
+impl<S: schedule_tied_request_builder::State + schedule_tied_request_builder::IsComplete> crate::request::RequestURLBuilderExt for ScheduleTiedRequestBuilder<S> {
     type Built = ScheduleTiedRequest;
 }
 
@@ -27,13 +27,13 @@ impl Display for ScheduleTiedRequest {
     }
 }
 
-impl StatsAPIRequestUrl for ScheduleTiedRequest {
+impl RequestURL for ScheduleTiedRequest {
     type Response = ScheduleResponse;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::request::StatsAPIRequestUrlBuilderExt;
+    use crate::request::RequestURLBuilderExt;
     use crate::schedule::tied::ScheduleTiedRequest;
 	use crate::TEST_YEAR;
 

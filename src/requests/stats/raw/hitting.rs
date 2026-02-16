@@ -1,4 +1,4 @@
-kind!(Projected {
+group_and_type!(Projected {
     gamesPlayed
     runs
     doubles
@@ -32,7 +32,7 @@ kind!(Projected {
     ubr
     wSb
 });
-kind!(YearByYear {
+group_and_type!(YearByYear {
     age
     gamesPlayed
     groundOuts
@@ -59,7 +59,7 @@ kind!(YearByYear {
     sacFlies
     catchersInterference
 });
-kind!(YearByYearAdvanced {
+group_and_type!(YearByYearAdvanced {
     age
     plateAppearances
     totalBases
@@ -85,7 +85,7 @@ kind!(YearByYearAdvanced {
     lineHits
     groundHits
 });
-kind!(Season {
+group_and_type!(Season {
     age
     gamesPlayed
     groundOuts
@@ -112,7 +112,7 @@ kind!(Season {
     sacFlies
     catchersInterference
 });
-kind!(Career {
+group_and_type!(Career {
     gamesPlayed
     groundOuts
     airOuts
@@ -138,7 +138,7 @@ kind!(Career {
     sacFlies
     catchersInterference
 });
-kind!(SeasonAdvanced {
+group_and_type!(SeasonAdvanced {
     age
     plateAppearances
     totalBases
@@ -164,7 +164,7 @@ kind!(SeasonAdvanced {
     lineHits
     groundHits
 });
-kind!(CareerAdvanced {
+group_and_type!(CareerAdvanced {
     plateAppearances
     totalBases
     leftOnBase
@@ -189,7 +189,7 @@ kind!(CareerAdvanced {
     lineHits
     groundHits
 });
-kind!(GameLog {
+group_and_type!(GameLog {
     gamesPlayed
     flyOuts
     groundOuts
@@ -217,13 +217,13 @@ kind!(GameLog {
     sacFlies
     catchersInterference
 });
-kind!(ExpectedStatistics {
+group_and_type!(ExpectedStatistics {
     avg
     slg
     woba
     wobaCon
 });
-kind!(Sabermetrics {
+group_and_type!(Sabermetrics {
     woba
     wRaa
     wRc
@@ -241,7 +241,7 @@ kind!(Sabermetrics {
     wGdp
     wSb
 });
-kind!(LastXGames {
+group_and_type!(LastXGames {
     gamesPlayed
     flyOuts
     groundOuts
@@ -269,7 +269,7 @@ kind!(LastXGames {
     sacFlies
     catchersInterference
 });
-kind!(ByDateRange {
+group_and_type!(ByDateRange {
     gamesPlayed
     flyOuts
     groundOuts
@@ -297,7 +297,7 @@ kind!(ByDateRange {
     sacFlies
     catchersInterference
 });
-kind!(ByDateRangeAdvanced {
+group_and_type!(ByDateRangeAdvanced {
     plateAppearances
     totalBases
     leftOnBase
@@ -322,7 +322,7 @@ kind!(ByDateRangeAdvanced {
     lineHits
     groundHits
 });
-kind!(ByMonth {
+group_and_type!(ByMonth {
     gamesPlayed
     flyOuts
     groundOuts
@@ -350,7 +350,7 @@ kind!(ByMonth {
     sacFlies
     catchersInterference
 });
-kind!(ByDayOfWeek {
+group_and_type!(ByDayOfWeek {
     gamesPlayed
     flyOuts
     groundOuts
@@ -378,7 +378,7 @@ kind!(ByDayOfWeek {
     sacFlies
     catchersInterference
 });
-kind!(HomeAndAway {
+group_and_type!(HomeAndAway {
     gamesPlayed
     flyOuts
     groundOuts
@@ -406,7 +406,7 @@ kind!(HomeAndAway {
     sacFlies
     catchersInterference
 });
-kind!(WinLoss {
+group_and_type!(WinLoss {
     gamesPlayed
     flyOuts
     groundOuts
@@ -434,7 +434,7 @@ kind!(WinLoss {
     sacFlies
     catchersInterference
 });
-kind!(Rankings {
+group_and_type!(Rankings {
     gamesPlayed
     runs
     triples
@@ -456,7 +456,7 @@ kind!(Rankings {
     rbi
     catchersInterference
 });
-kind!(RankingsByYear {
+group_and_type!(RankingsByYear {
     gamesPlayed
     runs
     triples
@@ -478,7 +478,7 @@ kind!(RankingsByYear {
     rbi
     catchersInterference
 });
-kind!(StatSplits {
+group_and_type!(StatSplits {
     gamesPlayed
     groundOuts
     airOuts
@@ -505,7 +505,7 @@ kind!(StatSplits {
     sacFlies
     catchersInterference
 });
-kind!(StatSplitsAdvanced {
+group_and_type!(StatSplitsAdvanced {
     plateAppearances
     totalBases
     leftOnBase

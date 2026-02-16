@@ -1,13 +1,15 @@
 use crate::sport::SportId;
-use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+use crate::request::{RequestURL, RequestURLBuilderExt};
 use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::cache::{CacheTable, RequestEntryCache};
-use crate::{rwlock_const_new, RwLock};
+use crate::cache::Requestable;
 use crate::season::{Season, SeasonState};
+
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -99,7 +101,7 @@ pub struct LeaguesRequest {
 	league_ids: Option<Vec<LeagueId>>,
 }
 
-impl<S: leagues_request_builder::State + leagues_request_builder::IsComplete> StatsAPIRequestUrlBuilderExt for LeaguesRequestBuilder<S> {
+impl<S: leagues_request_builder::State + leagues_request_builder::IsComplete> RequestURLBuilderExt for LeaguesRequestBuilder<S> {
 	type Built = LeaguesRequest;
 }
 
@@ -119,13 +121,14 @@ impl Display for LeaguesRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for LeaguesRequest {
+impl RequestURL for LeaguesRequest {
 	type Response = LeagueResponse;
 }
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<League>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for League {
+impl Requestable for League {
 	type Identifier = LeagueId;
 	type URL = LeaguesRequest;
 
@@ -143,13 +146,14 @@ impl RequestEntryCache for League {
 		LeaguesRequest::builder().league_ids_internal(vec![*id]).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
 		response.leagues
 	}
 
+	#[cfg(feature = "cache")]
 	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized

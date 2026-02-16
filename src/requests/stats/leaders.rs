@@ -10,7 +10,7 @@ use std::str::FromStr;
 use crate::baseball_stats::BaseballStatId;
 use crate::game_types::GameType;
 use crate::person::NamedPerson;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::season::SeasonId;
 use crate::stat_groups::StatGroup;
 use crate::stat_types::StatType;
@@ -100,7 +100,7 @@ pub struct StatLeadersRequest {
 	game_types: Option<Vec<GameType>>,
 }
 
-impl<S: stat_leaders_request_builder::State + stat_leaders_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for StatLeadersRequestBuilder<S> {
+impl<S: stat_leaders_request_builder::State + stat_leaders_request_builder::IsComplete> crate::request::RequestURLBuilderExt for StatLeadersRequestBuilder<S> {
 	type Built = StatLeadersRequest;
 }
 
@@ -127,7 +127,7 @@ impl Display for StatLeadersRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for StatLeadersRequest {
+impl RequestURL for StatLeadersRequest {
 	type Response = StatLeadersResponse;
 }
 
@@ -138,7 +138,7 @@ mod tests {
 	use crate::types::PlayerPool;
 	use crate::baseball_stats::BaseballStat;
 	use crate::game_types::GameType;
-	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+	use crate::request::{RequestURL, RequestURLBuilderExt};
 
 	#[tokio::test]
 	async fn test_stat_leaders() {

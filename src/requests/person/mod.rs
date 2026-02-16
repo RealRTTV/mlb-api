@@ -5,13 +5,12 @@ pub mod stats;
 pub mod people;
 pub mod players;
 
-use crate::cache::{CacheTable, RequestEntryCache};
+use crate::cache::Requestable;
 use crate::draft::School;
 use crate::hydrations::Hydrations;
 use crate::season::SeasonId;
 use crate::types::{Gender, Handedness, HeightMeasurement};
-use crate::request::StatsAPIRequestUrl;
-use crate::{rwlock_const_new, RwLock};
+use crate::request::RequestURL;
 use bon::Builder;
 use chrono::{Local, NaiveDate};
 use derive_more::{Deref, DerefMut, Display, From};
@@ -22,6 +21,9 @@ use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use crate::positions::NamedPosition;
 use crate::team::NamedTeam;
+
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deref, DerefMut, Deserialize, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -240,7 +242,7 @@ impl<H: PersonHydrations> PersonRequest<H> where H::RequestData: Default {
 	}
 }
 
-impl<H: PersonHydrations, S: person_request_builder::State + person_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PersonRequestBuilder<H, S> {
+impl<H: PersonHydrations, S: person_request_builder::State + person_request_builder::IsComplete> crate::request::RequestURLBuilderExt for PersonRequestBuilder<H, S> {
 	type Built = PersonRequest<H>;
 }
 
@@ -255,7 +257,7 @@ impl<H: PersonHydrations> Display for PersonRequest<H> {
 	}
 }
 
-impl<H: PersonHydrations> StatsAPIRequestUrl for PersonRequest<H> {
+impl<H: PersonHydrations> RequestURL for PersonRequest<H> {
 	type Response = PeopleResponse<H>;
 }
 
@@ -500,9 +502,10 @@ macro_rules! person_hydrations {
     };
 }
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Person<()>>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for Person<()> {
+impl Requestable for Person<()> {
 	type Identifier = PersonId;
 	type URL = PersonRequest<()>;
 
@@ -514,13 +517,14 @@ impl RequestEntryCache for Person<()> {
 		PersonRequest::for_id(*id).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item = Self>
+	fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item = Self>
 	where
 		Self: Sized,
 	{
 		response.people.into_iter().map(Box::new).map(Person::Ballplayer)
 	}
 
+	#[cfg(feature = "cache")]
 	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized,
@@ -536,7 +540,7 @@ entrypoint!(for < H > Ballplayer < H > . id => Person < > where H: PersonHydrati
 
 #[cfg(test)]
 mod tests {
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 	use crate::roster_types::RosterType;
 	use super::*;
 	use crate::team::roster::RosterRequest;

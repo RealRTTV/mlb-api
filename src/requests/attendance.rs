@@ -14,7 +14,7 @@ use std::num::NonZeroU32;
 use std::ops::Add;
 use crate::game::GameId;
 use crate::game_types::GameType;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 
 /// Within regards to attendance, the term frequently used is "Opening" over "Game";
 /// this is for reasons including but not limited to: single ticket double headers,
@@ -331,7 +331,7 @@ pub struct AttendanceRequest {
 	game_type: GameType,
 }
 
-impl<S: attendance_request_builder::State + attendance_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for AttendanceRequestBuilder<S> {
+impl<S: attendance_request_builder::State + attendance_request_builder::IsComplete> crate::request::RequestURLBuilderExt for AttendanceRequestBuilder<S> {
     type Built = AttendanceRequest;
 }
 
@@ -364,14 +364,14 @@ impl Display for AttendanceRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for AttendanceRequest {
+impl RequestURL for AttendanceRequest {
 	type Response = AttendanceResponse;
 }
 
 #[cfg(test)]
 mod tests {
 	use crate::attendance::AttendanceRequest;
-	use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+	use crate::request::{RequestURL, RequestURLBuilderExt};
 	use crate::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;
 

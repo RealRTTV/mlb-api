@@ -5,7 +5,7 @@ use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::job_types::JobTypeId;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::sport::SportId;
 
 pub mod datacasters;
@@ -41,7 +41,7 @@ pub struct JobsRequest {
     date: Option<NaiveDate>,
 }
 
-impl<S: jobs_request_builder::State + jobs_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for JobsRequestBuilder<S> {
+impl<S: jobs_request_builder::State + jobs_request_builder::IsComplete> crate::request::RequestURLBuilderExt for JobsRequestBuilder<S> {
     type Built = JobsRequest;
 }
 
@@ -55,7 +55,7 @@ impl Display for JobsRequest {
     }
 }
 
-impl StatsAPIRequestUrl for JobsRequest {
+impl RequestURL for JobsRequest {
 	type Response = JobsResponse;
 }
 
@@ -64,7 +64,7 @@ mod tests {
     use crate::job_types::JobType;
     use crate::jobs::JobsRequest;
     use crate::meta::MetaRequest;
-    use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+    use crate::request::{RequestURL, RequestURLBuilderExt};
 
     #[tokio::test]
     async fn parse_all_job_types() {

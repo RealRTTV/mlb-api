@@ -1,5 +1,5 @@
 use crate::jobs::JobsResponse;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 
@@ -12,6 +12,6 @@ impl Display for JobsOfficialScorersRequest {
     }
 }
 
-impl StatsAPIRequestUrl for JobsOfficialScorersRequest {
+impl RequestURL for JobsOfficialScorersRequest {
 	type Response = JobsResponse;
 }

@@ -1,7 +1,7 @@
 use crate::person::people::PeopleResponse;
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 
@@ -14,7 +14,7 @@ pub struct AlumniRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: alumni_request_builder::State + alumni_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for AlumniRequestBuilder<S> {
+impl<S: alumni_request_builder::State + alumni_request_builder::IsComplete> crate::request::RequestURLBuilderExt for AlumniRequestBuilder<S> {
 	type Built = AlumniRequest;
 }
 
@@ -24,13 +24,13 @@ impl Display for AlumniRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for AlumniRequest {
+impl RequestURL for AlumniRequest {
 	type Response = PeopleResponse<()>;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 	use crate::team::alumni::AlumniRequest;
 	use crate::team::teams::TeamsRequest;
 	use crate::TEST_YEAR;

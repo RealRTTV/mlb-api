@@ -7,7 +7,7 @@ use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 use crate::game_types::GameType;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::sport::SportId;
 
 #[derive(Builder)]
@@ -24,7 +24,7 @@ pub struct SchedulePostseasonRequest {
     series_number: Option<u32>,
 }
 
-impl<S: schedule_postseason_request_builder::State + schedule_postseason_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for SchedulePostseasonRequestBuilder<S> {
+impl<S: schedule_postseason_request_builder::State + schedule_postseason_request_builder::IsComplete> crate::request::RequestURLBuilderExt for SchedulePostseasonRequestBuilder<S> {
     type Built = SchedulePostseasonRequest;
 }
 
@@ -40,13 +40,13 @@ impl Display for SchedulePostseasonRequest {
     }
 }
 
-impl StatsAPIRequestUrl for SchedulePostseasonRequest {
+impl RequestURL for SchedulePostseasonRequest {
     type Response = ScheduleResponse;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::request::StatsAPIRequestUrlBuilderExt;
+    use crate::request::RequestURLBuilderExt;
     use crate::schedule::postseason::SchedulePostseasonRequest;
 	use crate::TEST_YEAR;
 

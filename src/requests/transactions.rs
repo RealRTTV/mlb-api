@@ -1,7 +1,7 @@
 use crate::person::{NamedPerson, PersonId};
 use crate::team::{TeamId};
 use crate::types::{Copyright, NaiveDateRange, MLB_API_DATE_FORMAT};
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -601,7 +601,7 @@ impl TransactionsRequest {
 	}
 }
 
-impl<S: transactions_request_builder::State + transactions_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TransactionsRequestBuilder<S> {
+impl<S: transactions_request_builder::State + transactions_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TransactionsRequestBuilder<S> {
 	type Built = TransactionsRequest;
 }
 
@@ -618,7 +618,7 @@ impl Display for TransactionsRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for TransactionsRequest {
+impl RequestURL for TransactionsRequest {
 	type Response = TransactionsResponse;
 }
 
@@ -629,7 +629,7 @@ mod tests {
 	use crate::transactions::TransactionsRequest;
 	use crate::TEST_YEAR;
 	use chrono::NaiveDate;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 	use crate::sport::SportId;
 
 	#[tokio::test]

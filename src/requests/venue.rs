@@ -1,14 +1,16 @@
 use crate::season::SeasonId;
 use crate::types::Copyright;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::cache::{CacheTable, RequestEntryCache};
-use crate::{rwlock_const_new, RwLock};
+use crate::cache::{Requestable};
 use crate::sport::SportId;
+
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -55,9 +57,10 @@ id!(VenueId { id: u32 });
 id_only_eq_impl!(NamedVenue, id);
 id_only_eq_impl!(Venue, id);
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Venue>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for Venue {
+impl Requestable for Venue {
 	type Identifier = VenueId;
 	type URL = VenuesRequest;
 
@@ -75,13 +78,14 @@ impl RequestEntryCache for Venue {
 		VenuesRequest::builder().venue_ids(vec![*id]).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
 		response.venues
 	}
 
+	#[cfg(feature = "cache")]
 	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized
@@ -100,7 +104,7 @@ pub struct VenuesRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: venues_request_builder::State + venues_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for VenuesRequestBuilder<S> {
+impl<S: venues_request_builder::State + venues_request_builder::IsComplete> crate::request::RequestURLBuilderExt for VenuesRequestBuilder<S> {
 	type Built = VenuesRequest;
 }
 
@@ -110,13 +114,13 @@ impl Display for VenuesRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for VenuesRequest {
+impl RequestURL for VenuesRequest {
 	type Response = VenuesResponse;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 	use crate::TEST_YEAR;
 	use crate::venue::VenuesRequest;
 

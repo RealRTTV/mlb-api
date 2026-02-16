@@ -2,7 +2,7 @@
 
 use crate::game_types::GameType;
 use crate::person::PersonId;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::season::SeasonId;
 use crate::sport::SportId;
 use crate::stat_groups::StatGroup;
@@ -46,7 +46,7 @@ pub struct TeamsStatsRequest<S: Stats> {
 	_marker: PhantomData<S>,
 }
 
-impl<S: Stats, State: teams_stats_request_builder::State + teams_stats_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for TeamsStatsRequestBuilder<S, State> {
+impl<S: Stats, State: teams_stats_request_builder::State + teams_stats_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamsStatsRequestBuilder<S, State> {
     type Built = TeamsStatsRequest<S>;
 }
 
@@ -97,6 +97,6 @@ impl<S: Stats> Display for TeamsStatsRequest<S> {
 	}
 }
 
-impl<S: Stats> StatsAPIRequestUrl for TeamsStatsRequest<S> {
+impl<S: Stats> RequestURL for TeamsStatsRequest<S> {
 	type Response = TeamsStatsResponse<S>;
 }

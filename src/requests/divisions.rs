@@ -1,14 +1,16 @@
-use crate::cache::{CacheTable, RequestEntryCache};
+use crate::cache::Requestable;
 use crate::league::LeagueId;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::season::SeasonId;
 use crate::sport::SportId;
 use crate::types::Copyright;
-use crate::{rwlock_const_new, RwLock};
 use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -62,7 +64,7 @@ pub struct DivisionsRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: divisions_request_builder::State + divisions_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for DivisionsRequestBuilder<S> {
+impl<S: divisions_request_builder::State + divisions_request_builder::IsComplete> crate::request::RequestURLBuilderExt for DivisionsRequestBuilder<S> {
     type Built = DivisionsRequest;
 }
 
@@ -76,13 +78,14 @@ impl Display for DivisionsRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for DivisionsRequest {
+impl RequestURL for DivisionsRequest {
 	type Response = DivisionsResponse;
 }
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Division>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for Division {
+impl Requestable for Division {
 	type Identifier = DivisionId;
 	type URL = DivisionsRequest;
 
@@ -100,13 +103,14 @@ impl RequestEntryCache for Division {
 		DivisionsRequest::builder().division_id(*id).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
 		response.divisions
 	}
 
+	#[cfg(feature = "cache")]
 	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized
@@ -122,7 +126,7 @@ entrypoint!(Division.id => Division);
 #[cfg(test)]
 mod tests {
 	use crate::divisions::DivisionsRequest;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	async fn all_divisions_this_season() {

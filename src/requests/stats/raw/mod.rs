@@ -71,29 +71,30 @@ api_names_to_types![ $
     groundHits: crate::stats::units::CountingStat,
 ];
 
-macro_rules! kind {
+macro_rules! group_and_type {
     ($name:ident { $($piece:ident)* }) => {
         ::pastey::paste! {
-            #[derive(Debug, ::serde::Deserialize, PartialEq, Eq, Clone, ::derive_more::Add, ::derive_more::AddAssign)]
+            #[doc(hidden)]
+            #[derive(Debug, ::serde::Deserialize, Clone, PartialEq, Eq)]
             #[serde(rename_all = "camelCase")]
-            pub struct $name {
+            pub struct [<__ $name StatsMarker>] {
                 $(
-                #[serde(deserialize_with = "deserialize_stat")]
-                [<$piece:snake>]: Result<api_name_to_type![$piece], OmittedStatError>,
+                #[serde(deserialize_with = "crate::stats::raw::deserialize_stat")]
+                [<$piece:snake>]: Result<api_name_to_type![$piece], crate::stats::raw::OmittedStatError>,
                 )*
             }
 
-            impl Default for $name {
+            impl Default for [<__ $name StatsMarker>] {
                 fn default() -> Self {
                     Self {
                         $(
-                        [<$piece:snake>]: Err(OmittedStatError)
+                        [<$piece:snake>]: Err(crate::stats::raw::OmittedStatError)
                         ),*
                     }
                 }
             }
 
-            impl crate::stats::SingletonWrappedEntryStat for $name {}
+            impl crate::stats::RawStat for [<__ $name StatsMarker>] {}
         }
     };
 }
@@ -103,8 +104,18 @@ pub mod hitting;
 pub mod fielding;
 pub mod catching;
 
-/// For old data, some stats are just omitted, like pitch count and stuff. So every field is now possibly omittable. Gotta `?` everything now.
-#[derive(Debug, Error)]
+mod fielded_matchup;
+mod spray_chart;
+mod hit_spray;
+mod hot_cold_zones;
+
+pub use fielded_matchup::*;
+pub use spray_chart::*;
+pub use hit_spray::*;
+pub use hot_cold_zones::*;
+
+/// For old data, some stats are just omitted, like pitch count and stuff. So every field is now possibly omittable. Gotta `?` everything now. (this api is legendary)
+#[derive(Debug, Error, PartialEq, Eq, Copy, Clone)]
 #[error("This stat was omitted.")]
 pub struct OmittedStatError;
 

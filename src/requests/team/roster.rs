@@ -7,7 +7,7 @@ use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::positions::NamedPosition;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::roster_types::RosterType;
 use crate::team::NamedTeam;
 
@@ -104,7 +104,7 @@ pub struct RosterRequest {
     roster_type: RosterType,
 }
 
-impl<S: roster_request_builder::State + roster_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for RosterRequestBuilder<S> {
+impl<S: roster_request_builder::State + roster_request_builder::IsComplete> crate::request::RequestURLBuilderExt for RosterRequestBuilder<S> {
     type Built = RosterRequest;
 }
 
@@ -114,7 +114,7 @@ impl Display for RosterRequest {
     }
 }
 
-impl StatsAPIRequestUrl for RosterRequest {
+impl RequestURL for RosterRequest {
     type Response = RosterResponse;
 }
 
@@ -134,7 +134,7 @@ pub struct RosterEntry {
 #[cfg(test)]
 mod tests {
 	use crate::meta::MetaRequest;
-    use crate::request::{StatsAPIRequestUrl, StatsAPIRequestUrlBuilderExt};
+    use crate::request::{RequestURL, RequestURLBuilderExt};
     use crate::roster_types::RosterType;
     use crate::team::roster::RosterRequest;
 	use crate::team::teams::TeamsRequest;

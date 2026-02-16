@@ -8,7 +8,7 @@ use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
 use crate::game_types::GameType;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use crate::sport::SportId;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -59,7 +59,7 @@ pub struct SchedulePostseasonSeriesRequest {
     series_number: Option<u32>,
 }
 
-impl<S: schedule_postseason_series_request_builder::State + schedule_postseason_series_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for SchedulePostseasonSeriesRequestBuilder<S> {
+impl<S: schedule_postseason_series_request_builder::State + schedule_postseason_series_request_builder::IsComplete> crate::request::RequestURLBuilderExt for SchedulePostseasonSeriesRequestBuilder<S> {
     type Built = SchedulePostseasonSeriesRequest;
 }
 
@@ -75,6 +75,6 @@ impl Display for SchedulePostseasonSeriesRequest {
     }
 }
 
-impl StatsAPIRequestUrl for SchedulePostseasonSeriesRequest {
+impl RequestURL for SchedulePostseasonSeriesRequest {
     type Response = SchedulePostseasonSeriesResponse;
 }

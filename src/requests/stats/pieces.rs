@@ -5,7 +5,7 @@ use derive_more::{Add, AddAssign};
 use serde::Deserialize;
 use serde_with::serde_as;
 use crate::pitch_types::PitchTypeId;
-use crate::stats::SingletonWrappedEntryStat;
+use crate::stats::SingletonSplitStat;
 
 macro_rules! piece {
     (
@@ -674,7 +674,7 @@ impl From<__PitchUsageStruct> for PitchUsage {
 
 impl Eq for PitchUsage {}
 
-impl SingletonWrappedEntryStat for PitchUsage {}
+impl SingletonSplitStat for PitchUsage {}
 
 impl PitchUsage {
 	/// Percentage of total pitches that are this pitch.

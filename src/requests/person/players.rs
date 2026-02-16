@@ -1,6 +1,6 @@
 use crate::person::people::PeopleResponse;
 use crate::season::SeasonId;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 use crate::sport::SportId;
@@ -15,7 +15,7 @@ pub struct PlayersRequest {
 	season: Option<SeasonId>,
 }
 
-impl<S: players_request_builder::State + players_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for PlayersRequestBuilder<S> {
+impl<S: players_request_builder::State + players_request_builder::IsComplete> crate::request::RequestURLBuilderExt for PlayersRequestBuilder<S> {
 	type Built = PlayersRequest;
 }
 
@@ -25,7 +25,7 @@ impl Display for PlayersRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for PlayersRequest {
+impl RequestURL for PlayersRequest {
 	type Response = PeopleResponse<()>;
 }
 
@@ -33,7 +33,7 @@ impl StatsAPIRequestUrl for PlayersRequest {
 mod tests {
 	use super::*;
 	use crate::TEST_YEAR;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]

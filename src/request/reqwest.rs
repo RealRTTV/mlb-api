@@ -1,5 +1,5 @@
 use crate::request::{Error, Result};
-use crate::types::StatsAPIError;
+use crate::types::MLBError;
 use serde::de::DeserializeOwned;
 
 /// # Errors
@@ -11,7 +11,7 @@ pub async fn get<T: DeserializeOwned>(url: String) -> Result<T> {
 		Ok(t) => return Ok(t),
 		Err(e) => Error::Serde(e),
 	};
-	Err(Error::StatsAPI(serde_json::from_slice::<'_, StatsAPIError>(&bytes).map_err(|_| e)?))
+	Err(Error::MLB(serde_json::from_slice::<'_, MLBError>(&bytes).map_err(|_| e)?))
 }
 
 /// # Errors
@@ -25,5 +25,5 @@ pub async fn get<T: DeserializeOwned>(url: String) -> Result<T> {
 		Ok(t) => return Ok(t),
 		Err(e) => Error::Serde(e),
 	};
-	Err(Error::StatsAPI(serde_json::from_slice::<'_, StatsAPIError>(&bytes).map_err(|_| e)?))
+	Err(Error::MLB(serde_json::from_slice::<'_, MLBError>(&bytes).map_err(|_| e)?))
 }

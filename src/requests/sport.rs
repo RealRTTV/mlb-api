@@ -1,10 +1,11 @@
 use crate::types::Copyright;
-use crate::request::StatsAPIRequestUrl;
+use crate::request::RequestURL;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::cache::{CacheTable, RequestEntryCache};
-use crate::{rwlock_const_new, RwLock};
+use crate::cache::{Requestable};
+#[cfg(feature = "cache")]
+use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +34,7 @@ pub struct SportsRequest {
 	id: Option<SportId>,
 }
 
-impl<S: sports_request_builder::State + sports_request_builder::IsComplete> crate::request::StatsAPIRequestUrlBuilderExt for SportsRequestBuilder<S> {
+impl<S: sports_request_builder::State + sports_request_builder::IsComplete> crate::request::RequestURLBuilderExt for SportsRequestBuilder<S> {
 	type Built = SportsRequest;
 }
 
@@ -43,7 +44,7 @@ impl Display for SportsRequest {
 	}
 }
 
-impl StatsAPIRequestUrl for SportsRequest {
+impl RequestURL for SportsRequest {
 	type Response = SportsResponse;
 }
 
@@ -61,9 +62,10 @@ pub struct Sport {
 
 id_only_eq_impl!(Sport, id);
 
+#[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Sport>> = rwlock_const_new(CacheTable::new());
 
-impl RequestEntryCache for Sport {
+impl Requestable for Sport {
 	type Identifier = SportId;
 	type URL = SportsRequest;
 
@@ -81,13 +83,14 @@ impl RequestEntryCache for Sport {
 		SportsRequest::builder().id(*id).build()
 	}
 
-	fn get_entries(response: <Self::URL as StatsAPIRequestUrl>::Response) -> impl IntoIterator<Item=Self>
+	fn get_entries(response: <Self::URL as RequestURL>::Response) -> impl IntoIterator<Item=Self>
 	where
 		Self: Sized
 	{
 		response.sports
 	}
 
+	#[cfg(feature = "cache")]
 	fn get_cache_table() -> &'static RwLock<CacheTable<Self>>
 	where
 		Self: Sized
@@ -102,7 +105,7 @@ entrypoint!(Sport.id => Sport);
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::request::StatsAPIRequestUrlBuilderExt;
+	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
 	async fn parse_all_sports() {
