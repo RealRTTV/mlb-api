@@ -98,8 +98,8 @@ pub mod stat_types {
 		($name:ident {
 			$hitting:ty,
 			$pitching:ty,
-			$fielding:ty,
-			$catching:ty $(,)?
+			$catching:ty,
+			$fielding:ty $(,)?
 		}) => {
 			::pastey::paste! {
 				#[doc(hidden)]

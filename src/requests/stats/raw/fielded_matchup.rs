@@ -8,7 +8,7 @@ use serde::Deserialize;
 pub struct FieldedMatchup {
 	pub pitcher: NamedPerson,
 	pub batter: NamedPerson,
-	pub fielding_team: NamedTeam,
+	pub fielding_team: Option<NamedTeam>,
 }
 
 impl Default for FieldedMatchup {
@@ -16,7 +16,7 @@ impl Default for FieldedMatchup {
 		Self {
 			pitcher: NamedPerson::unknown_person(),
 			batter: NamedPerson::unknown_person(),
-			fielding_team: NamedTeam::unknown_team(),
+			fielding_team: None,
 		}
 	}
 }

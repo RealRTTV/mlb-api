@@ -134,7 +134,7 @@ register_fields![ $
 ];
 
 macro_rules! group_and_type {
-    ($name:ident { $($serde:literal => $piece:ident),* $(,)? }) => {
+    ($name:ident { $($(#[$meta:meta])* $serde:literal => $piece:ident),* $(,)? }) => {
         ::pastey::paste! {
             #[doc(hidden)]
             #[allow(non_snake_case)]
@@ -143,6 +143,8 @@ macro_rules! group_and_type {
             pub struct [<__ $name StatsData>] {
                 $(
                 #[serde(deserialize_with = "crate::stats::raw::deserialize_stat", rename = $serde)]
+                #[cfg_attr(not(test), serde(default = "crate::stats::raw::default_stat"))]
+                $(#[$meta])*
                 pub $piece: Result<api_name_to_type![$piece], crate::stats::raw::OmittedStatError>,
                 )*
             }
@@ -194,6 +196,10 @@ pub struct OmittedStatError;
 
 pub(crate) fn deserialize_stat<'de, D: Deserializer<'de>, T: DeserializeOwned>(deserializer: D) -> Result<Result<T, OmittedStatError>, D::Error> {
     Ok(Option::<T>::deserialize(deserializer)?.ok_or(OmittedStatError))
+}
+
+pub(crate) fn default_stat<T>() -> Result<T, OmittedStatError> {
+    Err(OmittedStatError)
 }
 
 pub(crate) fn stat_eq<T: PartialEq>(a: &Result<T, OmittedStatError>, b: &Result<T, OmittedStatError>) -> bool {

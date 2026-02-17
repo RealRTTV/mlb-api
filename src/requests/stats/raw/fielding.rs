@@ -2,7 +2,9 @@ group_and_type!(YearByYear {
 	"age" => age,
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -11,19 +13,25 @@ group_and_type!(YearByYear {
 	"position" => position,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(Season {
 	"age" => age,
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -32,18 +40,24 @@ group_and_type!(Season {
 	"position" => position,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(Career {
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -52,18 +66,24 @@ group_and_type!(Career {
 	"position" => position,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(GameLog {
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -72,45 +92,24 @@ group_and_type!(GameLog {
 	"position" => position,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(LastXGames {
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
-	"assists" => assists,
-	"putOuts" => putouts,
-	"errors" => errors,
-	"chances" => chances,
-	"position" => position,
-	"games" => games,
-	"doublePlays" => double_plays,
-	"triplePlays" => triple_plays,
-	"throwingErrors" => throwing_errors,
-});
-group_and_type!(ByDateRange {
-	"gamesPlayed" => games_played,
-	"gamesStarted" => games_started,
-	"assists" => assists,
-	"putOuts" => putouts,
-	"errors" => errors,
-	"chances" => chances,
-	"position" => position,
-	"innings" => innings,
-	"games" => games,
-	"doublePlays" => double_plays,
-	"triplePlays" => triple_plays,
-	"throwingErrors" => throwing_errors,
-});
-group_and_type!(ByDateRangeAdvanced {
-	"gamesPlayed" => games_played,
-	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -119,18 +118,76 @@ group_and_type!(ByDateRangeAdvanced {
 	"position" => position,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"pickoffs" => pickoffs,
+});
+group_and_type!(ByDateRange {
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"pickoffs" => pickoffs,
+});
+group_and_type!(ByDateRangeAdvanced {
+	"gamesPlayed" => games_played,
+	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"position" => position,
+	"innings" => innings,
+	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"passedBall" => passed_balls,
+	"doublePlays" => double_plays,
+	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
+	"wildPitches" => wild_pitches,
+	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(ByMonth {
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -138,18 +195,24 @@ group_and_type!(ByMonth {
 	"chances" => chances,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(ByDayOfWeek {
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -157,18 +220,24 @@ group_and_type!(ByDayOfWeek {
 	"chances" => chances,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(HomeAndAway {
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -176,18 +245,24 @@ group_and_type!(HomeAndAway {
 	"chances" => chances,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(WinLoss {
 	"gamesPlayed" => games_played,
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
@@ -195,22 +270,30 @@ group_and_type!(WinLoss {
 	"chances" => chances,
 	"innings" => innings,
 	"games" => games,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
 	"doublePlays" => double_plays,
 	"triplePlays" => triple_plays,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"catchersInterference" => catchers_interference,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"wildPitches" => wild_pitches,
 	"throwingErrors" => throwing_errors,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
 group_and_type!(SimplifiedGameLog {
 	"gamesStarted" => games_started,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"caughtStealing" => caught_stealing,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"stolenBases" => stolen_bases,
 	"assists" => assists,
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"passedBall" => passed_balls,
+	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });

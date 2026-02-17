@@ -236,8 +236,8 @@ pub struct PersonRequest<H: PersonHydrations> {
 	hydrations: H::RequestData,
 }
 
-impl<H: PersonHydrations> PersonRequest<H> where H::RequestData: Default {
-	pub fn for_id(id: impl Into<PersonId>) -> PersonRequestBuilder<H, person_request_builder::SetHydrations<person_request_builder::SetId>> {
+impl<H: PersonHydrations> PersonRequest<H> {
+	pub fn for_id(id: impl Into<PersonId>) -> PersonRequestBuilder<H, person_request_builder::SetHydrations<person_request_builder::SetId>> where H::RequestData: Default {
 		PersonRequest::builder().id(id).hydrations(H::RequestData::default())
 	}
 }

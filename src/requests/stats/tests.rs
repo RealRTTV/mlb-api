@@ -2,7 +2,7 @@
 
 use chrono::NaiveDate;
 use crate::person::PersonRequest;
-use crate::request::RequestURL;
+use crate::request::{RequestURL, RequestURLBuilderExt};
 use crate::{person_hydrations, stats};
 use crate::game_types::GameType;
 use crate::situations::SituationCodeId;
@@ -192,4 +192,128 @@ async fn shohei_ohtani_pitching_2025_custom() {
 		.await
 		.unwrap()
 		.people;
+}
+
+#[tokio::test]
+async fn daulton_varsho_fielding_2025() {
+	stats! {
+		struct FieldingStats {
+			[
+				YearByYear,
+				Season,
+				Career,
+				GameLog,
+				PlayLog,
+				PitchLog,
+				ByMonth,
+				ByDayOfWeek,
+				HomeAndAway,
+				WinLoss,
+				OpponentsFaced
+			] = [Fielding]
+		}
+	}
+
+	person_hydrations! {
+		struct FieldingStatsHydrations {
+			stats: FieldingStats,
+		}
+	}
+
+	let response = PersonRequest::<FieldingStatsHydrations>::builder()
+		.id(662139)
+		.hydrations(FieldingStatsHydrations::builder().stats(FieldingStats::builder().season(2025)))
+		.build_and_get()
+		.await
+		.unwrap();
+}
+
+#[tokio::test]
+async fn daulton_varsho_fielding_2025_custom() {
+	stats! {
+		struct FieldingStats {
+			[
+				LastXGames,
+				ByDateRange,
+				ByDateRangeAdvanced,
+			] = [Fielding]
+		}
+	}
+
+	person_hydrations! {
+		struct FieldingStatsHydrations {
+			stats: FieldingStats,
+		}
+	}
+
+	let response = PersonRequest::<FieldingStatsHydrations>::builder()
+		.id(662139)
+		.hydrations(FieldingStatsHydrations::builder().stats(FieldingStats::builder()
+			.season(2025)
+			.games_back(10)
+			.date_range(NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 8, 1).unwrap())
+		))
+		.build_and_get()
+		.await
+		.unwrap();
+}
+
+#[tokio::test]
+async fn alejandro_kirk_catching_2025() {
+	stats! {
+		struct CatchingStats {
+			[
+				YearByYear,
+				Season,
+				Career,
+				GameLog,
+				PlayLog,
+				PitchLog,
+				ByMonth,
+				ByDayOfWeek,
+				HomeAndAway,
+				WinLoss,
+				OpponentsFaced
+			] = [Catching]
+		}
+	}
+
+	person_hydrations! {
+		struct CatchingStatsHydrations {
+			stats: CatchingStats,
+		}
+	}
+
+	let response = PersonRequest::<CatchingStatsHydrations>::builder()
+		.id(672386)
+		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(2025)))
+		.build_and_get()
+		.await
+		.unwrap();
+}
+
+#[tokio::test]
+async fn alejandro_kirk_catching_2025_custom() {
+	stats! {
+		struct CatchingStats {
+			[
+				LastXGames,
+				ByDateRange,
+				ByDateRangeAdvanced,
+			] = [Catching]
+		}
+	}
+
+	person_hydrations! {
+		struct CatchingStatsHydrations {
+			stats: CatchingStats,
+		}
+	}
+
+	let response = PersonRequest::<CatchingStatsHydrations>::builder()
+		.id(672386)
+		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(2025).date_range(NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 8, 1).unwrap()).games_back(10)))
+		.build_and_get()
+		.await
+		.unwrap();
 }

@@ -1,8 +1,7 @@
-use std::fmt::Formatter;
 use chrono::Weekday;
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Deserializer};
-use serde::de::{Error, Visitor};
+use serde::de::Error;
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::stats::wrappers::{SeasonPiece, WeekdayPiece};
@@ -11,7 +10,7 @@ use crate::stats::wrappers::{SeasonPiece, WeekdayPiece};
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct WithWeekday<T: RawStat> {
-	#[serde(deserialize_with = "deserialize_day_of_week")]
+	#[serde(deserialize_with = "deserialize_day_of_week", rename = "dayOfWeek")]
 	pub weekday: Weekday,
 	pub season: SeasonId,
 
@@ -36,7 +35,7 @@ impl<T: RawStat> WeekdayPiece for WithWeekday<T> {
 impl<T: RawStat> Default for WithWeekday<T> {
 	fn default() -> Self {
 		Self {
-			weekday: chrono::Weekday::Mon,
+			weekday: Weekday::Mon,
 			season: SeasonId::current_season(),
 			stats: T::default(),
 		}
@@ -45,24 +44,6 @@ impl<T: RawStat> Default for WithWeekday<T> {
 
 impl<T: RawStat> SingletonSplitStat for WithWeekday<T> {}
 
-fn deserialize_day_of_week<'de, D: Deserializer<'de>>(deserializer: D) -> Result<chrono::Weekday, D::Error> {
-	struct WeekdayVisitor;
-
-	impl Visitor<'_> for WeekdayVisitor {
-		type Value = chrono::Weekday;
-
-		fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-			formatter.write_str("an integer between 0 and 6 representing the day of the week")
-		}
-
-		#[allow(clippy::cast_sign_loss, reason = "needlessly pedantic")]
-		fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
-		where
-			E: Error,
-		{
-			chrono::Weekday::try_from(v as u8 - 1).map_err(E::custom)
-		}
-	}
-
-	deserializer.deserialize_any(WeekdayVisitor)
+fn deserialize_day_of_week<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Weekday, D::Error> {
+	Weekday::try_from(u8::deserialize(deserializer)? - 1).map_err(D::Error::custom)
 }

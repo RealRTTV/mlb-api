@@ -249,8 +249,7 @@ macro_rules! __stats__request_data {
 					$(#[$m])*
 					$vis struct $name {
 						$($field_tt)*
-						#[builder(into)]
-						opponent_player: $crate::person::PersonId,
+						games_back: usize,
 					}
 					$($impl_tt)*
 				}
@@ -272,7 +271,8 @@ macro_rules! __stats__request_data {
 					$(#[$m])*
 					$vis struct $name {
 						$($field_tt)*
-						games_back: usize,
+						#[builder(into)]
+						opponent_player: $crate::person::PersonId,
 					}
 					$($impl_tt)*
 				// }
@@ -396,41 +396,9 @@ macro_rules! __stats__request_data {
 	};
 }
 
-/// Generates stat data types to be used in requests.
-///
-/// These are commonly associated with [`person_hydrations`](crate::person_hydrations) to create a [`PersonRequest`](crate::person::PersonRequest).
-///
-/// The list of [`StatType`](crate::stat_types::StatType)s can be found on its module documentation.
-///
-/// The list of [`StatGroup`](crate::stat_groups::StatGroup)s can be found on its type.
-///
-/// # Examples
-///```
-///stats! {
-///    pub struct MyStats {
-///        [Season, Career] = [Hitting, Pitching]
-///    }
-///}
-///
-///---
-///
-///pub struct BasicStats {
-///    season: BasicStatsSeasonSplit,
-///    career: BasicStatsCareerSplit,
-///}
-///
-///pub struct BasicStatsSeasonSplit {
-///    hitting: Box<<SeasonStats as StatTypeStats>::Hitting>, // Season<HittingStats>
-///    pitching: Box<<SeasonStats as StatTypeStats>::Pitching>, // Season<PitchingStats>
-///}
-///
-///pub struct BasicStatsCareerSplit {
-///    hitting: Box<<CareerStats as StatTypeStats>::Hitting>, // Career<HittingStats>
-///    pitching: Box<<CareerStats as StatTypeStats>::Pitching>, // Career<PitchingStats>
-///}
-///```
+#[doc(hidden)]
 #[macro_export]
-macro_rules! stats {
+macro_rules! __stats0 {
     ($vis:vis struct $name:ident {
 		[$($stat_type:ident),+ $(,)?] = $stat_groups:tt
 	}) => {
@@ -481,4 +449,96 @@ macro_rules! stats {
             }
 		}
     };
+}
+
+/// Generates stat data types to be used in requests.
+///
+/// These are commonly associated with [`person_hydrations`](crate::person_hydrations) to create a [`PersonRequest`](crate::person::PersonRequest).
+///
+/// # Stat Types & Stat Groups for [`stats!`](crate::stats!)
+///
+/// | Name                  | Stat Type                            | Stat Group | Notes                        |
+/// |-----------------------|--------------------------------------|------------|------------------------------|
+/// | `Projected`           | [`WithPlayer<_>`]                    | **`HP--`** | likely ZIPS projections      |
+/// | `YearByYear`          | [`HashMap<SeasonId, WithSeason<_>>`] | **`HPCF`** | 1.                           |
+/// | `YearByYearAdvanced`  | [`HashMap<SeasonId, WithSeason<_>>`] | **`HP--`** | 1.                           |
+/// | `Season`              | [`WithSeason<_>`]                    | **`HPCF`** |                              |
+/// | `Career`              | [`Career<_>`]                        | **`HPCF`** |                              |
+/// | `SeasonAdvanced`      | [`WithSeason<_>`]                    | **`HP--`** |                              |
+/// | `CareerAdvanced`      | [`Career<_>`]                        | **`HP--`** |                              |
+/// | `GameLog`             | [`Vec<WithGame<_>>`]                 | **`HPCF`** |                              |
+/// | `PlayLog`             | [`Vec<SingleMatchup<Play<_>>>`]      | **`HPCF`** | same format as in games      |
+/// | `PitchLog`            | [`Vec<SingleMatchup<PitchStat>>`]    | **`HPCF`** | same format as in games      |
+/// | `ExpectedStatistics`  | *no wrapper*                         | **`HP--`** | xAVG`, `xwOBA`, etc.         |
+/// | `Sabermetrics`        | *no wrapper*                         | **`HP--`** | xFIP`, `fWAR`, etc.          |
+/// | `VsPlayer5Y`          | [`AccumulatedVsPlayerMatchup<_>`]    | **`HP--`** | `opposing_player` in builder |
+/// | `LastXGames`          | [`WithTeam<_>`]                      | **`HPCF`** | `games_back` in builder      |
+/// | `ByDateRange`         | [`WithTeam<_>`]                      | **`HPCF`** | `date_range` in builder      |
+/// | `ByDateRangeAdvanced` | [`WithTeam<_>`]                      | **`HPCF`** | `date_range` in builder      |
+/// | `ByMonth`             | [`HashMap<Month, WithMonth<_>>`]     | **`HPCF`** |                              |
+/// | `ByDayOfWeek`         | [`HashMap<Weekday, WithWeekday<_>>`] | **`HPCF`** |                              |
+/// | `HomeAndAway`         | [`WithHomeAndAway<_>`]               | **`HPCF`** |                              |
+/// | `WinLoss`             | [`WithWinLoss<_>`]                   | **`HPCF`** |                              |
+/// | `OpponentsFaced`      | [`FieldedMatchup`]                   | **`HPCF`** |                              |
+/// | `StatSplits`          | [`WithSeason<_>`]                    | **`HP--`** | `situations` in builder      |
+/// | `StatSplitsAdvanced`  | [`WithSeason<_>`]                    | **`HP--`** | `situations` in builder      |
+///
+/// Note: `HPCF` stands for Hitting, Pitching, Catching, and Fielding. [`StatType`]s will be marked as for what [`StatGroup`]s they support in requests.
+///
+/// Table Footnotes
+/// 1. Seasons will display the last entry sent via the API, which is typically a full season with multiple teams, as opposed to the split with one team (ex. if a player is traded at the deadline).
+///
+/// # Examples
+///```
+/// mlb_api::stats! {
+///     pub struct MyStats {
+///         [Season, Career] = [Hitting, Pitching]
+///     }
+/// }
+///
+/// mlb_api::person_hydrations! {
+///     pub struct MyStatsHydrations {
+///         stats: MyStats,
+///     }
+/// }
+///
+/// let response = mlb_api::person::PersonRequest::<MyStatsHydrations>::builder()
+///     .id(id)
+///     .hydrations(MyStatsHydrations::builder()
+///         .stats(MyStats::builder()))
+///     .build_and_get()
+///     .await?;
+///
+/// // for simple requests which don't involve values supplied in the builder (see table above), this also works:
+/// let response = mlb_api::person::PersonRequest::<MyStatsHydrations>::for_id(id)
+///     .build_and_get()
+///     .await?;
+///
+/// let stats: &MyStats = &response.people[0].extras.stats;
+///```
+///
+/// [`HashMap<SeasonId, WithSeason<_>>`]: crate::stats::wrappers::WithSeason
+/// [`WithSeason<_>`]: crate::stats::wrappers::WithSeason
+/// [`Career<_>`]: crate::stats::wrappers::Career
+/// [`Vec<WithGame<_>>`]: crate::stats::wrappers::WithGame
+/// [`Vec<SingleMatchup<Play<_>>>`]: crate::stats::wrappers::SingleMatchup
+/// [`Vec<SingleMatchup<PitchStat>>`]: crate::stats::wrappers::SingleMatchup
+/// [`Vec<PitchUsage>`]: crate::stats::raw::PitchUsage
+/// [`AccumulatedVsPlayerMatchup<_>`]: crate::stats::wrappers::AccumulatedVsPlayerMatchup
+/// [`WithTeam<_>`]: crate::stats::wrappers::WithTeam
+/// [`HashMap<Month, WithMonth<_>>`]: crate::stats::wrappers::WithMonth
+/// [`HashMap<Weekday, WithWeekday<_>>`]: crate::stats::wrappers::WithWeekday
+/// [`WithHomeAndAway<_>`]: crate::stats::wrappers::WithHomeAndAway
+/// [`WithWinLoss<_>`]: crate::stats::wrappers::WithWinLoss
+/// [`HittingHotColdZones`]: crate::stats::raw::HittingHotColdZones
+/// [`PitchingHotColdZones`]: crate::stats::raw::PitchingHotColdZones
+/// [`FieldedMatchup`]: crate::stats::raw::FieldedMatchup
+/// [`StatType`]: crate::stat_types::StatType
+/// [`StatGroup`]: crate::stat_groups::StatGroup
+/// [`WithPlayer<_>`]: crate::stats::wrappers::WithPlayer
+#[macro_export]
+macro_rules! stats {
+    ($($t:tt)*) => {
+		$crate::__stats0! { $($t)* }
+	};
 }
