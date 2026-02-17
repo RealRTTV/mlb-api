@@ -1,5 +1,3 @@
-use serde::{Deserialize, Deserializer};
-
 group_and_type!(Projected {
     "gamesPlayed" => games_played,
     "gamesStarted" => games_started,
@@ -743,7 +741,3 @@ group_and_type!(SimplifiedGameLog {
     "sacFlies" => sac_flies,
     "passedBall" => passed_balls,
 });
-
-fn float_to_int<'de, D: Deserializer<'de>>(deserializer: D) -> Result<crate::stats::units::CountingStat, D::Error> {
-    Ok(f64::deserialize(deserializer)? as u32)
-}
