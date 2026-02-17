@@ -10,7 +10,7 @@ group_and_type!(YearByYear {
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
-	"position" => position,
+	// "position" => position,
 	"innings" => innings,
 	"games" => games,
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
@@ -37,7 +37,7 @@ group_and_type!(Season {
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
-	"position" => position,
+	// "position" => position,
 	"innings" => innings,
 	"games" => games,
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
@@ -63,7 +63,7 @@ group_and_type!(Career {
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
-	"position" => position,
+	// "position" => position,
 	"innings" => innings,
 	"games" => games,
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
@@ -89,7 +89,7 @@ group_and_type!(GameLog {
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
-	"position" => position,
+	// "position" => position,
 	"innings" => innings,
 	"games" => games,
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
@@ -115,7 +115,7 @@ group_and_type!(LastXGames {
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
-	"position" => position,
+	// "position" => position,
 	"innings" => innings,
 	"games" => games,
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
@@ -141,7 +141,7 @@ group_and_type!(ByDateRange {
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
-	"position" => position,
+	// "position" => position,
 	"innings" => innings,
 	"games" => games,
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
@@ -167,7 +167,7 @@ group_and_type!(ByDateRangeAdvanced {
 	"putOuts" => putouts,
 	"errors" => errors,
 	"chances" => chances,
-	"position" => position,
+	// "position" => position,
 	"innings" => innings,
 	"games" => games,
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
