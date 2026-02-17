@@ -177,7 +177,7 @@ macro_rules! group_and_type {
 
             impl ::std::ops::AddAssign for [<__ $name StatsData>] where Self: ::std::ops::Add {
                 fn add_assign(&mut self, rhs: Self) {
-                    *self = self = rhs;
+                    *self = *self + rhs;
                 }
             }
 
