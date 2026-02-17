@@ -1,3 +1,5 @@
+use serde::{Deserialize, Deserializer};
+
 group_and_type!(Projected {
     "gamesPlayed" => games_played,
     "gamesStarted" => games_started,
@@ -322,8 +324,8 @@ group_and_type!(Sabermetrics {
     "ra9War" => bWAR,
     "rar" => RAR,
     "war" => fWAR,
-    "sd" => shutdowns,
-    "md" => meltdowns,
+    #[serde(deserialize_with = "float_to_int")] "sd" => shutdowns,
+    #[serde(deserialize_with = "float_to_int")] "md" => meltdowns,
     "pli" => leverage_index,
     "inli" => inning_start_leverage_index,
     "gmli" => game_leverage_index,
@@ -741,3 +743,7 @@ group_and_type!(SimplifiedGameLog {
     "sacFlies" => sac_flies,
     "passedBall" => passed_balls,
 });
+
+fn float_to_int<'de, D: Deserializer<'de>>(deserializer: D) -> Result<crate::stats::units::CountingStat, D::Error> {
+    Ok(f64::deserialize(deserializer)? as u32)
+}

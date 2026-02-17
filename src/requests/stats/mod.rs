@@ -130,7 +130,7 @@ pub mod stat_types {
 	stat_type_stats!(PitchLog { Vec<SingleMatchup<PitchStat>>, Vec<SingleMatchup<PitchStat>>, Vec<SingleMatchup<PitchStat>>, Vec<SingleMatchup<PitchStat>> });
 	// 'metricLog'?
 	// 'metricAverages'?
-	// stat_type_stats!(PitchArsenal { Vec<PitchUsage>, Vec<PitchUsage>, (), () }); // todo: fix, has no stat group
+	// stat_type_stats!(PitchArsenal { Vec<PitchUsage>, Vec<PitchUsage>, (), () }); // has no stat group
 	// 'outsAboveAverage'?
 	stat_type_stats!(ExpectedStatistics { WithPlayer<hitting::__ExpectedStatisticsStatsData>, WithPlayer<pitching::__ExpectedStatisticsStatsData>, (), () });
 	stat_type_stats!(Sabermetrics { WithPlayer<hitting::__SabermetricsStatsData>, WithPlayer<pitching::__SabermetricsStatsData>, (), () });
@@ -151,7 +151,7 @@ pub mod stat_types {
 	stat_type_stats!(WinLoss { WithWinLoss<hitting::__WinLossStatsData>, WithWinLoss<pitching::__WinLossStatsData>, WithWinLoss<catching::__WinLossStatsData>, WithWinLoss<fielding::__WinLossStatsData> });
 	// stat_type_stats!(Rankings { WithPlayerAndTeam<hitting::__RankingsStatsData>, WithPlayerAndTeam<pitching::__RankingsStatsData>, (), () });
 	// stat_type_stats!(RankingsByYear { Map<WithPlayerAndTeam<hitting::__RankingsByYearStatsData>, BySeason>, Map<WithPlayerAndTeam<pitching::__RankingsByYearStatsData>, BySeason>, (), () });
-	// stat_type_stats!(HotColdZones { HittingHotColdZones, PitchingHotColdZones, (), () }); // todo: has no stat group
+	// stat_type_stats!(HotColdZones { HittingHotColdZones, PitchingHotColdZones, (), () }); // has no stat group
 	stat_type_stats!(OpponentsFaced { Vec<FieldedMatchup>, Vec<FieldedMatchup>, Vec<FieldedMatchup>, Vec<FieldedMatchup> });
 	stat_type_stats!(StatSplits { WithSeason<hitting::__StatSplitsStatsData>, WithSeason<pitching::__StatSplitsStatsData>, (), () });
 	stat_type_stats!(StatSplitsAdvanced { WithSeason<hitting::__StatSplitsAdvancedStatsData>, WithSeason<pitching::__StatSplitsAdvancedStatsData>, (), () });

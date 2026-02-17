@@ -297,7 +297,7 @@ macro_rules! __stats__request_data {
 					#[builder(default)]
 					game_type: $crate::game_types::GameType,
 					#[builder(into)]
-					season: ::core::option::Option<$crate::season::SeasonId>, // todo: `seasons`?
+					season: ::core::option::Option<$crate::season::SeasonId>,
 					team_ids: ::core::option::Option<::std::vec::Vec<$crate::team::TeamId>>,
 					sport_ids: ::core::option::Option<::std::vec::Vec<$crate::sport::SportId>>,
 					league_ids: ::core::option::Option<::std::vec::Vec<$crate::league::LeagueId>>,
@@ -305,7 +305,6 @@ macro_rules! __stats__request_data {
 					player_pool: $crate::types::PlayerPool,
 
 
-					// todo
 					/*batter_team: TeamId,
 					pitcher_team: TeamId,
 					batter: PersonId,

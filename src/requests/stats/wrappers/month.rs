@@ -17,7 +17,7 @@ pub struct WithMonth<T: RawStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
-	stats: T,
+	pub stats: T,
 }
 
 fn deserialize_month<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Month, D::Error> {

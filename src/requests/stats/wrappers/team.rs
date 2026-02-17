@@ -11,7 +11,7 @@ pub struct WithTeam<T: RawStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
-	stats: T,
+	pub stats: T,
 }
 
 impl<T: RawStat> Default for WithTeam<T> {

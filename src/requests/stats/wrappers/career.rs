@@ -23,7 +23,7 @@ pub struct Career<T: RawStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
-	stats: T,
+	pub stats: T,
 }
 
 impl<T: RawStat> TeamPiece for Career<T> {

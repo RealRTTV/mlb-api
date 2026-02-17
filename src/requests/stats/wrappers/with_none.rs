@@ -6,7 +6,7 @@ use crate::stats::{RawStat, SingletonSplitStat};
 #[serde(bound = "T: RawStat")]
 pub struct WithNone<T: RawStat> {
     #[serde(rename = "stat")]
-    stats: T,
+    pub stats: T,
 }
 
 impl<T: RawStat> Default for WithNone<T> {

@@ -17,7 +17,7 @@ pub struct WithPlayer<T: RawStat> {
 	#[deref]
 	#[deref_mut]
 	#[serde(rename = "stat")]
-	stats: T,
+	pub stats: T,
 }
 
 impl<T: RawStat> SeasonPiece for WithPlayer<T> {
