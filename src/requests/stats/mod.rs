@@ -9,11 +9,14 @@ use std::fmt::Debug;
 pub mod macros;
 pub mod raw;
 pub mod wrappers;
-// pub mod pieces;
-// pub mod piece_impls;
 pub mod leaders;
 pub mod units;
 pub mod parse;
+// mod derived;
+#[cfg(test)]
+mod tests;
+
+// pub use derived::*;
 
 pub trait Stats: 'static + Debug + PartialEq + Eq + Clone + Hydrations {}
 
@@ -45,13 +48,11 @@ impl<T: SingletonSplitStat> Stat for T {
 
 	type TryFromSplitError = &'static str;
 
-	fn from_splits(splits: impl Iterator<Item=Self::Split>) -> Result<Self, Self::TryFromSplitError>
+	fn from_splits(mut splits: impl Iterator<Item=Self::Split>) -> Result<Self, Self::TryFromSplitError>
 	where
 		Self: Sized
 	{
-		<Vec<Self> as TryInto<[Self; 1]>>::try_into(splits.collect())
-			.map_err(|_| "length of stat splits is is not 1, cannot convert to unit type.")
-			.map(|[x]| x)
+		Ok(splits.next().ok_or("length of stat splits is not >= 1, cannot convert to unit type.")?)
 	}
 }
 
@@ -90,8 +91,8 @@ impl<T: Stat> Stat for Option<T> {
 #[doc(hidden)]
 pub mod stat_types {
 	use super::*;
-	use crate::stats::raw::{catching, fielding, hitting, pitching, FieldedMatchup, HittingHotColdZones, PitchingHotColdZones, PitchUsage};
-	use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, ByPosition, BySeason, Career, Map, Map2D, SingleMatchup, WithGame, WithHomeAndAway, WithMonth, WithPlayer, WithPositionAndSeason, WithSeason, WithTeam, WithWeekday, WithWinLoss};
+	use crate::stats::raw::{catching, fielding, hitting, pitching, FieldedMatchup};
+	use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, ByMonth, ByPosition, BySeason, ByWeekday, Career, Map, Map2D, SingleMatchup, WithGame, WithHomeAndAway, WithMonth, WithPlayer, WithPositionAndSeason, WithSeason, WithTeam, WithWeekday, WithWinLoss};
 
 	macro_rules! stat_type_stats {
 		($name:ident {
@@ -129,28 +130,28 @@ pub mod stat_types {
 	stat_type_stats!(PitchLog { Vec<SingleMatchup<PitchStat>>, Vec<SingleMatchup<PitchStat>>, Vec<SingleMatchup<PitchStat>>, Vec<SingleMatchup<PitchStat>> });
 	// 'metricLog'?
 	// 'metricAverages'?
-	stat_type_stats!(PitchArsenal { Vec<PitchUsage>, Vec<PitchUsage>, (), () });
+	// stat_type_stats!(PitchArsenal { Vec<PitchUsage>, Vec<PitchUsage>, (), () }); // todo: fix, has no stat group
 	// 'outsAboveAverage'?
 	stat_type_stats!(ExpectedStatistics { WithPlayer<hitting::__ExpectedStatisticsStatsData>, WithPlayer<pitching::__ExpectedStatisticsStatsData>, (), () });
 	stat_type_stats!(Sabermetrics { WithPlayer<hitting::__SabermetricsStatsData>, WithPlayer<pitching::__SabermetricsStatsData>, (), () });
 	// stat_type_stats!(SprayChart { SprayChart, SprayChart, (), () }); // does not have statGroup on the response
 	// 'tracking'?
-	// stat_type_stats!(VsPlayerStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
-	// stat_type_stats!(VsPlayerTotalStats { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
+	// stat_type_stats!(VsPlayer { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
+	// stat_type_stats!(VsPlayerTotal { AccumulatedMatchup<VsPlayerHittingStats>, AccumulatedMatchup<VsPlayerPitchingStats>, (), () });
 	stat_type_stats!(VsPlayer5Y { AccumulatedVsPlayerMatchup<hitting::__VsPlayerStatsData>, AccumulatedVsPlayerMatchup<pitching::__VsPlayerStatsData>, (), () });
-	// stat_type_stats!(VsTeamStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
-	// stat_type_stats!(VsTeam5YStats { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
-	// stat_type_stats!(VsTeamTotalStats { AccumulatedVsTeamTotalMatchup<HittingStats>, (), (), () });
+	// stat_type_stats!(VsTeam { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
+	// stat_type_stats!(VsTeam5Y { Multiple<AccumulatedVsTeamSeasonalPitcherSplit<HittingStats>>, (), (), () });
+	// stat_type_stats!(VsTeamTotal { AccumulatedVsTeamTotalMatchup<HittingStats>, (), (), () });
 	stat_type_stats!(LastXGames { WithTeam<hitting::__LastXGamesStatsData>, WithTeam<pitching::__LastXGamesStatsData>, WithTeam<catching::__LastXGamesStatsData>, WithTeam<fielding::__LastXGamesStatsData> });
 	stat_type_stats!(ByDateRange { WithTeam<hitting::__ByDateRangeStatsData>, WithTeam<pitching::__ByDateRangeStatsData>, WithTeam<catching::__ByDateRangeStatsData>, WithTeam<fielding::__ByDateRangeStatsData> });
 	stat_type_stats!(ByDateRangeAdvanced { WithTeam<hitting::__ByDateRangeAdvancedStatsData>, WithTeam<pitching::__ByDateRangeAdvancedStatsData>, WithTeam<catching::__ByDateRangeAdvancedStatsData>, WithTeam<fielding::__ByDateRangeAdvancedStatsData> });
-	stat_type_stats!(ByMonth { WithMonth<hitting::__ByMonthStatsData>, WithMonth<pitching::__ByMonthStatsData>, WithMonth<catching::__ByMonthStatsData>, WithMonth<fielding::__ByMonthStatsData> });
-	stat_type_stats!(ByDayOfWeek { WithWeekday<hitting::__ByDayOfWeekStatsData>, WithWeekday<pitching::__ByDayOfWeekStatsData>, WithWeekday<catching::__ByDayOfWeekStatsData>, WithWeekday<fielding::__ByDayOfWeekStatsData> });
+	stat_type_stats!(ByMonth { Map<WithMonth<hitting::__ByMonthStatsData>, ByMonth>, Map<WithMonth<pitching::__ByMonthStatsData>, ByMonth>, Map<WithMonth<catching::__ByMonthStatsData>, ByMonth>, Map<WithMonth<fielding::__ByMonthStatsData>, ByMonth> });
+	stat_type_stats!(ByDayOfWeek { Map<WithWeekday<hitting::__ByDayOfWeekStatsData>, ByWeekday>, Map<WithWeekday<pitching::__ByDayOfWeekStatsData>, ByWeekday>, Map<WithWeekday<catching::__ByDayOfWeekStatsData>, ByWeekday>, Map<WithWeekday<fielding::__ByDayOfWeekStatsData>, ByWeekday> });
 	stat_type_stats!(HomeAndAway { WithHomeAndAway<hitting::__HomeAndAwayStatsData>, WithHomeAndAway<pitching::__HomeAndAwayStatsData>, WithHomeAndAway<catching::__HomeAndAwayStatsData>, WithHomeAndAway<fielding::__HomeAndAwayStatsData> });
 	stat_type_stats!(WinLoss { WithWinLoss<hitting::__WinLossStatsData>, WithWinLoss<pitching::__WinLossStatsData>, WithWinLoss<catching::__WinLossStatsData>, WithWinLoss<fielding::__WinLossStatsData> });
 	// stat_type_stats!(Rankings { WithPlayerAndTeam<hitting::__RankingsStatsData>, WithPlayerAndTeam<pitching::__RankingsStatsData>, (), () });
 	// stat_type_stats!(RankingsByYear { Map<WithPlayerAndTeam<hitting::__RankingsByYearStatsData>, BySeason>, Map<WithPlayerAndTeam<pitching::__RankingsByYearStatsData>, BySeason>, (), () });
-	stat_type_stats!(HotColdZones { HittingHotColdZones, PitchingHotColdZones, (), () });
+	// stat_type_stats!(HotColdZones { HittingHotColdZones, PitchingHotColdZones, (), () }); // todo: has no stat group
 	stat_type_stats!(OpponentsFaced { Vec<FieldedMatchup>, Vec<FieldedMatchup>, Vec<FieldedMatchup>, Vec<FieldedMatchup> });
 	stat_type_stats!(StatSplits { WithSeason<hitting::__StatSplitsStatsData>, WithSeason<pitching::__StatSplitsStatsData>, (), () });
 	stat_type_stats!(StatSplitsAdvanced { WithSeason<hitting::__StatSplitsAdvancedStatsData>, WithSeason<pitching::__StatSplitsAdvancedStatsData>, (), () });

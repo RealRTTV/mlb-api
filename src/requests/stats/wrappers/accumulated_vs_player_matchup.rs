@@ -15,6 +15,7 @@ pub struct AccumulatedVsPlayerMatchup<T: RawStat> {
 
 	#[deref]
 	#[deref_mut]
+	#[serde(flatten)]
 	inner: AccumulatedMatchup<T>,
 }
 

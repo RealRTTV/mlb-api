@@ -37,7 +37,7 @@ pub use win_loss::*;
 pub use with_none::*;
 
 use std::convert::Infallible;
-use chrono::Month;
+use chrono::{Month, Weekday};
 use crate::game::GameId;
 use crate::game_types::GameType;
 use crate::league::NamedLeague;
@@ -79,6 +79,7 @@ macro_rules! piece {
 
 piece!(Season => SeasonId);
 piece!(Month => Month);
+piece!(Weekday => Weekday);
 piece!(Position => NamedPosition);
 piece!(OpposingTeam => NamedTeam);
 piece!(GameType => GameType);

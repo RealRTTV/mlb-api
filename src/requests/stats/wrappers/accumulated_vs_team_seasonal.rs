@@ -15,6 +15,7 @@ pub struct AccumulatedVsTeamSeasonalPitcherSplit<T: RawStat> {
 
 	#[deref]
 	#[deref_mut]
+	#[serde(flatten)]
 	inner: AccumulatedVsPlayerMatchup<T>,
 }
 

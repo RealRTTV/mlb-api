@@ -1,10 +1,9 @@
 use crate::stats::{SingletonSplitStat, Stat};
 use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
-use std::collections::hash_map::Entry;
+use std::convert::Infallible;
 use std::fmt::{Debug, Formatter};
 use std::hash::Hash;
-use thiserror::Error;
 
 #[derive(Deref, DerefMut)]
 pub struct Map<T: SingletonSplitStat, A: MapKey<T>> {
@@ -33,12 +32,6 @@ impl<T: SingletonSplitStat, A: MapKey<T>> Clone for Map<T, A> {
 	}
 }
 
-#[derive(Debug, Error)]
-pub enum MapFromSplitWrappedVariantError<T, A: MapKey<T>> {
-	#[error("Duplicate entry for key {key:?} found")]
-	DuplicateEntry { key: A::Key },
-}
-
 impl<T: SingletonSplitStat, A: MapKey<T>> Default for Map<T, A> {
 	fn default() -> Self {
 		Self { inner: FxHashMap::default() }
@@ -47,7 +40,7 @@ impl<T: SingletonSplitStat, A: MapKey<T>> Default for Map<T, A> {
 
 impl<T: SingletonSplitStat, A: MapKey<T>> Stat for Map<T, A> {
 	type Split = T;
-	type TryFromSplitError = MapFromSplitWrappedVariantError<T, A>;
+	type TryFromSplitError = Infallible;
 
 	fn from_splits(splits: impl Iterator<Item=T>) -> Result<Self, Self::TryFromSplitError>
 	where
@@ -57,12 +50,7 @@ impl<T: SingletonSplitStat, A: MapKey<T>> Stat for Map<T, A> {
 		for split in splits {
 			let id: A::Key = A::get_key(&split);
 			let id = id.clone();
-			match this.inner.entry(id.clone()) {
-				Entry::Occupied(_) => return Err(Self::TryFromSplitError::DuplicateEntry { key: id }),
-				Entry::Vacant(slot) => {
-					slot.insert(split);
-				}
-			}
+			this.inner.entry(id.clone()).insert_entry(split);
 		}
 		Ok(this)
 	}
@@ -103,7 +91,7 @@ impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Default for Map2D<T, A, 
 
 impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Stat for Map2D<T, A, B> {
 	type Split = T;
-	type TryFromSplitError = MapFromSplitWrappedVariantError<T, B>;
+	type TryFromSplitError = Infallible;
 
 	fn from_splits(splits: impl Iterator<Item=Self::Split>) -> Result<Self, Self::TryFromSplitError>
 	where
@@ -113,12 +101,7 @@ impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Stat for Map2D<T, A, B> 
 		for split in splits {
 			let id: A::Key = A::get_key(&split);
 			let inner_id: B::Key = B::get_key(&split);
-			match this.inner.entry(id).or_insert_with(FxHashMap::default).entry(inner_id.clone()) {
-				Entry::Occupied(_) => return Err(Self::TryFromSplitError::DuplicateEntry { key: inner_id }),
-				Entry::Vacant(slot) => {
-					slot.insert(split);
-				}
-			}
+			this.inner.entry(id).or_insert_with(FxHashMap::default).entry(inner_id.clone()).insert_entry(split);
 		}
 		Ok(this)
 	}

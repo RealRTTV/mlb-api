@@ -14,6 +14,7 @@ pub struct AccumulatedVsTeamTotalMatchup<T: RawStat> {
 
 	#[deref]
 	#[deref_mut]
+	#[serde(flatten)]
 	inner: AccumulatedMatchup<T>,
 }
 

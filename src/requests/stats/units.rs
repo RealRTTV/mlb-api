@@ -10,6 +10,8 @@ use thiserror::Error;
 pub struct ThreeDecimalPlaceRateStat(f64);
 
 impl ThreeDecimalPlaceRateStat {
+	pub const NIL: Self = Self(f64::NAN);
+
 	#[must_use]
 	pub const fn new(inner: f64) -> Self {
 		Self(inner)
@@ -92,6 +94,8 @@ pub struct PercentageStat(f64);
 impl Eq for PercentageStat {}
 
 impl PercentageStat {
+	pub const NIL: Self = Self(f64::NAN);
+
 	#[must_use]
 	pub const fn new(inner: f64) -> Self {
 		Self(inner)
@@ -110,6 +114,17 @@ impl<'de> Deserialize<'de> for PercentageStat {
 
 			fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
 				formatter.write_str("Percentage")
+			}
+
+			fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				if !v.contains(|c: char| c.is_ascii_digit()) {
+					Ok(PercentageStat::NIL)
+				} else {
+					Ok(PercentageStat::new(v.parse::<f64>().map_err(E::custom)? / 100.0))
+				}
 			}
 
 			fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Self::Value, E> {
@@ -141,7 +156,17 @@ impl Display for PercentageStat {
 
 impl Debug for PercentageStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}%", self.0 * 100.0)
+		if self.is_nan() {
+			write!(f, "--.-%")
+		} else {
+			write!(f, "{}%", self.0 * 100.0)
+		}
+	}
+}
+
+impl Default for PercentageStat {
+	fn default() -> Self {
+		Self::NIL
 	}
 }
 
@@ -149,6 +174,8 @@ impl Debug for PercentageStat {
 pub struct TwoDecimalPlaceRateStat(f64);
 
 impl TwoDecimalPlaceRateStat {
+	pub const NIL: Self = Self(f64::NAN);
+
 	#[must_use]
 	pub const fn new(inner: f64) -> Self {
 		Self(inner)
@@ -216,6 +243,12 @@ impl Display for TwoDecimalPlaceRateStat {
 impl Debug for TwoDecimalPlaceRateStat {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		<Self as Display>::fmt(self, f)
+	}
+}
+
+impl Default for TwoDecimalPlaceRateStat {
+	fn default() -> Self {
+		Self::NIL
 	}
 }
 

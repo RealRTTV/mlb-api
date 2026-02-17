@@ -2,7 +2,7 @@ use serde::{Deserialize, Deserializer};
 use serde::de::DeserializeOwned;
 use thiserror::Error;
 
-macro_rules! api_names_to_types {
+macro_rules! register_fields {
     ($d:tt $($name:ident: $ty:ty),+ $(,)?) => {
         macro_rules! api_name_to_type {
             $(
@@ -13,7 +13,7 @@ macro_rules! api_names_to_types {
     };
 }
 
-api_names_to_types![ $
+register_fields![ $
     games_played: crate::stats::units::CountingStat,
     games_pitched: crate::stats::units::CountingStat,
     games_started: crate::stats::units::CountingStat,
@@ -139,10 +139,11 @@ macro_rules! group_and_type {
             #[doc(hidden)]
             #[allow(non_snake_case)]
             #[derive(Debug, ::serde::Deserialize, Clone)]
+            // #[cfg_attr(test, serde(deny_unknown_fields))] // todo: find out how to fix this to discard some
             pub struct [<__ $name StatsData>] {
                 $(
                 #[serde(deserialize_with = "crate::stats::raw::deserialize_stat", rename = $serde)]
-                $piece: Result<api_name_to_type![$piece], crate::stats::raw::OmittedStatError>,
+                pub $piece: Result<api_name_to_type![$piece], crate::stats::raw::OmittedStatError>,
                 )*
             }
 

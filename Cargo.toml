@@ -1,6 +1,6 @@
 [package]
 name = "mlb-api"
-version = "0.0.12"
+version = "0.0.13"
 authors = ["Riley"]
 edition = "2024"
 description = "Endpoints for MLB's public Statcast API."
@@ -59,4 +59,3 @@ _heavy_tests = []
 
 reqwest = ["dep:reqwest", "dep:tokio"]
 ureq = ["dep:ureq", "dep:parking_lot"]
-

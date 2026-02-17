@@ -584,14 +584,14 @@ mod tests {
 	#[tokio::test]
 	async fn only_stats_hydrations() {
 		stats! {
-			pub struct BasicStats {
+			pub struct TestStats {
 				[Sabermetrics] = [Pitching]
 			}
 		}
 
 		person_hydrations! {
 			pub struct StatOnlyHydrations {
-				stats: BasicStats,
+				stats: TestStats,
 			}
 		}
 
@@ -621,7 +621,7 @@ mod tests {
 		let request = PersonRequest::<StatOnlyHydrations>::builder()
 			.id(player.person.id)
 			.hydrations(StatOnlyHydrations::builder()
-				.stats(BasicStats::builder()
+				.stats(TestStats::builder()
 					.season(2023)
 					// .situation(SituationCodeId::new("h"))
 				)
