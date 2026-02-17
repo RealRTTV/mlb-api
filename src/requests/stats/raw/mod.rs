@@ -64,8 +64,8 @@ register_fields![ $
     xwOBACON: crate::stats::units::ThreeDecimalPlaceRateStat,
     wLeague: crate::stats::units::FloatCountingStat<1>,
     FIPm: crate::stats::units::TwoDecimalPlaceRateStat,
-    shutdowns: crate::stats::units::CountingStat,
-    meltdowns: crate::stats::units::CountingStat,
+    shutdowns: crate::stats::units::FloatCountingStat<0>,
+    meltdowns: crate::stats::units::FloatCountingStat<0>,
     leverage_index: crate::stats::units::TwoDecimalPlaceRateStat,
     inning_start_leverage_index: crate::stats::units::TwoDecimalPlaceRateStat,
     game_leverage_index: crate::stats::units::TwoDecimalPlaceRateStat,
@@ -166,18 +166,22 @@ macro_rules! group_and_type {
             {
                 type Output = Self;
 
-                fn add(self, rhs: Self) -> Self::Output {
-                    Self {
-                        $(
-                        $piece: crate::stats::raw::stat_add(self.$piece, rhs.$piece),
-                        )*
-                    }
+                fn add(mut self, rhs: Self) -> Self::Output {
+                    self += rhs;
+                    self
                 }
             }
 
-            impl ::std::ops::AddAssign for [<__ $name StatsData>] where Self: ::std::ops::Add {
+            impl ::std::ops::AddAssign for [<__ $name StatsData>]
+            where
+                $(
+                for<'no_rfc_2056> api_name_to_type![$piece]: ::std::ops::Add
+                ),*
+            {
                 fn add_assign(&mut self, rhs: Self) {
-                    *self = *self + rhs;
+                    $(
+                    self.$piece = crate::stats::raw::stat_add(self.$piece.clone(), rhs.$piece);
+                    )*
                 }
             }
 
@@ -234,7 +238,7 @@ pub(crate) fn stat_eq<T: PartialEq>(a: &Result<T, OmittedStatError>, b: &Result<
     }
 }
 
-pub(crate) fn stat_add<T: Add>(a: Result<T, OmittedStatError>, b: Result<T, OmittedStatError>) -> Result<T, OmittedStatError> {
+pub(crate) fn stat_add<T: Add<Output=T>>(a: Result<T, OmittedStatError>, b: Result<T, OmittedStatError>) -> Result<T, OmittedStatError> {
     match (a, b) {
         (Ok(a), Ok(b)) => Ok(a + b),
         // if one record does not have the value, the value is not 0 - it is unknown.

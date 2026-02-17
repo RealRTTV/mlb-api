@@ -379,6 +379,20 @@ pub type CountingStat = u32;
 #[derive(Deserialize, PartialEq, Copy, Clone, Deref, DerefMut)]
 pub struct FloatCountingStat<const N: usize>(f64);
 
+impl<const N: usize> Add for FloatCountingStat<N> {
+	type Output = Self;
+
+	fn add(self, rhs: Self) -> Self::Output {
+		Self(self.0 + rhs.0)
+	}
+}
+
+impl<const N: usize> AddAssign for FloatCountingStat<N> {
+	fn add_assign(&mut self, rhs: Self) {
+		self.0 += rhs.0;
+	}
+}
+
 impl<const N: usize> Eq for FloatCountingStat<N> {
 
 }
