@@ -18,6 +18,7 @@ use people::PeopleResponse;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
 use crate::positions::NamedPosition;
 use crate::team::NamedTeam;
@@ -121,7 +122,7 @@ impl<H: PersonHydrations> RegularPerson<H> {
 	}
 }
 
-#[derive(Debug, Deserialize, Clone, Hash)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPerson {
 	// todo: rework to be like name in Team
@@ -129,6 +130,12 @@ pub struct NamedPerson {
 
 	#[serde(flatten)]
 	pub id: PersonId,
+}
+
+impl Hash for NamedPerson {
+	fn hash<H: Hasher>(&self, state: &mut H) {
+		self.id.hash(state);
+	}
 }
 
 impl NamedPerson {
@@ -238,7 +245,7 @@ pub struct PersonRequest<H: PersonHydrations> {
 
 impl<H: PersonHydrations> PersonRequest<H> {
 	pub fn for_id(id: impl Into<PersonId>) -> PersonRequestBuilder<H, person_request_builder::SetHydrations<person_request_builder::SetId>> where H::RequestData: Default {
-		PersonRequest::builder().id(id).hydrations(H::RequestData::default())
+		Self::builder().id(id).hydrations(H::RequestData::default())
 	}
 }
 

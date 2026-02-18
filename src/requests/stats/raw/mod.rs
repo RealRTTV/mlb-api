@@ -138,8 +138,8 @@ macro_rules! group_and_type {
     ($name:ident { $($(#[$meta:meta])* $serde:literal => $piece:ident),* $(,)? }) => {
         ::pastey::paste! {
             #[doc(hidden)]
-            #[allow(non_snake_case)]
             #[derive(Debug, ::serde::Deserialize, Clone)]
+            #[allow(non_snake_case, reason = "some fields like FIP")]
             // #[cfg_attr(test, serde(deny_unknown_fields))] // todo: find out how to fix this to discard some
             pub struct [<__ $name StatsData>] {
                 $(
@@ -226,7 +226,7 @@ pub(crate) fn deserialize_stat<'de, D: Deserializer<'de>, T: DeserializeOwned>(d
     Ok(Option::<T>::deserialize(deserializer)?.ok_or(OmittedStatError))
 }
 
-pub(crate) fn default_stat<T>() -> Result<T, OmittedStatError> {
+pub(crate) const fn default_stat<T>() -> Result<T, OmittedStatError> {
     Err(OmittedStatError)
 }
 

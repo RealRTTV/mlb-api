@@ -222,7 +222,7 @@ macro_rules! __stats__request_data {
 					}
 					$($impl_tt)*
 					impl<S: [<$name:snake _builder>]::State> [<$name Builder>]<S> {
-						#[allow(dead_code)]
+						#[allow(dead_code, reason = "could be used by the end user")]
 						pub fn situation(self, situation: impl ::core::convert::Into<$crate::situations::SituationCodeId>) -> [<$name Builder>]<[<$name:snake _builder>]::SetSituations<S>>
 						where
 							S::Situations: [<$name:snake _builder>]::IsUnset
@@ -292,7 +292,7 @@ macro_rules! __stats__request_data {
 			$crate::__stats__request_data! { @ metrics [$($stat_type),+]
 				#[derive(::bon::Builder)]
 				#[builder(derive(Into))]
-				#[allow(unused)]
+				#[allow(unused, reason = "could be used by the end user")]
 				$vis struct [<$name RequestData>] {
 					#[builder(default)]
 					game_type: $crate::game_types::GameType,
@@ -312,7 +312,7 @@ macro_rules! __stats__request_data {
 					days_back: usize*/
 				}
 
-				#[allow(unused)]
+				#[allow(unused, reason = "may be used by end user")]
 				impl<S: [<$name:snake _request_data_builder>]::State> [<$name RequestDataBuilder>]<S> {
 					pub fn team_id(self, team_id: impl ::core::convert::Into<$crate::team::TeamId>) -> [<$name RequestDataBuilder>]<[<$name:snake _request_data_builder>]::SetTeamIds<S>>
 					where
@@ -386,7 +386,7 @@ macro_rules! __stats__request_data {
 			}}
 
 			impl $name {
-				#[allow(unused)]
+				#[allow(unused, reason = "might use RequestData::builder() instead")]
 				pub fn builder() -> [<$name RequestDataBuilder>] {
 					[<$name RequestData>]::builder()
 				}

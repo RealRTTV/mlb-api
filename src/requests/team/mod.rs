@@ -9,6 +9,7 @@ pub mod history;
 pub mod affiliates;
 pub mod teams;
 
+use std::hash::{Hash, Hasher};
 use serde_with::DefaultOnError;
 use crate::divisions::NamedDivision;
 use crate::league::{LeagueId, NamedLeague};
@@ -104,19 +105,26 @@ impl From<TeamRaw> for Team {
 			parent_organization,
 			spring_venue,
 			spring_league,
-			name: name.initialize(inner.id, inner.full_name.to_owned()),
+			name: name.initialize(inner.id, inner.full_name.clone()),
 			inner,
 		}
 	}
 }
 
-#[derive(Debug, Deserialize, Clone, Hash)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedTeam {
 	#[serde(alias = "name")]
 	pub full_name: String,
 	#[serde(flatten)]
 	pub id: TeamId,
+}
+
+
+impl Hash for NamedTeam {
+	fn hash<H: Hasher>(&self, state: &mut H) {
+		self.id.hash(state);
+	}
 }
 
 impl NamedTeam {

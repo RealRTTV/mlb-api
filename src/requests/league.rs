@@ -5,6 +5,7 @@ use derive_more::{Deref, DerefMut};
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
+use std::hash::{Hash, Hasher};
 use crate::cache::Requestable;
 use crate::season::{Season, SeasonState};
 
@@ -18,12 +19,18 @@ pub struct LeagueResponse {
 	pub leagues: Vec<League>,
 }
 
-#[derive(Debug, Deserialize, Clone, Hash)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedLeague {
 	pub name: String,
 	#[serde(flatten)]
 	pub id: LeagueId,
+}
+
+impl Hash for NamedLeague {
+	fn hash<H: Hasher>(&self, state: &mut H) {
+		self.id.hash(state);
+	}
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
@@ -106,7 +113,7 @@ impl<S: leagues_request_builder::State + leagues_request_builder::IsComplete> Re
 }
 
 impl<S: leagues_request_builder::State> LeaguesRequestBuilder<S> {
-	#[allow(dead_code)]
+	#[allow(dead_code, reason = "could be used by the end user")]
 	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeaguesRequestBuilder<leagues_request_builder::SetLeagueIds<S>> where S::LeagueIds: leagues_request_builder::IsUnset {
 		self.league_ids_internal(league_ids.into_iter().map(T::into).collect::<Vec<_>>())
 	}

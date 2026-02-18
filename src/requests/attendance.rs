@@ -335,7 +335,7 @@ impl<S: attendance_request_builder::State + attendance_request_builder::IsComple
     type Built = AttendanceRequest;
 }
 
-#[allow(dead_code)]
+#[allow(dead_code, reason = "optionally used by the end user")]
 impl<S: attendance_request_builder::State> AttendanceRequestBuilder<S> {
 	#[doc = "_**Required.**_\n\n"]
 	pub fn team_id(self, id: impl Into<TeamId>) -> AttendanceRequestBuilder<attendance_request_builder::SetId<S>>

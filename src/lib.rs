@@ -1,5 +1,6 @@
 #![warn(clippy::pedantic, clippy::nursery, clippy::complexity, clippy::cargo, clippy::perf, clippy::style)]
-#![allow(clippy::multiple_crate_versions, clippy::ignore_without_reason)]
+#![warn(clippy::allow_attributes_without_reason, clippy::ignore_without_reason)]
+#![allow(clippy::multiple_crate_versions, clippy::cast_lossless, reason = "deemed unnecessary")]
 
 pub use requests::*;
 

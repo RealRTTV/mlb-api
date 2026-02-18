@@ -163,7 +163,7 @@ impl TryFrom<__HotColdZonesStruct> for HotColdZones {
 	}
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, reason = "stats names")]
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct HittingHotColdZones {
 	pub OPS: HotColdZones,
@@ -226,7 +226,7 @@ impl Stat for HittingHotColdZones {
 	}
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, reason = "stats names")]
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct PitchingHotColdZones {
 	pub AVG: HotColdZones,

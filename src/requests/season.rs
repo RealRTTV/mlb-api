@@ -17,7 +17,7 @@ impl<'de> Deserialize<'de> for SeasonId {
 		#[derive(::serde::Deserialize)]
 		#[serde(untagged)]
 		enum Repr {
-			Wrapped { #[allow(non_snake_case)]   id: u32 },
+			Wrapped { id: u32 },
 			Inline(u32),
 			String(String),
 		}
@@ -26,7 +26,7 @@ impl<'de> Deserialize<'de> for SeasonId {
 			Repr::Wrapped { id } | Repr::Inline(id) => id,
 			Repr::String(id) => id.parse::<u32>().map_err(D::Error::custom)?,
 		};
-		Ok(SeasonId(id))
+		Ok(Self(id))
 	}
 }
 
@@ -35,7 +35,8 @@ impl SeasonId {
 	pub const fn new(id: u32) -> Self {
 		Self(id)
 	}
-	
+
+	#[allow(clippy::cast_sign_loss, reason = "jesus is not alive")]
 	#[must_use]
 	pub fn current_season() -> Self {
 		Self::new(Utc::now().year() as _)

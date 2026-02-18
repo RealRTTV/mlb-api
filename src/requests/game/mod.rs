@@ -200,6 +200,7 @@ pub struct ResourceUsage {
 	remaining: u32,
 }
 
+#[allow(clippy::struct_excessive_bools, reason = "")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GameLiveTags {
@@ -256,7 +257,7 @@ fn deserialize_players_cache<'de, D: Deserializer<'de>>(deserializer: D) -> Resu
 
 			while let Some((key, value)) = map.next_entry()? {
 				let key: String = key;
-				let key = PersonId::new(key.strip_prefix("ID").ok_or(A::Error::custom("invalid id format"))?.parse::<u32>().map_err(A::Error::custom)?);
+				let key = PersonId::new(key.strip_prefix("ID").ok_or_else(|| A::Error::custom("invalid id format"))?.parse::<u32>().map_err(A::Error::custom)?);
 				values.insert(key, value);
 			}
 

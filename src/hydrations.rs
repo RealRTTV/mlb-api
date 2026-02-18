@@ -15,7 +15,7 @@ impl Hydrations for () {}
 impl HydrationText for () {
 	type RequestData = ();
 
-	fn hydration_text(_: &()) -> Cow<'static, str> {
+	fn hydration_text((): &()) -> Cow<'static, str> {
 		Cow::Borrowed("")
 	}
 }

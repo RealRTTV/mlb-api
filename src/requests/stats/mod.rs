@@ -32,7 +32,7 @@ pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
 	fn from_splits(splits: impl Iterator<Item=Self::Split>) -> Result<Self, Self::TryFromSplitError> where Self: Sized;
 }
 
-/// Represents the types defined in [`raw`], not the wrapped final types. In the serialized format, this represents the `stat' field.
+/// Represents the types defined in [`raw`], not the wrapped final types. In the serialized format, this represents the `stat` field.
 pub trait RawStat: Debug + DeserializeOwned + Clone + Eq + Default {}
 
 impl RawStat for () {}
@@ -52,7 +52,7 @@ impl<T: SingletonSplitStat> Stat for T {
 	where
 		Self: Sized
 	{
-		Ok(splits.next().ok_or("length of stat splits is not >= 1, cannot convert to unit type.")?)
+		splits.next().ok_or("length of stat splits is not >= 1, cannot convert to unit type.")
 	}
 }
 
@@ -90,7 +90,7 @@ impl<T: Stat> Stat for Option<T> {
 
 #[doc(hidden)]
 pub mod stat_types {
-	use super::*;
+	use super::{StatTypeStats, PlayStat, PitchStat};
 	use crate::stats::raw::{catching, fielding, hitting, pitching, FieldedMatchup};
 	use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, ByMonth, ByPosition, BySeason, ByWeekday, Career, Map, Map2D, SingleMatchup, WithGame, WithHomeAndAway, WithMonth, WithPlayer, WithPositionAndSeason, WithSeason, WithTeam, WithWeekday, WithWinLoss};
 

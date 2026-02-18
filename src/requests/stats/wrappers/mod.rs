@@ -55,7 +55,7 @@ impl<T: SingletonSplitStat> Stat for Vec<T> {
 	where
 		Self: Sized
 	{
-		Ok(Self::from_iter(splits))
+		Ok(splits.collect::<Self>())
 	}
 }
 

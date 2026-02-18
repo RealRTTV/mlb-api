@@ -5,7 +5,7 @@ macro_rules! id {
 		pub struct $name(String);
 
 		impl<'de> ::serde::Deserialize<'de> for $name {
-			#[allow(non_snake_case)]
+			#[allow(non_snake_case, reason = "is camel case because serde deserializes that from the API")]
 			fn deserialize<D: ::serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 				#[derive(::serde::Deserialize)]
 				#[serde(untagged)]
@@ -32,7 +32,7 @@ macro_rules! id {
 		pub struct $name(u32);
 
 		impl<'de> ::serde::Deserialize<'de> for $name {
-			#[allow(non_snake_case)]
+			#[allow(non_snake_case, reason = "is camel case because serde deserializes that from the API")]
 			fn deserialize<D: ::serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 				#[derive(::serde::Deserialize)]
 				#[serde(untagged)]

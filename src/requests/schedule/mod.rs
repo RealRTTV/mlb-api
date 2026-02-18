@@ -1,4 +1,4 @@
-#![allow(non_snake_case)]
+// #![allow(non_snake_case)]
 
 use crate::game::{DoubleHeaderKind, GameId};
 use crate::league::LeagueId;
@@ -225,16 +225,16 @@ pub struct ScheduleRequest {
 	#[builder(into)]
 	#[builder(default)]
 	sport_id: SportId,
-	#[builder(setters(vis = "", name = __game_ids_internal))]
+	#[builder(setters(vis = "", name = game_ids_internal))]
 	game_ids: Option<Vec<GameId>>,
 	#[builder(into)]
 	team_id: Option<TeamId>,
 	#[builder(into)]
 	league_id: Option<LeagueId>,
-	#[builder(setters(vis = "", name = __venue_ids_internal))]
+	#[builder(setters(vis = "", name = venue_ids_internal))]
 	venue_ids: Option<Vec<VenueId>>,
 	#[builder(default = Either::Left(Utc::now().date_naive()))]
-	#[builder(setters(vis = "", name = __date_internal))]
+	#[builder(setters(vis = "", name = date_internal))]
 	date: Either<NaiveDate, NaiveDateRange>,
 	#[builder(into)]
 	opponent_id: Option<TeamId>,
@@ -249,19 +249,19 @@ impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> 
 
 impl<S: schedule_request_builder::State> ScheduleRequestBuilder<S> {
 	pub fn game_ids(self, game_ids: Vec<impl Into<GameId>>) -> ScheduleRequestBuilder<schedule_request_builder::SetGameIds<S>> where S::GameIds: schedule_request_builder::IsUnset {
-		self.__game_ids_internal(game_ids.into_iter().map(Into::into).collect())
+		self.game_ids_internal(game_ids.into_iter().map(Into::into).collect())
 	}
 
 	pub fn venue_ids(self, venue_ids: Vec<impl Into<VenueId>>) -> ScheduleRequestBuilder<schedule_request_builder::SetVenueIds<S>> where S::VenueIds: schedule_request_builder::IsUnset {
-		self.__venue_ids_internal(venue_ids.into_iter().map(Into::into).collect())
+		self.venue_ids_internal(venue_ids.into_iter().map(Into::into).collect())
 	}
 
 	pub fn date(self, date: NaiveDate) -> ScheduleRequestBuilder<schedule_request_builder::SetDate<S>> where S::Date: schedule_request_builder::IsUnset {
-		self.__date_internal(Either::Left(date))
+		self.date_internal(Either::Left(date))
 	}
 
 	pub fn date_range(self, range: NaiveDateRange) -> ScheduleRequestBuilder<schedule_request_builder::SetDate<S>> where S::Date: schedule_request_builder::IsUnset {
-		self.__date_internal(Either::Right(range))
+		self.date_internal(Either::Right(range))
 	}
 }
 

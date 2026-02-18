@@ -48,11 +48,11 @@ impl<'de> Deserialize<'de> for ThreeDecimalPlaceRateStat {
 				Ok(ThreeDecimalPlaceRateStat::new(v))
 			}
 
-			fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
 			where
 				E: Error,
 			{
-				ThreeDecimalPlaceRateStat::from_str(&v).map_err(E::custom)
+				ThreeDecimalPlaceRateStat::from_str(v).map_err(E::custom)
 			}
 		}
 
@@ -116,15 +116,15 @@ impl<'de> Deserialize<'de> for PercentageStat {
 				formatter.write_str("Percentage")
 			}
 
-			fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
 			where
 				E: Error,
 			{
 				if !v.contains(|c: char| c.is_ascii_digit()) {
-					Ok(PercentageStat::NIL)
-				} else {
-					Ok(PercentageStat::new(v.parse::<f64>().map_err(E::custom)? / 100.0))
+					return Ok(PercentageStat::NIL)
 				}
+
+				Ok(PercentageStat::new(v.parse::<f64>().map_err(E::custom)? / 100.0))
 			}
 
 			fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Self::Value, E> {
@@ -200,11 +200,11 @@ impl<'de> Deserialize<'de> for TwoDecimalPlaceRateStat {
 				Ok(TwoDecimalPlaceRateStat::new(v))
 			}
 
-			fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
 			where
 				E: Error,
 			{
-				TwoDecimalPlaceRateStat::from_str(&v).map_err(E::custom)
+				TwoDecimalPlaceRateStat::from_str(v).map_err(E::custom)
 			}
 		}
 
@@ -368,7 +368,7 @@ impl Display for PlusStat {
 		if self.is_nan() {
 			write!(f, "-")
 		} else {
-			write!(f, "{}", self.0.round() as i64)
+			write!(f, "{:.0}", self.0.round())
 		}
 	}
 }

@@ -2,10 +2,10 @@ use serde::Deserialize;
 
 #[derive(Copy, Clone, Default, PartialEq, Eq)]
 pub enum SituationCodeFilter {
-	/// Display results that match <u>all</u> the [SituationCode]s selected.
+	/// Display results that match <u>all</u> the [`SituationCode`]s selected.
 	All,
 
-	/// Display results that match <u>any</u> the [SituationCode]s selected.
+	/// Display results that match <u>any</u> the [`SituationCode`]s selected.
 	#[default]
 	Any,
 }

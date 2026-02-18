@@ -1,9 +1,10 @@
+use std::hash::{Hash, Hasher};
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 
 id!(PositionCode { code: String });
 
-#[derive(Debug, Deserialize, Clone, Hash)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPosition {
 	pub code: PositionCode,
@@ -13,6 +14,12 @@ pub struct NamedPosition {
 	pub r#type: String,
 	#[serde(alias = "abbrev")]
 	pub abbreviation: String,
+}
+
+impl Hash for NamedPosition {
+	fn hash<H: Hasher>(&self, state: &mut H) {
+		self.code.hash(state);
+	}
 }
 
 impl NamedPosition {
@@ -28,7 +35,7 @@ impl NamedPosition {
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
-#[derive(Debug, Deserialize, Deref, DerefMut, Clone, Hash)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Position {
 	pub short_name: String,
@@ -47,6 +54,12 @@ pub struct Position {
 	#[deref_mut]
 	#[serde(flatten)]
 	inner: NamedPosition,
+}
+
+impl Hash for Position {
+	fn hash<H: Hasher>(&self, state: &mut H) {
+		self.code.hash(state);
+	}
 }
 
 impl Position {
