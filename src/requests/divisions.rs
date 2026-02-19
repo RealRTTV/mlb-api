@@ -1,9 +1,13 @@
+//! A division, like the AL East or NL West.
+//!
+//! These are created for every league, not just the MLB and contain important division-specific information like `num_playoff_teams`, `has_wildcard` and `active.
+
 use crate::cache::Requestable;
 use crate::league::LeagueId;
 use crate::request::RequestURL;
 use crate::season::SeasonId;
 use crate::sport::SportId;
-use crate::types::Copyright;
+use crate::Copyright;
 use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
@@ -12,6 +16,11 @@ use std::fmt::{Display, Formatter};
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
+/// A [`Vec`] of [`Division`]s
+///
+/// Response to a [`DivisionsRequest`]
+///
+/// Example: <http://statsapi.mlb.com/api/v1/divisions>
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DivisionsResponse {

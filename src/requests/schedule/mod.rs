@@ -1,15 +1,17 @@
+//! Schedules, typically the main entrypoint to navigate through games.
+
 // #![allow(non_snake_case)]
 
 use crate::game::{DoubleHeaderKind, GameId};
 use crate::league::LeagueId;
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::types::{Copyright, HomeAwaySplits, NaiveDateRange, MLB_API_DATE_FORMAT};
+use crate::{Copyright, HomeAwaySplit, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::venue::{NamedVenue, VenueId};
-use crate::game_status::GameStatus;
-use crate::game_types::GameType;
+use crate::meta::GameStatus;
+use crate::meta::GameType;
 use crate::request::RequestURL;
-use crate::sky::Sky;
+use crate::meta::Sky;
 use crate::sport::SportId;
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, Utc};
@@ -51,7 +53,7 @@ pub struct ScheduleGame {
 	/// Different from `game_date.date()` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
 	pub official_date: NaiveDate,
 	pub status: GameStatus,
-	pub teams: HomeAwaySplits<TeamWithStandings>,
+	pub teams: HomeAwaySplit<TeamWithStandings>,
 	pub venue: NamedVenue,
 	pub is_tie: bool,
 
@@ -83,11 +85,11 @@ struct __ScheduleGameStruct {
 	game_guid: Uuid,
 	game_type: GameType,
 	season: SeasonId,
-	#[serde(deserialize_with = "crate::types::deserialize_datetime")]
+	#[serde(deserialize_with = "crate::deserialize_datetime")]
 	game_date: NaiveDateTime,
 	official_date: NaiveDate,
 	status: GameStatus,
-	teams: HomeAwaySplits<TeamWithStandings>,
+	teams: HomeAwaySplit<TeamWithStandings>,
 	#[serde_as(deserialize_as = "DefaultOnError")]
 	venue: Option<NamedVenue>,
 	is_tie: Option<bool>,
@@ -98,7 +100,7 @@ struct __ScheduleGameStruct {
 	double_header: DoubleHeaderKind,
 	// #[serde(rename = "gamedayType")]
 	// gameday_game_type: GamedayGameType,
-	#[serde(rename = "tiebreaker", deserialize_with = "crate::types::from_yes_no")]
+	#[serde(rename = "tiebreaker", deserialize_with = "crate::from_yes_no")]
 	is_tiebreaker: bool,
 	// calender_event_id: CalenderEventId,
 	#[serde(rename = "seasonDisplay")]

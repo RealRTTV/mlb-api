@@ -1,14 +1,15 @@
 #![warn(clippy::pedantic, clippy::nursery, clippy::complexity, clippy::cargo, clippy::perf, clippy::style)]
-#![warn(clippy::allow_attributes_without_reason, clippy::ignore_without_reason)]
+#![warn(clippy::allow_attributes_without_reason, clippy::ignore_without_reason, missing_docs)]
 #![allow(clippy::multiple_crate_versions, clippy::cast_lossless, reason = "deemed unnecessary")]
-
-pub use requests::*;
 
 pub mod hydrations;
 pub mod request;
-pub mod types;
+mod types;
 pub mod cache;
 mod requests;
+
+pub use requests::*;
+pub use types::*;
 
 #[cfg(test)]
 pub const TEST_YEAR: u32 = 2025;

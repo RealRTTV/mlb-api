@@ -1,3 +1,5 @@
+//! Leagues; AL, NL, etc.
+
 use crate::sport::SportId;
 use crate::request::{RequestURL, RequestURLBuilderExt};
 use bon::Builder;

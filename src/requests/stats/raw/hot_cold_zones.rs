@@ -7,7 +7,7 @@ use serde::Deserialize;
 use serde_with::serde_as;
 use thiserror::Error;
 use crate::stats::Stat;
-use crate::types::{RGBAColor, SimpleTemperature};
+use crate::{RGBAColor, HeatmapTemperature};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, TryFrom)]
 #[serde(try_from = "u8")]
@@ -59,7 +59,7 @@ pub struct HotColdZone {
 	pub zone: StrikeZoneSection,
 	pub color: RGBAColor,
 	#[serde(rename = "temp")]
-	pub temperature: SimpleTemperature,
+	pub temperature: HeatmapTemperature,
 	#[serde_as(as = "DisplayFromStr")]
 	pub value: f64,
 }
@@ -69,7 +69,7 @@ impl Default for HotColdZone {
 		Self {
 			zone: StrikeZoneSection::MiddleMiddle,
 			color: RGBAColor::default(),
-			temperature: SimpleTemperature::Lukewarm,
+			temperature: HeatmapTemperature::Lukewarm,
 			value: 0.0,
 		}
 	}

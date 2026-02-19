@@ -1,5 +1,5 @@
 use crate::request::{Result, Error};
-use crate::types::MLBError;
+use crate::MLBError;
 use serde::de::DeserializeOwned;
 
 /// # Errors

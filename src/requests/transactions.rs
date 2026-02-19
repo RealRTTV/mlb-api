@@ -1,6 +1,8 @@
+//! Roster transactions; calling someone up, free agent signings, etc.
+
 use crate::person::{NamedPerson, PersonId};
 use crate::team::{TeamId};
-use crate::types::{Copyright, NaiveDateRange, MLB_API_DATE_FORMAT};
+use crate::{Copyright, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::request::RequestURL;
 use bon::Builder;
 use chrono::NaiveDate;

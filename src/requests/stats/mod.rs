@@ -1,3 +1,7 @@
+//! The second most likely reason you're here.
+//!
+//! ...need to add a lot here...
+
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
 use crate::hydrations::Hydrations;

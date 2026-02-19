@@ -1,4 +1,8 @@
-use crate::types::{Copyright, NaiveDateRange};
+//! Data about important dates in a season for a specific [`SportId`].
+//!
+//! When spring training starts, ends. Regular season dates, Postseason dates, ASG, etc.
+
+use crate::{Copyright, NaiveDateRange};
 use chrono::{Datelike, NaiveDate, Utc};
 use derive_more::{Deref, Display, From};
 use serde::{Deserialize, Deserializer};

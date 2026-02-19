@@ -70,7 +70,7 @@ pub struct NamedMetric {
 #[serde(rename_all = "camelCase")]
 pub struct Metric {
 	#[serde(default)]
-	#[serde(rename = "group", deserialize_with = "crate::types::deserialize_comma_separated_vec")]
+	#[serde(rename = "group", deserialize_with = "crate::deserialize_comma_separated_vec")]
 	pub groups: Vec<StatGroup>,
 	pub unit: Option<Unit>,
 

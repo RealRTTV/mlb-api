@@ -1,5 +1,5 @@
 use crate::season::SeasonId;
-use crate::types::Copyright;
+use crate::Copyright;
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
@@ -7,7 +7,7 @@ use serde_with::serde_as;
 use serde_with::DefaultOnError;
 use std::fmt::{Display, Formatter};
 use crate::person::NamedPerson;
-use crate::positions::NamedPosition;
+use crate::meta::NamedPosition;
 use crate::request::RequestURL;
 use crate::team::NamedTeam;
 

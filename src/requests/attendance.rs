@@ -1,7 +1,19 @@
+//! Attendance for games and seasons.
+//!
+//! Typically only seasonal [`AttendanceRecord`]s are accessible so some extra work is needed to get a specific game's attendance.
+//!
+//! Within regards to attendance, the term frequently used is "Opening" over "Game";
+//! this is for reasons including but not limited to: single ticket double headers,
+//! and rescheduled games.
+//!
+//! Averages are calculated with respect to the # of openings on the sample, not the number of games the team played as either "home" or "away".
+//!
+//! Since the 2020 season had 0 total attendance, the 'peak attendance game' has its default value of [`NaiveDate::MIN`]
+
 use crate::league::LeagueId;
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::types::{Copyright, HomeAwaySplits, MLB_API_DATE_FORMAT};
+use crate::{Copyright, HomeAwaySplit, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use either::Either;
@@ -13,16 +25,13 @@ use std::iter::Sum;
 use std::num::NonZeroU32;
 use std::ops::Add;
 use crate::game::GameId;
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 
-/// Within regards to attendance, the term frequently used is "Opening" over "Game";
-/// this is for reasons including but not limited to: single ticket double headers,
-/// and rescheduled games.
+/// Response from the `attendance` endpoint.
+/// Returns a [`Vec`] of [`AttendanceRecord`].
 ///
-/// Averages are calculated with respect to the # of openings on the sample, not the number of games the team played as either "home" or "away".
-///
-/// Since the 2020 season had 0 total attendance, the 'peak attendance game' has its default value of [`NaiveDate::MIN`]
+/// Example: <http://statsapi.mlb.com/api/v1/attendance?teamId=141>
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "AttendanceResponseStruct")]
 pub struct AttendanceResponse {
@@ -32,6 +41,7 @@ pub struct AttendanceResponse {
 }
 
 impl AttendanceResponse {
+	/// Combines all the attendance records into one for all the recorded openings.
 	#[must_use]
 	pub fn into_aggregate(self) -> AttendanceRecord {
 		self.annual_records.into_iter().sum()
@@ -51,14 +61,19 @@ impl From<AttendanceResponseStruct> for AttendanceResponse {
 	}
 }
 
+/// A record of attendance.
+///
+/// Does not represent a single opening, those opening-by-opening requests require a little more MacGyver-ing with the date.
+///
+/// Represents a full season of attendance data (segmented by [`GameType`]).
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "AnnualRecordStruct")]
 pub struct AttendanceRecord {
-	pub total_openings: HomeAwaySplits<u32>,
+	pub total_openings: HomeAwaySplit<u32>,
 	pub total_openings_lost: u32,
-	pub total_games: HomeAwaySplits<u32>,
+	pub total_games: HomeAwaySplit<u32>,
 	pub season: SeasonWithMinorId,
-	pub attendance_totals: HomeAwaySplits<u32>,
+	pub attendance_totals: HomeAwaySplit<u32>,
 	/// Minimum at an opening, then maximum at an opening
 	pub single_opening_min_max: Option<(DatedAttendance, DatedAttendance)>,
 	pub game_type: GameType,
@@ -70,17 +85,17 @@ impl Add for AttendanceRecord {
 	/// Since the [`AttendanceRecord::default()`] value has some "worse"-er defaults (high and low attendance records have the epoch start time as their dates), we always take the later values in case of ties.
 	fn add(self, rhs: Self) -> Self::Output {
 		Self {
-			total_openings: HomeAwaySplits {
+			total_openings: HomeAwaySplit {
 				home: self.total_openings.home + rhs.total_openings.home,
 				away: self.total_openings.away + rhs.total_openings.away,
 			},
 			total_openings_lost: self.total_openings_lost + rhs.total_openings_lost,
-			total_games: HomeAwaySplits {
+			total_games: HomeAwaySplit {
 				home: self.total_games.home + rhs.total_games.home,
 				away: self.total_games.away + rhs.total_games.away,
 			},
 			season: SeasonWithMinorId::max(self.season, rhs.season),
-			attendance_totals: HomeAwaySplits {
+			attendance_totals: HomeAwaySplit {
 				home: self.attendance_totals.home + rhs.attendance_totals.home,
 				away: self.attendance_totals.away + rhs.attendance_totals.away,
 			},
@@ -99,11 +114,11 @@ impl Default for AttendanceRecord {
 	#[allow(clippy::cast_sign_loss, reason = "jesus is not alive")]
 	fn default() -> Self {
 		Self {
-			total_openings: HomeAwaySplits::new(0, 0),
+			total_openings: HomeAwaySplit::new(0, 0),
 			total_openings_lost: 0,
-			total_games: HomeAwaySplits::new(0, 0),
+			total_games: HomeAwaySplit::new(0, 0),
 			season: (Local::now().year() as u32).into(),
-			attendance_totals: HomeAwaySplits::new(0, 0),
+			attendance_totals: HomeAwaySplit::new(0, 0),
 			single_opening_min_max: None,
 			game_type: GameType::default(),
 		}
@@ -117,14 +132,29 @@ impl Sum for AttendanceRecord {
 }
 
 impl AttendanceRecord {
+	/// Calculates the average attendance.
+	///
+	/// # Examples
+	/// ```
+	/// use mlb_api::attendance::AttendanceRecord;
+	///
+	/// assert_eq!(AttendanceRecord {
+	///     total_openings: (2, 2).into(),
+	///     attendance_totals: (200, 200).into(),
+	///     ..Default::default(),
+	/// }.average_attendance(), (100, 100).into());
+	/// ```
 	#[must_use]
-	pub const fn average_attendance(&self) -> HomeAwaySplits<u32> {
-		let HomeAwaySplits { home, away } = self.attendance_totals;
-		let HomeAwaySplits { home: num_at_home, away: num_at_away } = self.total_openings;
-		HomeAwaySplits::new((home + num_at_home / 2) / num_at_home, (away + num_at_away / 2) / num_at_away)
+	pub const fn average_attendance(&self) -> HomeAwaySplit<u32> {
+		let HomeAwaySplit { home, away } = self.attendance_totals;
+		let HomeAwaySplit { home: num_at_home, away: num_at_away } = self.total_openings;
+		HomeAwaySplit::new((home + num_at_home / 2) / num_at_home, (away + num_at_away / 2) / num_at_away)
 	}
 }
 
+/// Season with an optional minor part
+///
+/// Some seasons are duplicated since there might be multiple in the same year, because of that we get stuff like `2018.2`.
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash)]
 pub struct SeasonWithMinorId {
 	season: SeasonId,
@@ -278,17 +308,17 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 			None
 		};
 		Self {
-			total_openings: HomeAwaySplits {
+			total_openings: HomeAwaySplit {
 				home: openings_total_home,
 				away: openings_total_away,
 			},
 			total_openings_lost: openings_total_lost,
-			total_games: HomeAwaySplits {
+			total_games: HomeAwaySplit {
 				home: games_home_total,
 				away: games_away_total,
 			},
 			season: year,
-			attendance_totals: HomeAwaySplits {
+			attendance_totals: HomeAwaySplit {
 				home: attendance_total_home.unwrap_or(0),
 				away: attendance_total_away.unwrap_or(0),
 			},
@@ -298,10 +328,14 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 	}
 }
 
+/// An attendance record of a single game.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DatedAttendance {
+	/// Attendance quantity
 	pub value: u32,
+	/// Date of attendance
 	pub date: NaiveDate,
+	/// Game in which people attended
 	pub game: GameId,
 }
 
@@ -317,6 +351,7 @@ impl Ord for DatedAttendance {
 	}
 }
 
+/// Returns [`AttendanceResponse`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct AttendanceRequest {

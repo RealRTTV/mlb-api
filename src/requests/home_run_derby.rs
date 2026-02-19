@@ -1,1 +1,1 @@
-// Needs to be during a home run derby to find out how to use this one
+//! Needs to be a home run derby for me to implement this one

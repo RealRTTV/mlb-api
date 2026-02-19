@@ -1,13 +1,13 @@
 use crate::schedule::ScheduleGame;
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::types::Copyright;
+use crate::Copyright;
 use bon::Builder;
 use itertools::Itertools;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 use crate::sport::SportId;
 

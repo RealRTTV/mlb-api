@@ -3,7 +3,7 @@ use crate::season::SeasonId;
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 
 #[derive(Builder)]

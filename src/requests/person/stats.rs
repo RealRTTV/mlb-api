@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use crate::game::GameId;
 use crate::person::PersonId;
-use crate::types::Copyright;
+use crate::Copyright;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
@@ -10,7 +10,7 @@ use crate::__stats__request_data;
 use crate::hydrations::{HydrationText, Hydrations};
 use crate::stats::{StatTypeStats, PlayStat};
 use crate::request::RequestURL;
-use crate::stat_groups::StatGroup;
+use crate::meta::StatGroup;
 use crate::stats::parse::{__ParsedStats, make_stat_split};
 use crate::stats::raw::{fielding, hitting, pitching};
 use crate::stats::stat_types::__VsPlayer5YStatTypeStats;

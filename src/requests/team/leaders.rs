@@ -1,13 +1,13 @@
 use crate::season::SeasonId;
 use crate::stats::leaders::StatLeaders;
 use crate::team::TeamId;
-use crate::types::{Copyright, PlayerPool};
+use crate::{Copyright, PlayerPool};
 use bon::Builder;
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::baseball_stats::BaseballStatId;
-use crate::game_types::GameType;
+use crate::meta::BaseballStatId;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]

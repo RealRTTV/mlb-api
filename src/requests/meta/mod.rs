@@ -1,3 +1,15 @@
+//! An abstraction over endpoints that contain fixed data, such as [`GameType`]s, [`JobType`]s, etc.
+//!
+//! For types in which quick accessibility is important (and there are not tons of variants), they will be represented as an enum ([`GameType`]).
+//!
+//! For types which have many variants and ones that would be constantly updating, they are represented as `Vec<struct>`s ([`SituationCode`]).
+//!
+//! These types implement [`MetaKind`] and [`Requestable`] for ease of use.
+//!
+//! Some of these types will have id-only variants in most responses, in which you can request details using [`Requestable`]; [`Position`].
+//!
+//! [`Requestable`]: crate::cache::Requestable
+
 macro_rules! meta_kind_impl {
 	($endpoint:literal => $name:ty) => {
 		impl $crate::meta::MetaKind for $name {
@@ -104,29 +116,53 @@ macro_rules! static_request_entry_cache_impl {
 	};
 }
 
-pub mod baseball_stats;
-pub mod event_types;
-pub mod game_status;
-pub mod game_types;
-pub mod hit_trajectories;
-pub mod job_types;
-pub mod languages;
-pub mod league_leader_types;
-pub mod logical_events;
-pub mod metrics;
-pub mod pitch_codes;
-pub mod pitch_types;
-pub mod platforms;
-pub mod positions;
-pub mod review_reasons;
-pub mod roster_types;
-pub mod schedule_event_types;
-pub mod situations;
-pub mod sky;
-pub mod standings_types;
-pub mod stat_groups;
-pub mod stat_types;
-pub mod wind_direction;
+mod baseball_stats;
+mod event_types;
+mod game_status;
+mod game_types;
+mod hit_trajectories;
+mod job_types;
+mod languages;
+mod league_leader_types;
+mod logical_events;
+mod metrics;
+mod pitch_codes;
+mod pitch_types;
+mod platforms;
+mod positions;
+mod review_reasons;
+mod roster_types;
+mod schedule_event_types;
+mod situations;
+mod sky;
+mod standings_types;
+mod stat_groups;
+mod stat_types;
+mod wind_direction;
+
+pub use baseball_stats::*;
+pub use event_types::*;
+pub use game_status::*;
+pub use game_types::*;
+pub use hit_trajectories::*;
+pub use job_types::*;
+pub use languages::*;
+pub use league_leader_types::*;
+pub use logical_events::*;
+pub use metrics::*;
+pub use pitch_codes::*;
+pub use pitch_types::*;
+pub use platforms::*;
+pub use positions::*;
+pub use review_reasons::*;
+pub use roster_types::*;
+pub use schedule_event_types::*;
+pub use situations::*;
+pub use sky::*;
+pub use standings_types::*;
+pub use stat_groups::*;
+pub use stat_types::*;
+pub use wind_direction::*;
 
 use crate::request::RequestURL;
 use derive_more::{Deref, DerefMut};
@@ -135,12 +171,14 @@ use serde::{de, Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 
+/// Represents a type that is metadata.
 pub trait MetaKind {
 	type Complete: Debug + DeserializeOwned + Eq + Clone;
 
 	const ENDPOINT_NAME: &'static str;
 }
 
+/// Generalized response for the meta endpoints.
 #[derive(Debug, Deref, DerefMut, PartialEq, Eq, Clone)]
 pub struct MetaResponse<T: MetaKind> {
 	pub entries: Vec<<T as MetaKind>::Complete>,
@@ -189,6 +227,7 @@ impl<'de, T: MetaKind> Deserialize<'de> for MetaResponse<T> {
 	}
 }
 
+/// Returns [`MetaResponse<T>`].
 pub struct MetaRequest<T: MetaKind> {
 	_marker: PhantomData<T>,
 }

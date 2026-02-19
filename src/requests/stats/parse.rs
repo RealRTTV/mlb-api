@@ -2,8 +2,8 @@ use serde::Deserialize;
 use serde_json::Value;
 use smallvec::SmallVec;
 use thiserror::Error;
-use crate::stat_groups::StatGroup;
-use crate::stat_types::StatType;
+use crate::meta::StatGroup;
+use crate::meta::StatType;
 use crate::stats::Stat;
 
 #[derive(Deserialize)]

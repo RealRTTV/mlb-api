@@ -13,7 +13,7 @@ macro_rules! __stats__stat_type_definition {
 					Ok(Self {
 						$([<$stat_group:snake>]: ::std::boxed::Box::new(
 							$crate::stats::parse::make_stat_split::<<$crate::stats::stat_types::[< __ $stat_type StatTypeStats >] as $crate::stats::StatTypeStats>::$stat_group>(
-								parsed_stats, ::core::stringify!([<$stat_type:lower_camel>]), $crate::stat_groups::StatGroup::$stat_group
+								parsed_stats, ::core::stringify!([<$stat_type:lower_camel>]), $crate::meta::StatGroup::$stat_group
 							).map_err(|e| ::std::string::ToString::to_string(&e))?
 						)),+
 					})
@@ -164,11 +164,11 @@ macro_rules! __stats__request_data {
 					$(#[$m])*
 					$vis struct $name {
 						$($field_tt)*
-						metrics: ::std::vec::Vec<$crate::metrics::MetricId>,
+						metrics: ::std::vec::Vec<$crate::meta::MetricId>,
 					}
 					$($impl_tt)*
 					impl<S: [<$name:snake _builder>]::State> [<$name Builder>]<S> {
-						pub fn metric(self, metric: impl ::core::convert::Into<$crate::metrics::MetricId>) -> [<$name Builder>]<[<$name:snake _builder>]::SetMetrics<S>>
+						pub fn metric(self, metric: impl ::core::convert::Into<$crate::meta::MetricId>) -> [<$name Builder>]<[<$name:snake _builder>]::SetMetrics<S>>
 						where
 							S::Metrics: [<$name:snake _builder>]::IsUnset
 						{
@@ -194,7 +194,7 @@ macro_rules! __stats__request_data {
 					$(#[$m])*
 					$vis struct $name {
 						$($field_tt)*
-						date_range: $crate::types::NaiveDateRange,
+						date_range: $crate::NaiveDateRange,
 					}
 					$($impl_tt)*
 				}
@@ -216,14 +216,14 @@ macro_rules! __stats__request_data {
 					$(#[$m])*
 					$vis struct $name {
 						$($field_tt)*
-						situations: ::std::vec::Vec<$crate::situations::SituationCodeId>,
+						situations: ::std::vec::Vec<$crate::meta::SituationCodeId>,
 						#[builder(default)]
-						situation_filter: $crate::situations::SituationCodeFilter,
+						situation_filter: $crate::meta::SituationCodeFilter,
 					}
 					$($impl_tt)*
 					impl<S: [<$name:snake _builder>]::State> [<$name Builder>]<S> {
 						#[allow(dead_code, reason = "could be used by the end user")]
-						pub fn situation(self, situation: impl ::core::convert::Into<$crate::situations::SituationCodeId>) -> [<$name Builder>]<[<$name:snake _builder>]::SetSituations<S>>
+						pub fn situation(self, situation: impl ::core::convert::Into<$crate::meta::SituationCodeId>) -> [<$name Builder>]<[<$name:snake _builder>]::SetSituations<S>>
 						where
 							S::Situations: [<$name:snake _builder>]::IsUnset
 						{
@@ -295,14 +295,14 @@ macro_rules! __stats__request_data {
 				#[allow(unused, reason = "could be used by the end user")]
 				$vis struct [<$name RequestData>] {
 					#[builder(default)]
-					game_type: $crate::game_types::GameType,
+					game_type: $crate::meta::GameType,
 					#[builder(into)]
 					season: ::core::option::Option<$crate::season::SeasonId>,
 					team_ids: ::core::option::Option<::std::vec::Vec<$crate::team::TeamId>>,
 					sport_ids: ::core::option::Option<::std::vec::Vec<$crate::sport::SportId>>,
 					league_ids: ::core::option::Option<::std::vec::Vec<$crate::league::LeagueId>>,
 					#[builder(default)]
-					player_pool: $crate::types::PlayerPool,
+					player_pool: $crate::PlayerPool,
 
 
 					/*batter_team: TeamId,
@@ -360,10 +360,10 @@ macro_rules! __stats__request_data {
 						::core::fmt::Write::write_fmt(f, ::core::format_args!("metrics={},", self.metrics.iter().join(",")))?;
 					} else {}}
 					$crate::__stats__needle_haystack_date_range! { [$($stat_type),+] => {
-						::core::fmt::Write::write_fmt(f, ::core::format_args!("startDate={},endDate={},", self.date_range.start().format($crate::types::MLB_API_DATE_FORMAT), self.date_range.end().format($crate::types::MLB_API_DATE_FORMAT)))?;
+						::core::fmt::Write::write_fmt(f, ::core::format_args!("startDate={},endDate={},", self.date_range.start().format($crate::MLB_API_DATE_FORMAT), self.date_range.end().format($crate::MLB_API_DATE_FORMAT)))?;
 					} else {}}
 					$crate::__stats__needle_haystack_situations! { [$($stat_type),+] => {
-						::core::fmt::Write::write_fmt(f, ::core::format_args!("sitCodes=[{}],combineSits={},", self.situations.iter().join(","), self.situation_filter == $crate::situations::SituationCodeFilter::All))?;
+						::core::fmt::Write::write_fmt(f, ::core::format_args!("sitCodes=[{}],combineSits={},", self.situations.iter().join(","), self.situation_filter == $crate::meta::SituationCodeFilter::All))?;
 					} else {}}
 					$crate::__stats__needle_haystack_opponent_player! { [$($stat_type),+] => {
 						::core::fmt::Write::write_fmt(f, ::core::format_args!("opposingPlayerId={},", self.opponent_player))?;
@@ -532,8 +532,8 @@ macro_rules! __stats0 {
 /// [`HittingHotColdZones`]: crate::stats::raw::HittingHotColdZones
 /// [`PitchingHotColdZones`]: crate::stats::raw::PitchingHotColdZones
 /// [`FieldedMatchup`]: crate::stats::raw::FieldedMatchup
-/// [`StatType`]: crate::stat_types::StatType
-/// [`StatGroup`]: crate::stat_groups::StatGroup
+/// [`StatType`]: crate::meta::StatType
+/// [`StatGroup`]: crate::meta::StatGroup
 /// [`WithPlayer<_>`]: crate::stats::wrappers::WithPlayer
 #[macro_export]
 macro_rules! stats {

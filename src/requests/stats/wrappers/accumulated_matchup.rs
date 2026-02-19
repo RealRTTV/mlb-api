@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::stats::wrappers::{GameTypePiece, OpposingTeamPiece, TeamPiece};
 use crate::team::NamedTeam;

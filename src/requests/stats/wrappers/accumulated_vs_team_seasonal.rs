@@ -1,4 +1,4 @@
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::person::NamedPerson;
 use crate::season::SeasonId;
 use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, BatterPiece, GameTypePiece, OpposingTeamPiece, PitcherPiece, SeasonPiece, TeamPiece};

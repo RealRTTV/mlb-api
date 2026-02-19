@@ -1,4 +1,4 @@
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::person::NamedPerson;
 use crate::stats::wrappers::{AccumulatedMatchup, BatterPiece, GameTypePiece, OpposingTeamPiece, TeamPiece};
 use crate::stats::{RawStat, SingletonSplitStat};

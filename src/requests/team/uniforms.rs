@@ -1,7 +1,7 @@
 use crate::cache::{Requestable, RequestableEntrypoint};
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::types::Copyright;
+use crate::Copyright;
 use crate::request::RequestURL;
 use bon::Builder;
 use itertools::Itertools;

@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
-use crate::positions::NamedPosition;
+use crate::meta::NamedPosition;
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::stats::wrappers::{PositionPiece, SeasonPiece};

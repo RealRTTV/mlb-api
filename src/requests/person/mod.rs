@@ -9,7 +9,7 @@ use crate::cache::Requestable;
 use crate::draft::School;
 use crate::hydrations::Hydrations;
 use crate::season::SeasonId;
-use crate::types::{Gender, Handedness, HeightMeasurement};
+use crate::{Gender, Handedness, HeightMeasurement};
 use crate::request::RequestURL;
 use bon::Builder;
 use chrono::{Local, NaiveDate};
@@ -20,7 +20,7 @@ use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
-use crate::positions::NamedPosition;
+use crate::meta::NamedPosition;
 use crate::team::NamedTeam;
 
 #[cfg(feature = "cache")]
@@ -30,7 +30,7 @@ use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
 pub struct Ballplayer<H: PersonHydrations> {
-	#[serde(deserialize_with = "crate::types::try_from_str")]
+	#[serde(deserialize_with = "crate::try_from_str")]
 	#[serde(default)]
 	pub primary_number: Option<u8>,
 	#[serde(flatten)]
@@ -378,7 +378,7 @@ macro_rules! __person_hydrations_hydration_text {
 	};
 }
 
-/// Creates hydrations for a person, ex:
+/// Creates hydrations for a person
 ///```
 ///person_hydrations! {
 ///    pub struct ExampleHydrations {  ->  pub struct ExampleHydrations {

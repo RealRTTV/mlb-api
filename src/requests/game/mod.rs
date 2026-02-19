@@ -1,3 +1,5 @@
+//! The thing you're most likely here for.
+
 use std::fmt::{Display, Formatter};
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -6,17 +8,17 @@ use fxhash::FxHashMap;
 use serde::{Deserialize, Deserializer};
 use serde::de::{Error, MapAccess};
 use serde_with::{serde_as, DisplayFromStr};
-use crate::game_status::GameStatus;
-use crate::game_types::GameType;
-use crate::logical_events::LogicalEventId;
+use crate::meta::GameStatus;
+use crate::meta::GameType;
+use crate::meta::LogicalEventId;
 use crate::person::{Ballplayer, NamedPerson, PersonId};
 use crate::request::RequestURL;
 use crate::season::SeasonId;
-use crate::sky::Sky;
+use crate::meta::Sky;
 use crate::team::Team;
-use crate::types::{Copyright, HomeAwaySplits, DayHalf};
+use crate::{Copyright, HomeAwaySplit, DayHalf};
 use crate::venue::{Venue, VenueId};
-use crate::wind_direction::WindDirectionId;
+use crate::meta::WindDirectionId;
 
 pub mod boxscore;
 pub mod changes;
@@ -65,7 +67,7 @@ pub struct GameData {
 	game: GameDataMeta,
 	pub datetime: GameDateTime,
 	pub status: GameStatus,
-	pub teams: HomeAwaySplits<Team>,
+	pub teams: HomeAwaySplit<Team>,
 	#[serde(deserialize_with = "deserialize_players_cache")]
 	pub players: FxHashMap<PersonId, Ballplayer<()>>,
 	pub venue: Venue,
@@ -77,10 +79,10 @@ pub struct GameData {
 	#[serde(rename = "flags")]
 	pub live_tags: GameLiveTags,
 	// pub alerts: Vec<()>, // todo: type?
-	pub probable_pitchers: HomeAwaySplits<NamedPerson>,
+	pub probable_pitchers: HomeAwaySplit<NamedPerson>,
 	pub official_scorer: NamedPerson,
 	pub primary_datacaster: NamedPerson,
-	pub mound_visits: HomeAwaySplits<ResourceUsage>,
+	pub mound_visits: HomeAwaySplit<ResourceUsage>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -93,7 +95,7 @@ pub struct GameDataMeta {
 	pub double_header: DoubleHeaderKind,
 	/// Will state `P` for [`GameType::Playoffs`] games rather than what playoff series it is.
 	pub gameday_type: GameType,
-	#[serde(deserialize_with = "crate::types::from_yes_no")]
+	#[serde(deserialize_with = "crate::from_yes_no")]
 	pub tiebreaker: bool,
 	/// No clue what this means
 	pub game_number: u32,
@@ -106,7 +108,7 @@ pub struct GameDataMeta {
 #[serde(rename_all = "camelCase")]
 #[doc(hidden)]
 struct __GameDateTimeStruct {
-	#[serde(rename = "dateTime", deserialize_with = "crate::types::deserialize_datetime")]
+	#[serde(rename = "dateTime", deserialize_with = "crate::deserialize_datetime")]
 	datetime: NaiveDateTime,
 	original_date: NaiveDate,
 	official_date: NaiveDate,
@@ -178,7 +180,7 @@ impl TryFrom<__GameWeatherStruct> for GameWeather {
 #[serde(rename_all = "camelCase")]
 pub struct GameInfo {
 	pub attendance: u32,
-	#[serde(deserialize_with = "crate::types::deserialize_datetime")]
+	#[serde(deserialize_with = "crate::deserialize_datetime")]
 	pub first_pitch: NaiveDateTime,
 	/// Measured in minutes,
 	#[serde(rename = "gameDurationMinutes")]
@@ -190,7 +192,7 @@ pub struct GameInfo {
 pub struct GameReview {
 	pub has_challenges: bool,
 	#[serde(flatten)]
-	pub teams: HomeAwaySplits<ResourceUsage>,
+	pub teams: HomeAwaySplit<ResourceUsage>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]

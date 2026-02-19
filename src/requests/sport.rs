@@ -1,4 +1,6 @@
-use crate::types::Copyright;
+//! Different "sports"; MLB, AAA, AA, A+, A, Rookieball, etc.
+
+use crate::Copyright;
 use crate::request::RequestURL;
 use bon::Builder;
 use serde::Deserialize;

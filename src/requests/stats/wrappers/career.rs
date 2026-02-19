@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::league::NamedLeague;
 use crate::person::NamedPerson;
 use crate::sport::SportId;

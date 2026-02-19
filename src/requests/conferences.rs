@@ -1,7 +1,11 @@
+//! A conference, like in NCAA Baseball.
+//!
+//! At the time of writing, the only two registered are the PCL American Conference and the PCL Pacific Conference.
+
 use crate::league::LeagueId;
 use crate::season::SeasonId;
 use crate::sport::SportId;
-use crate::types::Copyright;
+use crate::Copyright;
 use crate::request::RequestURL;
 use bon::Builder;
 use derive_more::{Deref, DerefMut};
@@ -12,6 +16,7 @@ use crate::cache::Requestable;
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
+/// Returns a [`Vec`] of [`Conference`]s
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConferencesResponse {
@@ -19,12 +24,14 @@ pub struct ConferencesResponse {
 	pub conferences: Vec<Conference>,
 }
 
+/// A conference containing all details registered
 #[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Conference {
 	pub abbreviation: String,
 	#[serde(rename = "nameShort")]
 	pub short_name: String,
+	/// If the conferene has a wildcard slot system for the postseason
 	pub has_wildcard: bool,
 	pub league: LeagueId,
 	pub sport: SportId,
@@ -35,6 +42,7 @@ pub struct Conference {
 	inner: NamedConference,
 }
 
+/// Conference with a name
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedConference {
@@ -48,6 +56,7 @@ id!(ConferenceId { id: u32 });
 id_only_eq_impl!(Conference, id);
 id_only_eq_impl!(NamedConference, id);
 
+/// Returns a [`ConferencesResponse`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct ConferencesRequest {

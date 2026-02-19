@@ -1,19 +1,19 @@
 use crate::league::NamedLeague;
 use crate::sport::SportId;
-use crate::types::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
+use crate::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use crate::baseball_stats::BaseballStatId;
-use crate::game_types::GameType;
+use crate::meta::BaseballStatId;
+use crate::meta::GameType;
 use crate::person::NamedPerson;
 use crate::request::RequestURL;
 use crate::season::SeasonId;
-use crate::stat_groups::StatGroup;
-use crate::stat_types::StatType;
+use crate::meta::StatGroup;
+use crate::meta::StatType;
 use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -135,9 +135,9 @@ impl RequestURL for StatLeadersRequest {
 mod tests {
 	use crate::meta::MetaRequest;
 	use crate::stats::leaders::StatLeadersRequest;
-	use crate::types::PlayerPool;
-	use crate::baseball_stats::BaseballStat;
-	use crate::game_types::GameType;
+	use crate::PlayerPool;
+	use crate::BaseballStat;
+	use crate::GameType;
 	use crate::request::{RequestURL, RequestURLBuilderExt};
 
 	#[tokio::test]

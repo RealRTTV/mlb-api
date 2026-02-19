@@ -1,7 +1,7 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
 
 use crate::person::{Ballplayer, PersonHydrations};
-use crate::types::Copyright;
+use crate::Copyright;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]

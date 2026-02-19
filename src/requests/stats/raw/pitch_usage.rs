@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use crate::pitch_types::PitchTypeId;
+use crate::meta::PitchTypeId;
 use crate::stats::SingletonSplitStat;
 use crate::stats::units::PercentageStat;
 

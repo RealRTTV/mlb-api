@@ -1,17 +1,35 @@
+//! Jobs data.
+//! 
+//! Lists of different people with different positions
+
 use crate::person::NamedPerson;
-use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use crate::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::job_types::JobTypeId;
+use crate::meta::JobTypeId;
 use crate::request::RequestURL;
 use crate::sport::SportId;
 
-pub mod datacasters;
-pub mod official_scorers;
-pub mod umpire;
+mod datacasters;
+mod official_scorers;
+mod umpire;
 
+pub use datacasters::*;
+pub use official_scorers::*;
+pub use umpire::*;
+
+/// Response from the `jobs` endpoints.
+/// Returns a [`Vec`] of [`EmployedPerson`]
+///
+/// Example: <http://statsapi.mlb.com/api/v1/jobs?jobType=UMPR>
+///
+/// This type represents the response for:
+/// - [`JobsRequest`]
+/// - [`JobsDatacastersRequest`]
+/// - [`JobsOfficialScorersRequest`]
+/// - [`JobsUmpiresRequest`]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct JobsResponse {
     pub copyright: Copyright,
@@ -19,18 +37,24 @@ pub struct JobsResponse {
     pub roster: Vec<EmployedPerson>,
 }
 
+/// Person with a job
+///
+/// Wrapper of [`NamedPerson`] used in the [`JobsRequest`] endpoints that contains extra fields about their job.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EmployedPerson {
     #[serde(default = "NamedPerson::unknown_person")]
     pub person: NamedPerson,
-    #[serde(deserialize_with = "crate::types::try_from_str")]
+    #[serde(deserialize_with = "crate::try_from_str")]
     pub jersey_number: Option<u8>,
     #[serde(rename = "job")] pub job_name: String,
     pub job_id: JobTypeId,
     #[serde(rename = "title")] pub job_title: String,
 }
 
+/// Returns [`JobsResponse`].
+///
+/// Example: <http://statsapi.mlb.com/api/v1/jobs?jobType=UMPR>
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct JobsRequest {
@@ -61,7 +85,7 @@ impl RequestURL for JobsRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::job_types::JobType;
+    use crate::JobType;
     use crate::jobs::JobsRequest;
     use crate::meta::MetaRequest;
     use crate::request::{RequestURL, RequestURLBuilderExt};

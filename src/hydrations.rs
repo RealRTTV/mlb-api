@@ -1,3 +1,9 @@
+//! General hydrations types for the hydrations system
+//! 
+//! Everything here is rather internal, not much will be of interest
+
+#![allow(missing_docs, reason = "unnecessary")]
+
 use std::borrow::Cow;
 use std::fmt::Debug;
 use serde::de::DeserializeOwned;

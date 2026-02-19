@@ -1,8 +1,10 @@
+//! Draft endpoint data. Picks, rounds, etc.
+
 use crate::person::{Person, PersonId};
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::types::{Copyright, Location};
-use crate::positions::PositionCode;
+use crate::{Copyright, Location};
+use crate::meta::PositionCode;
 use crate::request::RequestURL;
 use bon::Builder;
 use derive_more::Display;
@@ -60,7 +62,7 @@ pub struct DraftPick {
 	#[serde(rename = "displayPickNumber")]
 	pub displayed_pick_number: Option<u32>,
 	pub rank: Option<u32>,
-	#[serde(default, deserialize_with = "crate::types::try_from_str")]
+	#[serde(default, deserialize_with = "crate::try_from_str")]
 	pub signing_bonus: Option<u32>,
 	pub home: Location,
 	pub scouting_report_url: Option<String>,

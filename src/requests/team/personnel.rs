@@ -1,7 +1,7 @@
 use crate::person::people::PeopleResponse;
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::types::MLB_API_DATE_FORMAT;
+use crate::MLB_API_DATE_FORMAT;
 use crate::request::RequestURL;
 use bon::Builder;
 use chrono::NaiveDate;

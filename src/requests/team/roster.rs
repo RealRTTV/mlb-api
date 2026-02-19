@@ -1,14 +1,14 @@
 use crate::person::NamedPerson;
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use crate::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
-use crate::positions::NamedPosition;
+use crate::meta::NamedPosition;
 use crate::request::RequestURL;
-use crate::roster_types::RosterType;
+use crate::meta::RosterType;
 use crate::team::NamedTeam;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -25,7 +25,7 @@ pub struct RosterResponse {
 #[serde(rename_all = "camelCase")]
 pub struct RosterPlayer {
     pub person: NamedPerson,
-    #[serde(deserialize_with = "crate::types::try_from_str")]
+    #[serde(deserialize_with = "crate::try_from_str")]
     pub jersey_number: Option<u8>,
     pub position: NamedPosition,
     pub status: RosterStatus,

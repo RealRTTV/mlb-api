@@ -1,15 +1,15 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::person::PersonId;
 use crate::request::RequestURL;
 use crate::season::SeasonId;
 use crate::sport::SportId;
-use crate::stat_groups::StatGroup;
-use crate::stat_types::StatType;
+use crate::meta::StatGroup;
+use crate::meta::StatType;
 use crate::stats::Stats;
 use crate::team::TeamId;
-use crate::types::{Copyright, MLB_API_DATE_FORMAT};
+use crate::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
 use either::Either;

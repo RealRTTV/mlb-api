@@ -1,3 +1,5 @@
+///! Numerous endpoints for teams; [`roster`], [`history`], [`affiliates`], etc.
+
 pub mod alumni;
 pub mod coaches;
 pub mod leaders;
@@ -31,7 +33,7 @@ struct TeamRaw {
 	#[serde(default)]
 	venue: Option<NamedVenue>,
 	location_name: Option<String>,
-	#[serde(default, deserialize_with = "crate::types::try_from_str")]
+	#[serde(default, deserialize_with = "crate::try_from_str")]
 	first_year_of_play: Option<u32>,
 	#[serde(default)]
 	#[serde_as(deserialize_as = "DefaultOnError")]

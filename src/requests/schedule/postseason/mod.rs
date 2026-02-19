@@ -6,7 +6,7 @@ use crate::team::TeamId;
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
-use crate::game_types::GameType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 use crate::sport::SportId;
 

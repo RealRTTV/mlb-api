@@ -1,5 +1,5 @@
 use crate::season::SeasonId;
-use crate::types::Copyright;
+use crate::Copyright;
 use crate::request::RequestURL;
 use bon::Builder;
 use serde::Deserialize;
