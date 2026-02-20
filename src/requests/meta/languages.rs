@@ -1,7 +1,9 @@
 use serde::Deserialize;
 
-id!(LanguageId { languageId: u32 });
+id!(#[doc = "A [`u32`] representing a [`Language`]"]LanguageId { languageId: u32 });
 
+// A language, such as English, French, etc.
+// Likely used for locale-related purposes.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Language {

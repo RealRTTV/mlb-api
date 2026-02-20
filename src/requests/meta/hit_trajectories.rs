@@ -1,6 +1,7 @@
 use derive_more::Display;
 use serde::Deserialize;
 
+/// Different coarse definitions of how a ball is hit -- likely up to scorers interpretation.
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__HitTrajectoryStruct")]
 pub enum HitTrajectory {

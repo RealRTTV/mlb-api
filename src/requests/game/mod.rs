@@ -9,12 +9,12 @@ use serde::{Deserialize, Deserializer};
 use serde::de::{Error, MapAccess};
 use serde_with::{serde_as, DisplayFromStr};
 use crate::meta::GameStatus;
-use crate::meta::GameType;
+use crate::meta::StandingsType;
 use crate::meta::LogicalEventId;
 use crate::person::{Ballplayer, NamedPerson, PersonId};
 use crate::request::RequestURL;
 use crate::season::SeasonId;
-use crate::meta::Sky;
+use crate::meta::DayNight;
 use crate::team::Team;
 use crate::{Copyright, HomeAwaySplit, DayHalf};
 use crate::venue::{Venue, VenueId};
@@ -91,10 +91,10 @@ pub struct GameDataMeta {
 	#[serde(rename = "pk")]
 	pub id: GameId,
 	#[serde(rename = "type")]
-	pub game_type: GameType,
+	pub game_type: StandingsType,
 	pub double_header: DoubleHeaderKind,
-	/// Will state `P` for [`GameType::Playoffs`] games rather than what playoff series it is.
-	pub gameday_type: GameType,
+	/// Will state `P` for [`StandingsType::Playoffs`] games rather than what playoff series it is.
+	pub gameday_type: StandingsType,
 	#[serde(deserialize_with = "crate::from_yes_no")]
 	pub tiebreaker: bool,
 	/// No clue what this means
@@ -113,7 +113,7 @@ struct __GameDateTimeStruct {
 	original_date: NaiveDate,
 	official_date: NaiveDate,
 	#[serde(rename = "dayNight")]
-	sky: Sky,
+	sky: DayNight,
 	time: NaiveTime,
 	ampm: DayHalf,
 }
@@ -124,7 +124,7 @@ pub struct GameDateTime {
 	datetime: NaiveDateTime,
 	original_date: NaiveDate,
 	official_date: NaiveDate,
-	sky: Sky,
+	sky: DayNight,
 }
 
 impl From<__GameDateTimeStruct> for GameDateTime {

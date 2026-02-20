@@ -301,6 +301,7 @@ macro_rules! __stats__request_data {
 					team_ids: ::core::option::Option<::std::vec::Vec<$crate::team::TeamId>>,
 					sport_ids: ::core::option::Option<::std::vec::Vec<$crate::sport::SportId>>,
 					league_ids: ::core::option::Option<::std::vec::Vec<$crate::league::LeagueId>>,
+					limit: Option<usize>,
 					#[builder(default)]
 					player_pool: $crate::PlayerPool,
 
@@ -355,6 +356,9 @@ macro_rules! __stats__request_data {
 						::core::fmt::Write::write_fmt(f, ::core::format_args!("leagueIds=[{}],", ids.iter().join(",")))?;
 					}
 					::core::fmt::Write::write_fmt(f, ::core::format_args!("playerPool={},", self.player_pool))?;
+					if let ::core::option::Option::Some(limit) = ::core::option::Option::as_ref(&self.limit) {
+						::core::fmt::Write::write_fmt(f, ::core::format_args!("limit={}", limit))?;
+					}
 
 					$crate::__stats__needle_haystack_metrics! { [$($stat_type),+] => {
 						::core::fmt::Write::write_fmt(f, ::core::format_args!("metrics={},", self.metrics.iter().join(",")))?;
@@ -376,11 +380,13 @@ macro_rules! __stats__request_data {
 			$crate::__stats__needle_haystack_metrics! { [$($stat_type),+] => {} else {
 				$crate::__stats__needle_haystack_date_range! { [$($stat_type),+] => {} else {
 					$crate::__stats__needle_haystack_situations! { [$($stat_type),+] => {} else {
-						impl ::core::default::Default for [<$name RequestData>] {
-							fn default() -> Self {
-								[<$name RequestDataBuilder>]::<[<$name:snake _request_data_builder>]::Empty>::build(Self::builder())
+						$crate::__stats__needle_haystack_opponent_player! { [$($stat_type),+] => {} else {
+							impl ::core::default::Default for [<$name RequestData>] {
+								fn default() -> Self {
+									[<$name RequestDataBuilder>]::<[<$name:snake _request_data_builder>]::Empty>::build(Self::builder())
+								}
 							}
-						}
+						}}
 					}}
 				}}
 			}}
@@ -454,7 +460,7 @@ macro_rules! __stats0 {
 ///
 /// These are commonly associated with [`person_hydrations`](crate::person_hydrations) to create a [`PersonRequest`](crate::person::PersonRequest).
 ///
-/// # Stat Types & Stat Groups for [`stats!`](crate::stats!)
+/// # Stat Types & Stat Groups for [`stats_type!`](crate::stats_type!)
 ///
 /// | Name                  | Stat Type                            | Stat Group | Notes                        |
 /// |-----------------------|--------------------------------------|------------|------------------------------|
@@ -468,8 +474,8 @@ macro_rules! __stats0 {
 /// | `GameLog`             | [`Vec<WithGame<_>>`]                 | **`HPCF`** |                              |
 /// | `PlayLog`             | [`Vec<SingleMatchup<Play<_>>>`]      | **`HPCF`** | same format as in games      |
 /// | `PitchLog`            | [`Vec<SingleMatchup<PitchStat>>`]    | **`HPCF`** | same format as in games      |
-/// | `ExpectedStatistics`  | *no wrapper*                         | **`HP--`** | xAVG`, `xwOBA`, etc.         |
-/// | `Sabermetrics`        | *no wrapper*                         | **`HP--`** | xFIP`, `fWAR`, etc.          |
+/// | `ExpectedStatistics`  | *no wrapper*                         | **`HP--`** | `xAVG`, `xwOBA`, etc.        |
+/// | `Sabermetrics`        | *no wrapper*                         | **`HP--`** | `xFIP`, `fWAR`, etc.         |
 /// | `VsPlayer5Y`          | [`AccumulatedVsPlayerMatchup<_>`]    | **`HP--`** | `opposing_player` in builder |
 /// | `LastXGames`          | [`WithTeam<_>`]                      | **`HPCF`** | `games_back` in builder      |
 /// | `ByDateRange`         | [`WithTeam<_>`]                      | **`HPCF`** | `date_range` in builder      |
@@ -489,7 +495,7 @@ macro_rules! __stats0 {
 ///
 /// # Examples
 ///```
-/// mlb_api::stats! {
+/// mlb_api::stats_type! {
 ///     pub struct MyStats {
 ///         [Season, Career] = [Hitting, Pitching]
 ///     }
@@ -536,7 +542,7 @@ macro_rules! __stats0 {
 /// [`StatGroup`]: crate::meta::StatGroup
 /// [`WithPlayer<_>`]: crate::stats::wrappers::WithPlayer
 #[macro_export]
-macro_rules! stats {
+macro_rules! stats_type {
     ($($t:tt)*) => {
 		$crate::__stats0! { $($t)* }
 	};

@@ -1,6 +1,6 @@
 //! A division, like the AL East or NL West.
 //!
-//! These are created for every league, not just the MLB and contain important division-specific information like `num_playoff_teams`, `has_wildcard` and `active.
+//! These are created for every league, not just the MLB and contain important division-specific information like `num_playoff_teams`, `has_wildcard` and `active`.
 
 use crate::cache::Requestable;
 use crate::league::LeagueId;
@@ -28,8 +28,9 @@ pub struct DivisionsResponse {
 	pub divisions: Vec<Division>,
 }
 
-id!(DivisionId { id: u32 });
+id!(#[doc = "A [`u32`] representing the ID of the division"] DivisionId { id: u32 });
 
+/// A division with a name.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedDivision {
@@ -38,6 +39,7 @@ pub struct NamedDivision {
 	pub id: DivisionId,
 }
 
+/// A complete division of info, returned from [`DivisionsResponse`]
 #[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Division {
@@ -60,6 +62,7 @@ pub struct Division {
 id_only_eq_impl!(Division, id);
 id_only_eq_impl!(NamedDivision, id);
 
+/// Returns a [`DivisionsResponse`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct DivisionsRequest {

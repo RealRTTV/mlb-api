@@ -1,6 +1,29 @@
+//! # The Stats API
+//!
 //! The second most likely reason you're here.
 //!
-//! ...need to add a lot here...
+//! [`mlb_api`](crate)'s stats system designed to be simple to use.
+//! Create a stats type, then create the hydrations which have stats in it, then request it.
+//!
+//! Almost all the types here are for private use and occasionally might be
+//!
+//! ## Examples
+//! See [`stats_type!`](crate::stats_type) for examples on how to use the macro.
+//!
+//! ## Notes
+//! 1. The stat type registry is admittedly incomplete, only some stat types are implemented (see [`stat_types`]), more will come in the future.
+//! 2. Some stats are only implemented for specific [`StatGroup`](crate::meta::StatGroup)s, if you have a complicated request such as:
+//! ```
+//! stats_type! {
+//!     pub struct TechnicalStats {
+//!         [Sabermetrics, Career] = [Hitting, Pitching, Fielding, Catching]
+//!     }
+//! }
+//! ```
+//! `stats.sabermetrics.fielding` and `.catching` will be of type `()`.
+//! 3. It is an intentional decision that [`SituationCode`](crate::meta::SituationCode)s
+//! are not registered in an enum as if new cutting-edge situation-codes come out,
+//! this API being outdated shouldn't limit in that factor.
 
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
@@ -10,23 +33,32 @@ use serde::Deserialize;
 use std::convert::Infallible;
 use std::fmt::Debug;
 
+#[doc(hidden)]
 pub mod macros;
+#[doc(hidden)]
 pub mod raw;
+#[doc(hidden)]
 pub mod wrappers;
 pub mod leaders;
-pub mod units;
+#[doc(hidden)]
+mod units;
+#[doc(hidden)]
 pub mod parse;
-// mod derived;
+pub mod derived;
+
+pub use units::*;
+
 #[cfg(test)]
 mod tests;
 
 // pub use derived::*;
 
+#[doc(hidden)]
 pub trait Stats: 'static + Debug + PartialEq + Eq + Clone + Hydrations {}
 
 impl Stats for () {}
 
-pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
+pub(crate) trait Stat: Debug + Clone + PartialEq + Eq + Default {
 	type Split: DeserializeOwned;
 
 	type TryFromSplitError;
@@ -37,13 +69,13 @@ pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
 }
 
 /// Represents the types defined in [`raw`], not the wrapped final types. In the serialized format, this represents the `stat` field.
-pub trait RawStat: Debug + DeserializeOwned + Clone + Eq + Default {}
+pub(crate) trait RawStat: Debug + DeserializeOwned + Clone + Eq + Default {}
 
 impl RawStat for () {}
 impl SingletonSplitStat for () {}
 
 /// Represents types that are made from a single 'split' in the serialized format (able to be deserialized)
-pub trait SingletonSplitStat: Debug + DeserializeOwned + Clone + PartialEq + Eq + Default {
+pub(crate) trait SingletonSplitStat: Debug + DeserializeOwned + Clone + PartialEq + Eq + Default {
 
 }
 
@@ -60,7 +92,7 @@ impl<T: SingletonSplitStat> Stat for T {
 	}
 }
 
-pub trait StatTypeStats {
+pub(crate) trait StatTypeStats {
 	type Hitting: Stat;
 
 	type Pitching: Stat;

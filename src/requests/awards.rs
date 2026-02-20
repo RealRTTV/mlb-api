@@ -43,7 +43,7 @@ pub struct Award {
 }
 
 id_only_eq_impl!(Award, id);
-id!(AwardId { id: String });
+id!(#[doc = "A string representing an award, ID of award, used in [`AwardRequest`]"] AwardId { id: String });
 
 /// Returns [`AwardResponse`]
 #[derive(Builder)]

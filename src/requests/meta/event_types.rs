@@ -1,7 +1,8 @@
 use serde::Deserialize;
 
-id!(EventTypeId { code: String });
+id!(#[doc = "A [`String`] ID for an [`EventType`]"] EventTypeId { code: String });
 
+/// Event Types; `"pickoff_1b"`, `"grounded_into_double_play"`, etc.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EventType {

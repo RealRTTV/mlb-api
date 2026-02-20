@@ -3,14 +3,13 @@
 use chrono::NaiveDate;
 use crate::person::PersonRequest;
 use crate::request::{RequestURL, RequestURLBuilderExt};
-use crate::{person_hydrations, stats};
-use crate::game_types::GameType;
-use crate::situations::SituationCodeId;
+use crate::{person_hydrations, stats_type};
+use crate::meta::{StandingsType, SituationCodeId};
 use crate::stats::units::ThreeDecimalPlaceRateStat;
 
 #[tokio::test]
 async fn shohei_ohtani_pitching_2025() {
-	stats! {
+	stats_type! {
 		struct PitchingStats {
 			[
                 Projected,
@@ -59,7 +58,7 @@ async fn shohei_ohtani_pitching_2025() {
 
 #[tokio::test]
 async fn shohei_ohtani_hitting_2025() {
-	stats! {
+	stats_type! {
 		struct HittingStats {
 			[
 				Projected,
@@ -112,7 +111,7 @@ async fn shohei_ohtani_hitting_2025() {
 
 #[tokio::test]
 async fn shohei_ohtani_hitting_2025_custom() {
-	stats! {
+	stats_type! {
 		struct HittingStats {
 			[
 				VsPlayer5Y,
@@ -137,7 +136,7 @@ async fn shohei_ohtani_hitting_2025_custom() {
 			.stats(HittingStats::builder()
 				.season(2025)
 				.opponent_player(453286)
-				.game_type(GameType::RegularSeason)
+				.game_type(StandingsType::RegularSeason)
 				.games_back(5)
 				.date_range(NaiveDate::from_ymd_opt(2025, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(2025, 6, 12).unwrap())
 				.situations(vec![SituationCodeId::new("c00")])))
@@ -154,7 +153,7 @@ async fn shohei_ohtani_hitting_2025_custom() {
 
 #[tokio::test]
 async fn shohei_ohtani_pitching_2025_custom() {
-	stats! {
+	stats_type! {
 		struct PitchingStats {
 			[
 				VsPlayer5Y,
@@ -179,7 +178,7 @@ async fn shohei_ohtani_pitching_2025_custom() {
 			.stats(PitchingStats::builder()
 				.season(2025)
 				.opponent_player(672386)
-				.game_type(GameType::RegularSeason)
+				.game_type(StandingsType::RegularSeason)
 				.games_back(5)
 				.date_range(NaiveDate::from_ymd_opt(2025, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(2025, 6, 12).unwrap())
 				.situations(vec![SituationCodeId::new("c00")])))
@@ -196,7 +195,7 @@ async fn shohei_ohtani_pitching_2025_custom() {
 
 #[tokio::test]
 async fn daulton_varsho_fielding_2025() {
-	stats! {
+	stats_type! {
 		struct FieldingStats {
 			[
 				YearByYear,
@@ -230,7 +229,7 @@ async fn daulton_varsho_fielding_2025() {
 
 #[tokio::test]
 async fn daulton_varsho_fielding_2025_custom() {
-	stats! {
+	stats_type! {
 		struct FieldingStats {
 			[
 				LastXGames,
@@ -260,7 +259,7 @@ async fn daulton_varsho_fielding_2025_custom() {
 
 #[tokio::test]
 async fn alejandro_kirk_catching_2025() {
-	stats! {
+	stats_type! {
 		struct CatchingStats {
 			[
 				YearByYear,
@@ -294,7 +293,7 @@ async fn alejandro_kirk_catching_2025() {
 
 #[tokio::test]
 async fn alejandro_kirk_catching_2025_custom() {
-	stats! {
+	stats_type! {
 		struct CatchingStats {
 			[
 				LastXGames,

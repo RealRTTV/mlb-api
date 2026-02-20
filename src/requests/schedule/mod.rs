@@ -9,9 +9,9 @@ use crate::team::TeamId;
 use crate::{Copyright, HomeAwaySplit, NaiveDateRange, MLB_API_DATE_FORMAT};
 use crate::venue::{NamedVenue, VenueId};
 use crate::meta::GameStatus;
-use crate::meta::GameType;
+use crate::meta::StandingsType;
 use crate::request::RequestURL;
-use crate::meta::Sky;
+use crate::meta::DayNight;
 use crate::sport::SportId;
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, Utc};
@@ -47,7 +47,7 @@ pub struct ScheduleDate {
 pub struct ScheduleGame {
 	pub game_id: GameId,
 	pub game_guid: Uuid,
-	pub game_type: GameType,
+	pub game_type: StandingsType,
 	pub season: SeasonId,
 	pub game_date: NaiveDateTime,
 	/// Different from `game_date.date()` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
@@ -67,7 +67,7 @@ pub struct ScheduleGame {
 	pub is_tiebreaker: bool,
 	// pub calender_event_id: CalenderEventId,
 	pub displayed_season: SeasonId,
-	pub day_night: Sky,
+	pub day_night: DayNight,
 	pub description: Option<String>,
 	pub scheduled_innings: u32,
 	pub reverse_home_away_status: bool,
@@ -83,7 +83,7 @@ struct __ScheduleGameStruct {
 	#[serde(rename = "gamePk")]
 	game_id: GameId,
 	game_guid: Uuid,
-	game_type: GameType,
+	game_type: StandingsType,
 	season: SeasonId,
 	#[serde(deserialize_with = "crate::deserialize_datetime")]
 	game_date: NaiveDateTime,
@@ -105,7 +105,7 @@ struct __ScheduleGameStruct {
 	// calender_event_id: CalenderEventId,
 	#[serde(rename = "seasonDisplay")]
 	displayed_season: SeasonId,
-	day_night: Sky,
+	day_night: DayNight,
 	description: Option<String>,
 	scheduled_innings: u32,
 	reverse_home_away_status: bool,

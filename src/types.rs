@@ -75,7 +75,7 @@ where
 	String::deserialize(deserializer)?.parse::<T>().map_err(|e| Error::custom(format!("{e:?}")))
 }
 
-/// Deserializes a "Y" or "N" into a `bool`
+/// Deserializes a `"Y"` or `"N"` into a `bool`
 ///
 /// # Errors
 /// If the type cannot be parsed into a Y or N string
@@ -235,9 +235,6 @@ impl TryFrom<__HandednessStruct> for Handedness {
 ///
 /// # Examples
 /// ```
-/// use chrono::NaiveDate;
-/// use mlb_api::NaiveDateRange;
-///
 /// let range: NaiveDateRange = NaiveDate::from_ymd(1, 1, 2025)..=NaiveDate::from_ymd(12, 31, 2025);
 /// ```
 pub type NaiveDateRange = RangeInclusive<NaiveDate>;
@@ -315,7 +312,6 @@ impl<T> From<(T, T)> for HomeAwaySplit<T> {
 /// Street address, city, etc.
 ///
 /// Pretty much nothing *has* to be supplied so you either get an address, phone number, everything, or just a country.
-#[allow(missing_docs, reason = "unnecessary")]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Location {
@@ -432,7 +428,6 @@ pub struct MLBError {
 impl std::error::Error for MLBError {}
 
 /// `rgba({red}, {green}, {blue})` into a type
-#[allow(missing_docs, reason = "unnecessary")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
 #[serde(try_from = "&str")]
 pub struct RGBAColor {
@@ -493,7 +488,7 @@ impl FromStr for RGBAColor {
 	}
 }
 
-/// Used in [`HittingHotColdZones`](crate::stats::raw::HittingHotColdZones) and [`PitchingHotColdZones`](crate::stats::raw:::PitchingHotColdZones).
+/// Used in [`HittingHotColdZones`](crate::stats::raw::HittingHotColdZones) and [`PitchingHotColdZones`](crate::stats::raw::PitchingHotColdZones).
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, FromStr)]
 #[serde(try_from = "&str")]
 pub enum HeatmapTemperature {
@@ -513,7 +508,6 @@ impl<'a> TryFrom<&'a str> for HeatmapTemperature {
 }
 
 /// AM/PM
-#[allow(missing_docs, reason = "unnecessary")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, FromStr)]
 #[serde(try_from = "&str")]
 pub enum DayHalf {

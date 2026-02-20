@@ -1,4 +1,4 @@
-///! Numerous endpoints for teams; [`roster`], [`history`], [`affiliates`], etc.
+//! Numerous endpoints for teams; [`roster`], [`history`], [`affiliates`], etc.
 
 pub mod alumni;
 pub mod coaches;

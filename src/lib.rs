@@ -1,5 +1,5 @@
 #![warn(clippy::pedantic, clippy::nursery, clippy::complexity, clippy::cargo, clippy::perf, clippy::style)]
-#![warn(clippy::allow_attributes_without_reason, clippy::ignore_without_reason, missing_docs)]
+#![warn(clippy::allow_attributes_without_reason, clippy::ignore_without_reason)]
 #![allow(clippy::multiple_crate_versions, clippy::cast_lossless, reason = "deemed unnecessary")]
 
 pub mod hydrations;

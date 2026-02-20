@@ -5,7 +5,7 @@ type Result<T, E = OmittedStatError> = core::result::Result<T, E>;
 
 macro_rules! wrap {
     ($expr:expr) => {
-        (|| Ok($expr))().unwrap_or_default()
+        (move || Result::<_>::Ok($expr))().unwrap_or_default()
     };
 }
 
@@ -49,7 +49,7 @@ pub fn obp(
 
 /// # OPS - On-Base Plus Slugging
 /// Adds OBP and SLG values together to make a new stat (yes, this means both components are weighted equally)
-/// Typically this is used as a trivial way to rank performance, however if possible, using [`wOBAPiece::wOBA`]-like stats is recommended as they are generally more accurate.
+/// Typically this is used as a trivial way to rank performance, however if possible, using `wOBA`-like stats is recommended as they are generally more accurate.
 ///
 /// Hitters: Higher is better.
 /// Pitchers: Lower is better.

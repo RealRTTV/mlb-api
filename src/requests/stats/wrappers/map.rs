@@ -6,25 +6,25 @@ use std::fmt::{Debug, Formatter};
 use std::hash::Hash;
 
 #[derive(Deref, DerefMut)]
-pub struct Map<T: SingletonSplitStat, A: MapKey<T>> {
+pub struct Map<T, A: MapKey<T>> {
 	inner: FxHashMap<A::Key, T>,
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>> Debug for Map<T, A> {
+impl<T: Debug, A: MapKey<T>> Debug for Map<T, A> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		self.inner.fmt(f)
 	}
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>> PartialEq for Map<T, A> {
+impl<T: PartialEq, A: MapKey<T>> PartialEq for Map<T, A> {
 	fn eq(&self, other: &Self) -> bool {
 		self.inner == other.inner
 	}
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>> Eq for Map<T, A> {}
+impl<T: Eq, A: MapKey<T>> Eq for Map<T, A> {}
 
-impl<T: SingletonSplitStat, A: MapKey<T>> Clone for Map<T, A> {
+impl<T: Clone, A: MapKey<T>> Clone for Map<T, A> {
 	fn clone(&self) -> Self {
 		Self {
 			inner: self.inner.clone(),
@@ -32,7 +32,7 @@ impl<T: SingletonSplitStat, A: MapKey<T>> Clone for Map<T, A> {
 	}
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>> Default for Map<T, A> {
+impl<T, A: MapKey<T>> Default for Map<T, A> {
 	fn default() -> Self {
 		Self { inner: FxHashMap::default() }
 	}
@@ -57,11 +57,11 @@ impl<T: SingletonSplitStat, A: MapKey<T>> Stat for Map<T, A> {
 }
 
 #[derive(Deref, DerefMut)]
-pub struct Map2D<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> {
+pub struct Map2D<T, A: MapKey<T>, B: MapKey<T>> {
 	inner: FxHashMap<A::Key, FxHashMap<B::Key, T>>,
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Clone for Map2D<T, A, B> {
+impl<T: Clone, A: MapKey<T>, B: MapKey<T>> Clone for Map2D<T, A, B> {
 	fn clone(&self) -> Self {
 		Self {
 			inner: self.inner.clone(),
@@ -69,21 +69,21 @@ impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Clone for Map2D<T, A, B>
 	}
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Debug for Map2D<T, A, B> {
+impl<T: Debug, A: MapKey<T>, B: MapKey<T>> Debug for Map2D<T, A, B> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		self.inner.fmt(f)
 	}
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> PartialEq for Map2D<T, A, B> {
+impl<T: PartialEq, A: MapKey<T>, B: MapKey<T>> PartialEq for Map2D<T, A, B> {
 	fn eq(&self, other: &Self) -> bool {
 		self.inner == other.inner
 	}
 }
 
-impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Eq for Map2D<T, A, B> {}
+impl<T: Eq, A: MapKey<T>, B: MapKey<T>> Eq for Map2D<T, A, B> {}
 
-impl<T: SingletonSplitStat, A: MapKey<T>, B: MapKey<T>> Default for Map2D<T, A, B> {
+impl<T, A: MapKey<T>, B: MapKey<T>> Default for Map2D<T, A, B> {
 	fn default() -> Self {
 		Self { inner: FxHashMap::default() }
 	}

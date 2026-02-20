@@ -1,9 +1,11 @@
+//! Tied games (?).
+
 use crate::schedule::ScheduleResponse;
 use crate::season::SeasonId;
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
-use crate::meta::GameType;
+use crate::meta::StandingsType;
 use crate::request::RequestURL;
 
 #[derive(Builder)]
@@ -11,7 +13,7 @@ use crate::request::RequestURL;
 pub struct ScheduleTiedRequest {
     #[builder(into)]
     season: SeasonId,
-    game_types: Option<Vec<GameType>>,
+    game_types: Option<Vec<StandingsType>>,
 }
 
 impl<S: schedule_tied_request_builder::State + schedule_tied_request_builder::IsComplete> crate::request::RequestURLBuilderExt for ScheduleTiedRequestBuilder<S> {

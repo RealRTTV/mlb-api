@@ -1,8 +1,9 @@
 use crate::meta::stat_groups::StatGroup;
 use serde::Deserialize;
 
-id!(BaseballStatId { name: String });
+id!(#[doc = "A [`String`] ID for a [`BaseballStat`]"] BaseballStatId { name: String });
 
+/// A Baseball Stat; `"hits"`, `"strikeOuts"`, `"xWoba"`, etc.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BaseballStat {

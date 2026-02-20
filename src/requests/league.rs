@@ -14,6 +14,7 @@ use crate::season::{Season, SeasonState};
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
+/// Returns a [`Vec`] of [`League`]s.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LeagueResponse {
@@ -21,6 +22,7 @@ pub struct LeagueResponse {
 	pub leagues: Vec<League>,
 }
 
+/// A league with a name
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedLeague {
@@ -35,6 +37,7 @@ impl Hash for NamedLeague {
 	}
 }
 
+/// A complete league with all it's information.
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
 #[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -67,7 +70,7 @@ pub struct League {
 	inner: NamedLeague,
 }
 
-// this is annoying me that it exists
+/// this is annoying me that it exists
 #[derive(Deserialize)]
 struct BadLeagueSeasonSchema {
 	#[serde(rename = "hasWildCard")]
@@ -82,7 +85,7 @@ fn bad_league_season_schema_deserializer<'de, D: serde::Deserializer<'de>>(deser
 	Ok(rest)
 }
 
-id!(LeagueId { id: u32 });
+id!(#[doc = "A [`u32`] representing an ID of a league"] LeagueId { id: u32 });
 id_only_eq_impl!(League, id);
 id_only_eq_impl!(NamedLeague, id);
 
@@ -101,6 +104,7 @@ impl NamedLeague {
 	}
 }
 
+/// Returns a [`LeaguesResponse`].
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct LeaguesRequest {

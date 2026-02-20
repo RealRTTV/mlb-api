@@ -1,6 +1,6 @@
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
-use crate::meta::GameType;
+use crate::meta::StandingsType;
 use crate::person::PersonId;
 use crate::request::RequestURL;
 use crate::season::SeasonId;
@@ -33,7 +33,7 @@ pub struct TeamsStatsRequest<S: Stats> {
 	pub id: Either<TeamId, SportId>,
 	#[builder(into)]
 	pub season: Option<SeasonId>,
-	pub game_type: GameType,
+	pub game_type: StandingsType,
 	pub stat_types: Vec<StatType>,
 	pub stat_groups: Vec<StatGroup>,
 	pub start_date: Option<NaiveDate>,

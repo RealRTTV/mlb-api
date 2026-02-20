@@ -8,13 +8,12 @@ use std::fmt::{Display, Formatter};
 use serde::de::{Deserializer, Error};
 use crate::__stats__request_data;
 use crate::hydrations::{HydrationText, Hydrations};
-use crate::stats::{StatTypeStats, PlayStat};
+use crate::stats::PlayStat;
 use crate::request::RequestURL;
 use crate::meta::StatGroup;
 use crate::stats::parse::{__ParsedStats, make_stat_split};
 use crate::stats::raw::{fielding, hitting, pitching};
-use crate::stats::stat_types::__VsPlayer5YStatTypeStats;
-use crate::stats::wrappers::WithNone;
+use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, WithNone};
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct PersonSingleGameStatsResponse {
@@ -74,20 +73,20 @@ pub struct SingleGameStats {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsSimplifiedGameLogSplit {
-	pub hitting: Box<<GameLogStats as StatTypeStats>::Hitting>,
-	pub pitching: Box<<GameLogStats as StatTypeStats>::Pitching>,
-	pub fielding: Box<<GameLogStats as StatTypeStats>::Fielding>,
+	pub hitting: Box<WithNone<hitting::__SimplifiedGameLogStatsData>>,
+	pub pitching: Box<WithNone<pitching::__SimplifiedGameLogStatsData>>,
+	pub fielding: Box<WithNone<fielding::__SimplifiedGameLogStatsData>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsVsPlayer5YSplit {
-	pub hitting: Box<<__VsPlayer5YStatTypeStats as StatTypeStats>::Hitting>,
-	pub pitching: Box<<__VsPlayer5YStatTypeStats as StatTypeStats>::Pitching>,
+	pub hitting: Box<AccumulatedVsPlayerMatchup<hitting::__VsPlayerStatsData>>,
+	pub pitching: Box<AccumulatedVsPlayerMatchup<pitching::__VsPlayerStatsData>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SingleGameStatsSimplifiedPlayLogSplit {
-	pub hitting: Box<<PlayLogStats as StatTypeStats>::Hitting>,
+	pub hitting: Box<Vec<WithNone<PlayStat>>>,
 }
 
 impl<'de> Deserialize<'de> for SingleGameStats {
@@ -100,60 +99,42 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 		Ok(Self {
 			game_log: SingleGameStatsSimplifiedGameLogSplit {
 				hitting: Box::new(
-					make_stat_split::<<GameLogStats as StatTypeStats>::Hitting>(
+					make_stat_split::<WithNone<hitting::__SimplifiedGameLogStatsData>>(
 						&mut parsed_stats, "gameLog", StatGroup::Hitting,
 					).map_err(D::Error::custom)?
 				),
 				pitching: Box::new(
-					make_stat_split::<<GameLogStats as StatTypeStats>::Pitching>(
+					make_stat_split::<WithNone<pitching::__SimplifiedGameLogStatsData>>(
 						&mut parsed_stats, "gameLog", StatGroup::Pitching,
 					).map_err(D::Error::custom)?
 				),
 				fielding: Box::new(
-					make_stat_split::<<GameLogStats as StatTypeStats>::Fielding>(
+					make_stat_split::<WithNone<fielding::__SimplifiedGameLogStatsData>>(
 						&mut parsed_stats, "gameLog", StatGroup::Fielding,
 					).map_err(D::Error::custom)?
 				),
 			},
 			vs_player5_y: SingleGameStatsVsPlayer5YSplit {
 				hitting: Box::new(
-					make_stat_split::<<__VsPlayer5YStatTypeStats as StatTypeStats>::Hitting>(
+					make_stat_split::<AccumulatedVsPlayerMatchup<hitting::__VsPlayerStatsData>>(
 						&mut parsed_stats, "vsPlayer5Y", StatGroup::Hitting,
 					).map_err(D::Error::custom)?
 				),
 				pitching: Box::new(
-					make_stat_split::<<__VsPlayer5YStatTypeStats as StatTypeStats>::Pitching>(
+					make_stat_split::<AccumulatedVsPlayerMatchup<pitching::__VsPlayerStatsData>>(
 						&mut parsed_stats, "vsPlayer5Y", StatGroup::Pitching,
 					).map_err(D::Error::custom)?
 				),
 			},
 			play_log: SingleGameStatsSimplifiedPlayLogSplit {
 				hitting: Box::new(
-					make_stat_split::<<PlayLogStats as StatTypeStats>::Hitting>(
+					make_stat_split::<Vec<WithNone<PlayStat>>>(
 						&mut parsed_stats, "playLog", StatGroup::Hitting,
 					).map_err(D::Error::custom)?
 				),
 			},
 		})
 	}
-}
-
-pub struct GameLogStats;
-
-impl StatTypeStats for GameLogStats {
-	type Hitting = WithNone<hitting::__SimplifiedGameLogStatsData>;
-	type Pitching = WithNone<pitching::__SimplifiedGameLogStatsData>;
-	type Fielding = WithNone<fielding::__SimplifiedGameLogStatsData>;
-	type Catching = ();
-}
-
-pub struct PlayLogStats;
-
-impl StatTypeStats for PlayLogStats {
-	type Hitting = Vec<WithNone<PlayStat>>;
-	type Pitching = Vec<WithNone<PlayStat>>;
-	type Fielding = Vec<WithNone<PlayStat>>;
-	type Catching = ();
 }
 
 impl Hydrations for SingleGameStats {}

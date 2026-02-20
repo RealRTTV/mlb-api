@@ -1,7 +1,14 @@
 use serde::Deserialize;
 
-id!(ScheduleEventTypeId { code: String });
+id!(#[doc = "A [`String`] code representing a [`ScheduleEventType`]"] ScheduleEventTypeId { code: String });
 
+/// A detailed `struct` representing an event in the schedule.
+/// ```
+/// ScheduleEventType {
+///     name: "All-Star Weekend Event".into(),
+///     id: "A".into(),
+/// }
+/// ```
 #[derive(Debug, Deserialize, Clone)]
 pub struct ScheduleEventType {
 	pub name: String,

@@ -130,35 +130,53 @@ impl From<SeasonRaw> for Season {
 	}
 }
 
+/// A season and it's info - dependent on [`SportId`].
+///
+/// These fields are arranged in a chronological order but the specification makes no guarantees that this order remain consistent.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "SeasonRaw")]
 pub struct Season {
 	pub id: SeasonId,
+	/// If the season has a wildcard system
 	pub has_wildcard: bool,
+	/// Preseason date range
 	pub preseason: NaiveDateRange,
+	/// Spring Training date range
 	pub spring: Option<NaiveDateRange>,
+	/// Full Season date range
 	pub season: NaiveDateRange,
+	/// Regular Season date range
 	pub regular_season: NaiveDateRange,
+	/// End of the first half of the season (if the season halves are defined)
 	pub first_half_end: Option<NaiveDate>,
+	/// When the ASG is
 	pub all_star: Option<NaiveDate>,
+	/// Start of the second half of the season (if the season halves are defined)
 	pub second_half_start: Option<NaiveDate>,
+	/// When the postseason happens
 	pub postseason: Option<NaiveDateRange>,
+	/// When the offseason is active (different from preseason)
 	pub offseason: NaiveDateRange,
+	/// [`QualificationMultipliers`]
 	pub qualification_multipliers: Option<QualificationMultipliers>,
 	// opt<(season_level_gameday_type, game_level_gameday_type)>
 }
 
+// Coefficients for the qualified player cutoffs.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QualificationMultipliers {
+	/// Amount of plate appearances needed per game your (current?) team has played to be considered qualified
 	#[serde(rename = "qualifierPlateAppearances")]
 	pub plate_appearances_per_game: f64,
+	// Amount of outs pitched per game your (current?) team has played to be considered qualified
 	#[serde(rename = "qualifierOutsPitched")]
 	pub outs_pitched_per_game: f64,
 }
 
 impl Eq for QualificationMultipliers {}
 
+/// Current state of the season
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum SeasonState {
 	#[serde(rename = "inseason")]
@@ -169,6 +187,7 @@ pub enum SeasonState {
 	Preseason,
 }
 
+/// Returns a [`Vec`] of [`Season`]s.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SeasonsResponse {
@@ -176,6 +195,7 @@ pub struct SeasonsResponse {
 	pub seasons: Vec<Season>,
 }
 
+/// Returns a [`SeasonsResponse`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct SeasonsRequest {

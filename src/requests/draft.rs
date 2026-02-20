@@ -13,6 +13,7 @@ use std::fmt::{Display, Formatter};
 use thiserror::Error;
 use crate::team::NamedTeam;
 
+/// Returns a [`DraftYear`].
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftResponse {
@@ -20,6 +21,7 @@ pub struct DraftResponse {
 	pub drafts: DraftYear,
 }
 
+/// A collection of [`DraftRound`]s in a year's draft.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftYear {
@@ -28,6 +30,13 @@ pub struct DraftYear {
 	pub rounds: Vec<DraftRound>,
 }
 
+/// A round of [`DraftPick`]s
+///
+/// Note that rounds typically do not always line up as `"1"`, `"2"`, etc. and instead have non-integer names, for example, the 2025 draft had:
+/// - `"3"`
+/// - `"SUP-3"`
+/// - `"4"`
+/// - `"4C"`
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftRound {
@@ -35,8 +44,9 @@ pub struct DraftRound {
 	pub picks: Vec<DraftPick>,
 }
 
-id!(EBISPersonId { id: u32 });
+id!(#[doc = "Different from [`PersonId`](crate::person::PersonId).\n\nInternal eBIS person id, I'd be surprised if you had a use for this."] #[allow(non_camel_case_types)] eBISPersonId { id: u32 });
 
+/// Returns a [`Vec`] of [`DraftPick`]s for the prospects.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftProspectsResponse {
@@ -49,12 +59,13 @@ pub struct DraftProspectsResponse {
 	pub prospects: Vec<DraftPick>,
 }
 
+/// An individual draft pick.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftPick {
-	/// a `PlayerId` on the EBIS System
+	/// a `PlayerId` on the eBIS System
 	#[serde(rename = "bisPlayerId")]
-	pub ebis_player_id: Option<EBISPersonId>,
+	pub ebis_player_id: Option<eBISPersonId>,
 	#[serde(default, rename = "pickRound")]
 	pub round: String,
 	#[serde(default)]
@@ -80,7 +91,7 @@ pub struct DraftPick {
 }
 
 #[must_use]
-pub fn get_default_headshot() -> String {
+fn get_default_headshot() -> String {
 	"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_120,q_auto:best/v1/people/0/headshot/draft/current".to_owned()
 }
 
@@ -147,6 +158,7 @@ impl TryFrom<__DraftTypeStruct> for DraftType {
 	}
 }
 
+/// Returns a [`DraftResponse`]
 #[derive(Builder)]
 #[builder(start_fn = __latest)]
 pub struct DraftRequestLatest {
@@ -166,6 +178,8 @@ impl RequestURL for DraftRequestLatest {
 }
 
 /// This request sorts into rounds
+///
+/// Returns a [`DraftProspectsResponse`]
 #[derive(Builder)]
 #[builder(start_fn = regular)]
 #[builder(derive(Into))]
@@ -256,6 +270,8 @@ impl RequestURL for DraftRequest {
 }
 
 /// This request gives a list of prospects.
+///
+/// Returns a [`DraftProspectsResponse`]
 #[derive(Builder)]
 #[builder(start_fn = regular)]
 #[builder(derive(Into))]

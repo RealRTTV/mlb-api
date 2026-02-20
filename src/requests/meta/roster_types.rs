@@ -2,6 +2,7 @@ use derive_more::Display;
 use serde::Deserialize;
 use std::ops::Deref;
 
+/// Types of roster definitions
 #[derive(Debug, Deserialize, Display, PartialEq, Eq, Copy, Clone, Hash)]
 #[serde(try_from = "__RosterTypeStruct")]
 pub enum RosterType {

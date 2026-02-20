@@ -1,11 +1,14 @@
 use serde::Deserialize;
 
-id!(JobTypeId { code: String });
+id!(#[doc = "A [`String`] representing a [`JobType`]."] JobTypeId { code: String });
 
+/// Different types of baseball jobs; Umpires, Coaches, etc.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct JobType {
+	/// Director of Instant Replay, Bench Coach, etc.
 	pub job: String,
+	/// UMPR, MNGR, etc.
 	#[serde(flatten)]
 	pub id: JobTypeId,
 }

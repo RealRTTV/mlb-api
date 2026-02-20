@@ -548,11 +548,11 @@ entrypoint!(for < H > Ballplayer < H > . id => Person < > where H: PersonHydrati
 #[cfg(test)]
 mod tests {
 	use crate::request::RequestURLBuilderExt;
-	use crate::roster_types::RosterType;
+	use crate::meta::RosterType;
 	use super::*;
 	use crate::team::roster::RosterRequest;
 	use crate::team::teams::TeamsRequest;
-	use crate::{stats, TEST_YEAR};
+	use crate::{stats_type, TEST_YEAR};
 
 	#[tokio::test]
 	async fn no_hydrations() {
@@ -590,7 +590,7 @@ mod tests {
 	#[rustfmt::skip]
 	#[tokio::test]
 	async fn only_stats_hydrations() {
-		stats! {
+		stats_type! {
 			pub struct TestStats {
 				[Sabermetrics] = [Pitching]
 			}

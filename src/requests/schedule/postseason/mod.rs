@@ -1,3 +1,5 @@
+//! Postseason schedule info and endpoints.
+
 pub mod series;
 
 use crate::schedule::ScheduleResponse;
@@ -6,7 +8,7 @@ use crate::team::TeamId;
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
-use crate::meta::GameType;
+use crate::meta::StandingsType;
 use crate::request::RequestURL;
 use crate::sport::SportId;
 
@@ -20,7 +22,7 @@ pub struct SchedulePostseasonRequest {
     sport_id: SportId,
     #[builder(into)]
     team_id: Option<TeamId>,
-    game_types: Option<Vec<GameType>>,
+    game_types: Option<Vec<StandingsType>>,
     series_number: Option<u32>,
 }
 

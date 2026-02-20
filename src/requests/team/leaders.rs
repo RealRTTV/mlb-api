@@ -7,7 +7,7 @@ use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::meta::BaseballStatId;
-use crate::meta::GameType;
+use crate::meta::StandingsType;
 use crate::request::RequestURL;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -29,8 +29,8 @@ pub struct TeamStatLeadersRequest {
 	#[builder(default)]
 	pub pool: PlayerPool,
 
-	/// [`None`] represents matching for all [`GameType`]s.
-	pub game_types: Option<Vec<GameType>>,
+	/// [`None`] represents matching for all [`StandingsType`]s.
+	pub game_types: Option<Vec<StandingsType>>,
 }
 
 impl<S: team_stat_leaders_request_builder::State + team_stat_leaders_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamStatLeadersRequestBuilder<S> {
@@ -59,8 +59,7 @@ impl RequestURL for TeamStatLeadersRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::baseball_stats::BaseballStat;
-	use crate::meta::MetaRequest;
+	use crate::meta::{MetaRequest, BaseballStat};
 	use crate::request::{RequestURL, RequestURLBuilderExt};
 	use crate::team::leaders::TeamStatLeadersRequest;
 	use crate::team::teams::TeamsRequest;

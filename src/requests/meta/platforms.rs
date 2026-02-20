@@ -1,7 +1,14 @@
 use serde::Deserialize;
 
-id!(PlatformId { platformCode: String });
+id!(#[doc = "A [`String`] representing an electronic platform"] PlatformId { platformCode: String });
 
+/// A detailed `struct` representing a Platform
+///
+/// ## Examples
+/// Platform {
+///     name: "iOS Phone".into(),
+///     id: "ios-phone".into(),
+/// }
 #[derive(Debug, Deserialize, Clone)]
 pub struct Platform {
 	#[serde(rename = "platformDescription")]

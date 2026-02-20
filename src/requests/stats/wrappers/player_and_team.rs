@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
-use crate::meta::GameType;
+use crate::meta::StandingsType;
 use crate::person::NamedPerson;
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
@@ -12,7 +12,7 @@ use crate::team::NamedTeam;
 #[serde(bound = "T: RawStat")]
 pub struct WithPlayerAndTeam<T: RawStat> {
     pub player: NamedPerson,
-    pub game_type: GameType,
+    pub game_type: StandingsType,
     pub season: SeasonId,
 
     pub team: NamedTeam,
@@ -36,7 +36,7 @@ impl<T: RawStat> PlayerPiece for WithPlayerAndTeam<T> {
 }
 
 impl<T: RawStat> GameTypePiece for WithPlayerAndTeam<T> {
-    fn game_type(&self) -> &GameType {
+    fn game_type(&self) -> &StandingsType {
         &self.game_type
     }
 }
@@ -51,7 +51,7 @@ impl<T: RawStat> Default for WithPlayerAndTeam<T> {
     fn default() -> Self {
         Self {
             player: NamedPerson::unknown_person(),
-            game_type: GameType::default(),
+            game_type: StandingsType::default(),
             season: SeasonId::current_season(),
             team: NamedTeam::unknown_team(),
             stats: T::default(),

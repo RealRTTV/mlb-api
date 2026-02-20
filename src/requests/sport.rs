@@ -16,10 +16,9 @@ pub struct SportsResponse {
 	pub sports: Vec<Sport>,
 }
 
-id!(SportId { id: u32 });
+id!(#[doc = "A [`u32`] representing the ID of the sport; `SportId::MLB = 1`"] SportId { id: u32 });
 
 impl SportId {
-	/// This is only here because we can rest assured that it won't ever go away.
 	pub const MLB: Self = Self::new(1);
 }
 
@@ -50,6 +49,18 @@ impl RequestURL for SportsRequest {
 	type Response = SportsResponse;
 }
 
+/// A detailed `struct` representing information about a sport (or Organized Baseball Level)
+///
+/// ## Examples
+/// ```
+/// Sport {
+///     code: "mlb".into(),
+///     name: "Major League Baseball".into(),
+///     abbreviation: "MLB".into(),
+///     active: true,
+///     id: 1.into(),
+/// }
+/// ```
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Sport {

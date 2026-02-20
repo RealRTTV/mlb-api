@@ -1,6 +1,6 @@
-//! An abstraction over endpoints that contain fixed data, such as [`GameType`]s, [`JobType`]s, etc.
+//! An abstraction over endpoints that contain fixed data, such as [`StandingsType`]s, [`JobType`]s, etc.
 //!
-//! For types in which quick accessibility is important (and there are not tons of variants), they will be represented as an enum ([`GameType`]).
+//! For types in which quick accessibility is important (and there are not tons of variants), they will be represented as an enum ([`StandingsType`]).
 //!
 //! For types which have many variants and ones that would be constantly updating, they are represented as `Vec<struct>`s ([`SituationCode`]).
 //!

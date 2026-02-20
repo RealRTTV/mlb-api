@@ -2,10 +2,11 @@ use crate::meta::stat_groups::StatGroup;
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 
-id!(MetricId { metricId: u32 });
+id!(#[doc = "A [`u32`] representing a [`Metric`]"]MetricId { metricId: u32 });
 
 macro_rules! units {
     ($($name:ident($func:path => $units:ty)),+ $(,)?) => {
+		/// A unit of measurement
         #[derive(Debug, ::serde::Deserialize, Clone)]
         #[serde(try_from = "__UnitStruct")]
         pub enum Unit {
@@ -58,6 +59,7 @@ units! {
 	Time(uom::si::time::units => uom::si::time::Units),
 }
 
+/// A [`Metric`] with a name
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedMetric {
@@ -66,6 +68,7 @@ pub struct NamedMetric {
 	pub id: MetricId,
 }
 
+/// A measurement thing; typically EV, LA, pitch velocity, spin rate, etc.
 #[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Metric {

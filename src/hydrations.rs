@@ -2,14 +2,14 @@
 //! 
 //! Everything here is rather internal, not much will be of interest
 
-#![allow(missing_docs, reason = "unnecessary")]
-
 use std::borrow::Cow;
 use std::fmt::Debug;
 use serde::de::DeserializeOwned;
 
+#[doc(hidden)]
 pub trait Hydrations: 'static + Debug + DeserializeOwned + Eq + Clone + HydrationText {}
 
+#[doc(hidden)]
 pub trait HydrationText {
 	type RequestData;
 

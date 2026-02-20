@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-id!(GameStatusId { detailedState: String });
+id!(#[doc = "A [`String`] representing the [`GameStatus`]"] GameStatusId { detailedState: String });
 
 /// Detailed game status (use [`AbstractGameCode`] for simpler responses)
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
@@ -106,6 +106,7 @@ impl AbstractGameCode {
 	}
 }
 
+// State of the game as of the current moment.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GameStatus {

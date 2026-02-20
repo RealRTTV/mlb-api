@@ -135,7 +135,7 @@ pub struct RosterEntry {
 mod tests {
 	use crate::meta::MetaRequest;
     use crate::request::{RequestURL, RequestURLBuilderExt};
-    use crate::roster_types::RosterType;
+    use crate::meta::RosterType;
     use crate::team::roster::RosterRequest;
 	use crate::team::teams::TeamsRequest;
     use crate::TEST_YEAR;

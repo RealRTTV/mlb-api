@@ -85,7 +85,7 @@ impl RequestURL for JobsRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::JobType;
+    use crate::meta::JobType;
     use crate::jobs::JobsRequest;
     use crate::meta::MetaRequest;
     use crate::request::{RequestURL, RequestURLBuilderExt};

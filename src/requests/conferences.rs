@@ -51,7 +51,7 @@ pub struct NamedConference {
 	pub id: ConferenceId,
 }
 
-id!(ConferenceId { id: u32 });
+id!(#[doc = "A [`u32`] representing the ID of the conference, used in [`ConferencesRequest`]"] ConferenceId { id: u32 });
 
 id_only_eq_impl!(Conference, id);
 id_only_eq_impl!(NamedConference, id);

@@ -1,5 +1,6 @@
 macro_rules! id {
-    ($name:ident { $id_field:ident: String }) => {
+    ($(#[$meta:meta])* $name:ident { $id_field:ident: String }) => {
+		$(#[$meta])*
 		#[derive(::core::fmt::Debug, ::derive_more::Deref, ::derive_more::Display, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone, ::core::hash::Hash, ::derive_more::From)]
 		#[repr(transparent)]
 		pub struct $name(String);
@@ -26,7 +27,8 @@ macro_rules! id {
 			}
 		}
 	};
-    ($name:ident { $id_field:ident: u32 }) => {
+    ($(#[$meta:meta])* $name:ident { $id_field:ident: u32 }) => {
+		$(#[$meta])*
 		#[derive(::core::fmt::Debug, ::derive_more::Deref, ::derive_more::Display, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::marker::Copy, ::core::clone::Clone, ::core::hash::Hash, ::derive_more::From)]
 		#[repr(transparent)]
 		pub struct $name(u32);

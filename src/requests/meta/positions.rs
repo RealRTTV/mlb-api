@@ -2,8 +2,19 @@ use std::hash::{Hash, Hasher};
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 
-id!(PositionCode { code: String });
+id!(#[doc = "A [`String`] representing a position on the field, such as Pitcher, 1st Baseman, etc. These values use 1-9, so Pitcher = \"1\", etc."] PositionCode { code: String });
 
+/// A [`Position`] with a name.
+///
+/// ## Examples
+/// ```
+/// NamedPosition {
+///     code: "3".into(),
+///     name: "First Base".into(),
+///     r#type: "Infielder".into(),
+///     abbreviation: "1B".into(),
+/// }
+/// ```
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPosition {
@@ -34,6 +45,24 @@ impl NamedPosition {
 	}
 }
 
+/// A Position with every piece of data you could describe about it.
+///
+/// ## Examples
+/// ```
+/// Position {
+///     short_name: "1st Base".into(),
+///     full_name: "First Base".into(),
+///     abbreviation: "1B".into(),
+///     code: "3".into(),
+///     r#type: "Infielder".into(),
+///     formal_name: "First Baseman".into(),
+///     name: "First Base".into(),
+///     is_pitcher: false,
+///     is_game_position: true,
+///     is_fielder: true,
+///     is_outfield: false,
+/// }
+/// ```
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
 #[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]

@@ -1,7 +1,15 @@
 use serde::Deserialize;
 
-id!(ReviewReasonId { code: String });
+id!(#[doc = "A review on a play\n(These codes often are just single letters and mean nothing and only useful for lookup purposes.)"] ReviewReasonId { code: String });
 
+/// A detailed `struct` representing a reviewable play.
+///
+/// ## Examples
+/// ```
+/// ReviewReason {
+///     description: "Tag play".into(),
+///     id: "A".into(), // see what I mean? meaningless code
+/// }
 #[derive(Debug, Deserialize, Clone)]
 pub struct ReviewReason {
 	pub description: String,

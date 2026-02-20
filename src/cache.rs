@@ -11,11 +11,7 @@
 //! 
 //! # Examples
 //! ```
-//! use std::sync::Arc;
-//! use mlb_api::person::{Person, PersonId};
-//! use mlb_api::cache::RequestableEntrypoint;
-//!
-//! let person: PersonId = unimplemented!();
+//! let person: PersonId = ...;
 //! // dbg!(&person.full_name); // person.full_name does not exist
 //!
 //! let person: Arc<Person> = person.as_complete_or_request().await.unwrap();
@@ -23,17 +19,11 @@
 //! ```
 //! 
 //! ```
-//! use std::sync::Arc;
-//! use mlb_api::{NamedPosition, Position};
-//! use mlb_api::cache::RequestableEntrypoint;
-//!
-//! let position: NamedPosition = unimplemented!(); // very common type to see
+//! let position: NamedPosition = ...; // very common type to see
 //!
 //! let position: Arc<Position> = position.as_complete_or_request().await.unwrap();
 //! dbg!(&position.short_name);
 //! ```
-
-#![allow(missing_docs, reason = "covered in module docs")]
 
 use crate::RwLock;
 use crate::meta::MetaRequest;
@@ -48,6 +38,11 @@ use thiserror::Error;
 use crate::person::Person;
 use crate::person::players::PlayersRequest;
 
+/// A type that can be requested via a URL, such as a [`Position`], [`Award`], or [`Team`].
+///
+/// [`Position`]: crate::meta::Position
+/// [`Award`]: crate::awards::Award
+/// [`Team`]: crate::team::Team
 pub trait Requestable: 'static + Send + Sync + DeserializeOwned + Debug + Clone + Eq {
     type Identifier: Clone + Eq + Hash + Display + Sync + Debug;
     type URL: RequestURL;
@@ -62,6 +57,7 @@ pub trait Requestable: 'static + Send + Sync + DeserializeOwned + Debug + Clone 
     fn get_cache_table() -> &'static RwLock<CacheTable<Self>> where Self: Sized;
 }
 
+/// A type in which it can be [`as_complete_or_request`](RequestableEntrypoint::as_complete_or_request)ed into it's [`Complete`](RequestableEntrypoint::Complete) type.
 pub trait RequestableEntrypoint {
     type Complete: Requestable;
 
@@ -128,11 +124,15 @@ pub trait RequestableEntrypoint {
     }
 }
 
+/// Type representing the cached values of `T`; stored as `static` using [`Arc<RwLock<_>>`]
+///
+/// underlying structure is an [`FxHashMap`](fxhash::FxHashMap).
 #[cfg(feature = "cache")]
 pub struct CacheTable<T: Requestable> {
     cached_values: HashMap<T::Identifier, Arc<T>, FxBuildHasher>,
 }
 
+/// Errors for [`as_complete_or_request`](RequestableEntrypoint::as_complete_or_request) calls.
 #[derive(Debug, Error)]
 pub enum Error<T: RequestableEntrypoint> {
     #[error(transparent)]
@@ -189,6 +189,8 @@ impl<T: Requestable> CacheTable<T> {
     }
 }
 
+/// Caches popular types for [`Requestable`] use.
+///
 /// # Errors
 /// See variants of [`crate::request::Error`]
 #[cfg(feature = "cache")]
@@ -230,6 +232,8 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     Ok(())
 }
 
+/// Caches popular types for [`Requestable`] use.
+///
 /// # Errors
 /// See variants of [`crate::request::Error`]
 #[cfg(feature = "cache")]

@@ -1,7 +1,18 @@
 use serde::Deserialize;
 
-id!(WindDirectionId { code: String });
+id!(#[doc = "A [`String`] representing a direction the wind is going"] WindDirectionId { code: String });
 
+/// A detailed `struct` representing the direction wind is going.
+///
+/// Note these are not cardinal directions, you'd have to find out the venue's coordinates to calculate from these, but it's likely easier to use another weather API for wind.
+///
+/// ## Examples
+/// ```
+/// WindDirection {
+///     id: "Out to CF".into(),
+///     description: /* same as id */
+/// }
+/// ```
 #[derive(Debug, Deserialize, Clone)]
 pub struct WindDirection {
 	pub description: String,

@@ -1,6 +1,7 @@
 use derive_more::{Display, FromStr};
 use serde::Deserialize;
 
+/// Hitting, Pitching, etc.
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, FromStr, Hash, Display)]
 #[serde(try_from = "__StatGroupMaybeInline")]
 pub enum StatGroup {

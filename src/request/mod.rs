@@ -1,4 +1,4 @@
-//! Handles the request portion of the code; uses [`ureq`] or [`reqwest`] for blocking or non-blocking networking.
+//! Handles the request portion of the code; uses [`::ureq`] or [`::reqwest`] for blocking or non-blocking networking.
 
 use serde::de::DeserializeOwned;
 use crate::MLBError;
