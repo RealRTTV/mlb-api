@@ -627,7 +627,7 @@ impl RequestURL for TransactionsRequest {
 #[cfg(test)]
 mod tests {
 	use crate::person::players::PlayersRequest;
-	use crate::team::teams::TeamsRequest;
+	use crate::team::TeamsRequest;
 	use crate::transactions::TransactionsRequest;
 	use crate::TEST_YEAR;
 	use chrono::NaiveDate;
@@ -655,16 +655,15 @@ mod tests {
 			.into_iter()
 			.find(|team| team.name.as_str() == "Toronto Blue Jays")
 			.unwrap();
-		let bo_bichette = PlayersRequest::builder()
+		let bo_bichette = PlayersRequest::for_sport(SportId::MLB)
 			.season(2024)
-			.build_and_get()
 			.await
 			.unwrap()
 			.people
 			.into_iter()
 			.find(|person| person.full_name == "Bo Bichette")
 			.unwrap();
-
+		
 		let response = TransactionsRequest::for_date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).unwrap()).build_and_get().await.unwrap();
 		let transaction_ids = response.transactions.into_iter().take(20).map(|transaction| transaction.id).collect::<Vec<_>>();
 		let _response = TransactionsRequest::for_team(blue_jays.id).build_and_get().await.unwrap();

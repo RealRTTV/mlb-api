@@ -1,3 +1,27 @@
+//! A description of a person in baseball.
+//!
+//! Person works through multi-level definition.
+//!
+//! 1. [`PersonId`], which deserializes a:
+//! ```json
+//! "person": {
+//!     "id": 660271,
+//!     "link": "/api/v1/people/660271"
+//! }
+//! ```
+//! 2. [`NamedPerson`], which deserializes a:
+//! ```json
+//! "person": {
+//!     "id": 660271,
+//!     "link": "/api/v1/people/660271",
+//!     "fullName": "Shohei Ohtani"
+//! }
+//! ```
+//! 3. [`Person`], which deserializes a lot of extra fields, see <http://statsapi.mlb.com/api/v1/people/660271>.
+//! Technically, [`Person`] is actually an enum which separates fields supplied for [`Ballplayers`] (handedness, draft year, etc.), and fields available to people like coaches and umpires (such as last name, age, etc.) [`RegularPerson`].
+//!
+//! This module also contains [`person_hydrations`](crate::person_hydrations), which are used to get additional data about people when making requests.
+
 #![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
 
 pub mod free_agents;
@@ -26,6 +50,9 @@ use crate::team::NamedTeam;
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
+/// A baseball player.
+///
+/// [`Deref`]s to [`RegularPerson`]
 #[derive(Debug, Deref, DerefMut, Deserialize, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
@@ -54,6 +81,9 @@ pub struct Ballplayer<H: PersonHydrations> {
 	inner: Box<RegularPerson<H>>,
 }
 
+/// A regular person; detailed-name stuff.
+///
+/// [`Deref`]s to [`NamedPerson`]
 #[derive(Debug, Deserialize, Deref, DerefMut, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
@@ -87,7 +117,7 @@ pub struct RegularPerson<H: PersonHydrations> {
 	inner: NamedPerson,
 
 	#[serde(flatten)]
-	pub extras: Box<H>,
+	pub extras: H,
 }
 
 impl<H: PersonHydrations> RegularPerson<H> {
@@ -122,10 +152,12 @@ impl<H: PersonHydrations> RegularPerson<H> {
 	}
 }
 
+/// A person with a name.
+///
+/// [`Deref`]s to [`PersonId`]
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPerson {
-	// todo: rework to be like name in Team
 	pub full_name: String,
 
 	#[serde(flatten)]
@@ -153,14 +185,15 @@ impl NamedPerson {
 	}
 }
 
-id!(PersonId { id: u32 });
+id!(#[doc = "A [`u32`] that represents a person."] PersonId { id: u32 });
 
+/// A complete person response for a hydrated request. Ballplayers have more fields.
 #[derive(Debug, Deserialize, Clone, Eq, From)]
 #[serde(untagged)]
 #[serde(bound = "H: PersonHydrations")]
 pub enum Person<H: PersonHydrations = ()> {
-	Ballplayer(Box<Ballplayer<H>>),
-	Regular(Box<RegularPerson<H>>),
+	Ballplayer(Ballplayer<H>),
+	Regular(RegularPerson<H>),
 }
 
 impl<H: PersonHydrations> Person<H> {
@@ -185,7 +218,7 @@ impl<H: PersonHydrations> Person<H> {
 
 impl<H: PersonHydrations> Person<H> {
 	#[must_use]
-	pub fn into_ballplayer(self) -> Option<Box<Ballplayer<H>>> {
+	pub fn into_ballplayer(self) -> Option<Ballplayer<H>> {
 		match self {
 			Self::Ballplayer(x) => Some(x),
 			Self::Regular(_) => None,
@@ -233,6 +266,7 @@ impl<H1: PersonHydrations, H2: PersonHydrations> PartialEq<RegularPerson<H2>> fo
 
 id_only_eq_impl!(NamedPerson, id);
 
+/// Returns a [`PeopleResponse`].
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct PersonRequest<H: PersonHydrations> {
@@ -243,9 +277,9 @@ pub struct PersonRequest<H: PersonHydrations> {
 	hydrations: H::RequestData,
 }
 
-impl<H: PersonHydrations> PersonRequest<H> {
-	pub fn for_id(id: impl Into<PersonId>) -> PersonRequestBuilder<H, person_request_builder::SetHydrations<person_request_builder::SetId>> where H::RequestData: Default {
-		Self::builder().id(id).hydrations(H::RequestData::default())
+impl PersonRequest<()> {
+	pub fn for_id(id: impl Into<PersonId>) -> PersonRequestBuilder<(), person_request_builder::SetHydrations<person_request_builder::SetId>> {
+		Self::builder().id(id).hydrations(<() as Hydrations>::RequestData::default())
 	}
 }
 
@@ -268,20 +302,7 @@ impl<H: PersonHydrations> RequestURL for PersonRequest<H> {
 	type Response = PeopleResponse<H>;
 }
 
-/*pub trait PersonRequestBuilderDefaultHydrationsEdgeCase<H: PersonHydrations> {
-	fn build(self) -> PersonRequest<H>;
-}
-
-impl<H: PersonHydrations, S: person_request_builder::State> PersonRequestBuilderDefaultHydrationsEdgeCase<H> for PersonRequestBuilder<H, S>
-where
-	<H as HydrationText>::RequestData: Default,
-	S::Hydrations: person_request_builder::IsUnset
-{
-	fn build(self) -> PersonRequest<H> {
-		PersonRequestBuilder::<H, person_request_builder::SetHydrations<S>>::build(self.hydrations(<H as HydrationText>::RequestData::default()))
-	}
-}*/
-
+/// The number on the back of a jersey, useful for radix sorts maybe??
 #[repr(transparent)]
 #[derive(Debug, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct JerseyNumber(u8);
@@ -295,6 +316,7 @@ impl<'de> Deserialize<'de> for JerseyNumber {
 	}
 }
 
+/// Data regarding birthplace.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BirthData {
@@ -312,6 +334,7 @@ impl BirthData {
 	}
 }
 
+/// Height and weight
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BodyMeasurements {
@@ -319,6 +342,7 @@ pub struct BodyMeasurements {
 	pub weight: u16,
 }
 
+/// Strike zone dimensions, measured in feet from the ground.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StrikeZoneMeasurements {
@@ -328,6 +352,7 @@ pub struct StrikeZoneMeasurements {
 
 impl Eq for StrikeZoneMeasurements {}
 
+/// Data regarding preferred team, likely for showcasing the player with a certain look regardless of the time.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PreferredTeamData {
@@ -336,6 +361,7 @@ pub struct PreferredTeamData {
 	pub team: NamedTeam,
 }
 
+/// Relative to the ballplayer, father, son, etc.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Relative {
@@ -345,6 +371,7 @@ pub struct Relative {
 	pub person: NamedPerson,
 }
 
+/// Schools the ballplayer went to.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
 pub struct Education {
 	#[serde(default)]
@@ -353,6 +380,7 @@ pub struct Education {
 	pub colleges: Vec<School>,
 }
 
+/// More generalized than social media, includes retrosheet, fangraphs, etc.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct ExternalReference {
 	#[serde(rename = "xrefId")]
@@ -362,53 +390,110 @@ pub struct ExternalReference {
 	pub season: Option<SeasonId>,
 }
 
+/// A type that is made with [`person_hydrations!`](crate::person_hydrations)
 pub trait PersonHydrations: Hydrations {}
 
 impl PersonHydrations for () {}
 
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __person_hydrations_hydration_text {
-    () => { "" };
-	($first:literal $(, $rest:literal)* $(,)?) => {
-		::core::concat!(
-			::core::stringify!($first),
-			$(",", ::core::stringify!($rest),)*
-		)
-	};
-}
-
 /// Creates hydrations for a person
-///```
-///person_hydrations! {
-///    pub struct ExampleHydrations {  ->  pub struct ExampleHydrations {
-///        awards,                     ->      awards: Vec<Award>,
-///        social,                     ->      social: HashMap<String, Vec<String>>,
-///        stats: MyStats,             ->      stats: MyStats,
-///    }                               ->  }
-///}
+///```norun
+/// person_hydrations! {
+///     pub struct ExampleHydrations {  ->  pub struct ExampleHydrations {
+///         awards,                     ->      awards: Vec<Award>,
+///         social,                     ->      social: HashMap<String, Vec<String>>,
+///         stats: MyStats,             ->      stats: MyStats,
+///     }                               ->  }
+/// }
+///
+/// person_hydrations! {
+///     pub struct ExampleHydrations {        ->  pub struct ExampleHydrations {
+///         stats: { [Season] = [Hitting] },  ->      stats: ExampleHydrationsInlineStats,
+///     }                                     ->  }
+/// }
+///
+/// let request = PersonRequest::<ExampleHydrations>::builder()
+///     .id(660_271)
+///     .hydrations(ExampleHydrations::builder())
+///     .build();
+///
+/// let repsonse = request.get();
 ///```
 ///
-/// The list of valid hydrations are:
-/// - `awards`
-/// - `current_team`
-/// - `depth_charts`
-/// - `draft`
-/// - `education`
-/// - `jobs`
-/// - `nicknames`
-/// - `preferred_team`
-/// - `relatives`
-/// - `roster_entries`
-/// - `transactions`
-/// - `social`
-/// - `stats`
-/// - `xref_id`
+/// ## Person Hydrations
+/// <u>Note: Fields must appear in exactly this order (or be omitted)</u>
 ///
-/// Note: these must appear in exactly this order
+/// | Name             | Type                             |
+/// |------------------|----------------------------------|
+/// | `awards`         | [`Vec<Award>`]                   |
+/// | `current_team`   | [`Team`]                         |
+/// | `depth_charts`   | [`Vec<RosterEntry>`]             |
+/// | `draft`          | [`Vec<DraftPick>`]               |
+/// | `education`      | [`Education`]                    |
+/// | `jobs`           | [`Vec<EmployedPerson>`]          |
+/// | `nicknames`      | [`Vec<String>`]                  |
+/// | `preferred_team` | [`Team`]                         |
+/// | `relatives`      | [`Vec<Relative>`]                |
+/// | `roster_entries` | [`Vec<RosterEntry>`]             |
+/// | `transactions`   | [`Vec<Transaction>`]             |
+/// | `social`         | [`HashMap<String, Vec<String>>`] |
+/// | `stats`          | [`stats_type!`]                  |
+/// | `xref_id`        | [`Vec<ExternalReference>`]       |
+///
+/// [`Vec<Award>`]: crate::awards::Award
+/// [`Team`]: crate::team::Team
+/// [`Vec<RosterEntry>`]: crate::team::roster::RosterEntry
+/// [`Vec<DraftPick>`]: crate::draft::DraftPick
+/// [`Education`]: Education
+/// [`Vec<EmployedPerson>`]: crate::jobs::EmployedPerson
+/// [`Vec<String>`]: String
+/// [`Team`]: crate::team::Team
+/// [`Vec<Relative>`]: Relative
+/// [`Vec<RosterEntry>`]: crate::team::rosterRosterEntry
+/// [`Vec<Transaction>`]: crate::transactions::Transaction
+/// [`HashMap<String, Vec<String>>`]: std::collections::HashMap
+/// [`stats_type!`]: crate::stats_type
+/// [`Vec<ExternalReference>`]: ExternalReference
 #[macro_export]
 macro_rules! person_hydrations {
-    (
+	(@ inline_structs [stats: { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        ::pastey::paste! {
+            $crate::stats_type! {
+                $vis struct [<$name InlineStats>] {
+                    $($contents)*
+                }
+            }
+
+            $crate::person_hydrations! { @ inline_structs [$($($rest)*)?]
+                $vis struct $name {
+                    $($field_tt)*
+                    stats: [<$name InlineStats>],
+                }
+            }
+        }
+    };
+    (@ inline_structs [$marker:ident : { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        compile_error!("Found unknown inline struct");
+    };
+    (@ inline_structs [$marker:ident $(: $value:path)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        ::pastey::paste! {
+            $crate::person_hydrations! { @ inline_structs [$($($rest)*)?]
+                $vis struct $name {
+                    $($field_tt)*
+                    $marker $(: $value)?,
+                }
+            }
+        }
+    };
+    (@ inline_structs [$(,)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        ::pastey::paste! {
+            $crate::person_hydrations! { @ actual
+                $vis struct $name {
+                    $($field_tt)*
+                }
+            }
+        }
+    };
+    (@ actual
 		$vis:vis struct $name:ident {
 			$(awards $awards_comma:tt)?
 			$(current_team $current_team_comma:tt)?
@@ -448,34 +533,28 @@ macro_rules! person_hydrations {
 
 			impl $crate::person::PersonHydrations for $name {}
 
-			impl $crate::hydrations::Hydrations for $name {}
-
-			impl $crate::hydrations::HydrationText for $name {
+			impl $crate::hydrations::Hydrations for $name {
 				type RequestData = [<$name RequestData>];
 
 				fn hydration_text(_data: &Self::RequestData) -> ::std::borrow::Cow<'static, str> {
-					let text = ::std::borrow::Cow::Borrowed($crate::__person_hydrations_hydration_text!(
-						$("awards" $awards_comma)?
-						$("currentTeam" $current_team_comma)?
-						$("depthCharts" $depth_charts_comma)?
-						$("draft" $draft_comma)?
-						$("education" $education_comma)?
-						$("jobs" $jobs_comma)?
-						$("nicknames" $nicknames_comma)?
-						$("preferredTeam" $preferred_team_comma)?
-						$("relatives" $relatives_comma)?
-						$("rosterEntries" $roster_entries_comma)?
-						$("transactions" $transactions_comma)?
-						$("social" $social_comma)?
-						$("xrefId" $xref_id_comma)?
+					let text = ::std::borrow::Cow::Borrowed(::std::concat!(
+						$("awards," $awards_comma)?
+						$("currentTeam," $current_team_comma)?
+						$("depthCharts," $depth_charts_comma)?
+						$("draft," $draft_comma)?
+						$("education," $education_comma)?
+						$("jobs," $jobs_comma)?
+						$("nicknames," $nicknames_comma)?
+						$("preferredTeam," $preferred_team_comma)?
+						$("relatives," $relatives_comma)?
+						$("rosterEntries," $roster_entries_comma)?
+						$("transactions," $transactions_comma)?
+						$("social," $social_comma)?
+						$("xrefId," $xref_id_comma)?
 					));
 
 					$(
-					let text = if text.is_empty() {
-						::std::borrow::Cow::Owned(::std::format!("stats({})", <$stats as $crate::hydrations::HydrationText>::hydration_text(&_data.stats)))
-					} else {
-						::std::borrow::Cow::Owned(::std::format!("{text},stats({})", <$stats as $crate::hydrations::HydrationText>::hydration_text(&_data.stats)))
-					};
+					let text = ::std::borrow::Cow::Owned(::std::format!("{text}stats({})", <$stats as $crate::hydrations::Hydrations>::hydration_text(&_data.stats)));
 					)?
 
 					text
@@ -485,7 +564,7 @@ macro_rules! person_hydrations {
 			#[derive(::bon::Builder)]
 			#[builder(derive(Into))]
 			$vis struct [<$name RequestData>] {
-				$(#[builder(into)] stats: <$stats as $crate::hydrations::HydrationText>::RequestData,)?
+				$(#[builder(into)] stats: <$stats as $crate::hydrations::Hydrations>::RequestData,)?
 			}
 
 			impl $name {
@@ -497,16 +576,21 @@ macro_rules! person_hydrations {
 
 			impl ::core::default::Default for [<$name RequestData>]
 			where
-				$(for<'no_rfc_2056> <$stats as $crate::hydrations::HydrationText>::RequestData: ::core::default::Default,)?
+				$(for<'no_rfc_2056> <$stats as $crate::hydrations::Hydrations>::RequestData: ::core::default::Default,)?
 			{
 				fn default() -> Self {
 					Self {
-						$(stats: <<$stats as $crate::hydrations::HydrationText>::RequestData as ::core::default::Default>::default(),)?
+						$(stats: <<$stats as $crate::hydrations::Hydrations>::RequestData as ::core::default::Default>::default(),)?
 					}
 				}
 			}
 		}
     };
+	($vis:vis struct $name:ident {
+		$($tt:tt)*
+	}) => {
+		$crate::person_hydrations! { @ inline_structs [$($tt)*] $vis struct $name {} }
+	};
 }
 
 #[cfg(feature = "cache")]
@@ -528,7 +612,7 @@ impl Requestable for Person<()> {
 	where
 		Self: Sized,
 	{
-		response.people.into_iter().map(Box::new).map(Person::Ballplayer)
+		response.people.into_iter().map(Person::Ballplayer)
 	}
 
 	#[cfg(feature = "cache")]
@@ -551,8 +635,8 @@ mod tests {
 	use crate::meta::RosterType;
 	use super::*;
 	use crate::team::roster::RosterRequest;
-	use crate::team::teams::TeamsRequest;
-	use crate::{stats_type, TEST_YEAR};
+	use crate::team::TeamsRequest;
+	use crate::TEST_YEAR;
 
 	#[tokio::test]
 	async fn no_hydrations() {
@@ -561,7 +645,7 @@ mod tests {
 		}
 
 		let _ = PersonRequest::<()>::for_id(665_489).build_and_get().await.unwrap();
-		let _ = PersonRequest::<EmptyHydrations>::for_id(665_489).build_and_get().await.unwrap();
+		let _ = PersonRequest::<EmptyHydrations>::builder().id(665_489).hydrations(EmptyHydrationsRequestData::default()).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
@@ -580,25 +664,19 @@ mod tests {
 				roster_entries,
 				transactions,
 				social,
-				xref_id,
+				xref_id
 			}
 		}
 
-		let _person = PersonRequest::<AllButStatHydrations>::for_id(665_489).build_and_get().await.unwrap().people.into_iter().next().unwrap();
+		let _person = PersonRequest::<AllButStatHydrations>::builder().hydrations(AllButStatHydrationsRequestData::default()).id(665_489).build_and_get().await.unwrap().people.into_iter().next().unwrap();
 	}
 
 	#[rustfmt::skip]
 	#[tokio::test]
 	async fn only_stats_hydrations() {
-		stats_type! {
-			pub struct TestStats {
-				[Sabermetrics] = [Pitching]
-			}
-		}
-
 		person_hydrations! {
 			pub struct StatOnlyHydrations {
-				stats: TestStats,
+				stats: { [Sabermetrics] = [Pitching] },
 			}
 		}
 
@@ -612,8 +690,7 @@ mod tests {
 			.find(|team| team.name.full_name == "Toronto Blue Jays")
 			.unwrap();
 
-		let roster = RosterRequest::builder()
-			.team_id(toronto_blue_jays.id)
+		let roster = RosterRequest::<()>::for_team(toronto_blue_jays.id)
 			.roster_type(RosterType::AllTime)
 			.build_and_get()
 			.await
@@ -628,7 +705,7 @@ mod tests {
 		let request = PersonRequest::<StatOnlyHydrations>::builder()
 			.id(player.person.id)
 			.hydrations(StatOnlyHydrations::builder()
-				.stats(TestStats::builder()
+				.stats(StatOnlyHydrationsInlineStats::builder()
 					.season(2023)
 					// .situation(SituationCodeId::new("h"))
 				)

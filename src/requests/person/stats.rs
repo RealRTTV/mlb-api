@@ -1,3 +1,5 @@
+//! Gets the stats of a player for a single game.
+
 use std::borrow::Cow;
 use crate::game::GameId;
 use crate::person::PersonId;
@@ -7,7 +9,7 @@ use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use serde::de::{Deserializer, Error};
 use crate::__stats__request_data;
-use crate::hydrations::{HydrationText, Hydrations};
+use crate::hydrations::Hydrations;
 use crate::stats::PlayStat;
 use crate::request::RequestURL;
 use crate::meta::StatGroup;
@@ -137,14 +139,12 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 	}
 }
 
-impl Hydrations for SingleGameStats {}
-
 __stats__request_data!(pub SingleGameStats [Season]);
 
-impl HydrationText for SingleGameStats {
+impl Hydrations for SingleGameStats {
 	type RequestData = SingleGameStatsRequestData;
 
 	fn hydration_text(_: &Self::RequestData) -> Cow<'static, str> {
-		panic!("HydrationText::hydration_text() called on SingleGameStats. Must use `PersonSingleGameStatsRequest` instead.")
+		panic!("Hydrations::hydration_text() called on SingleGameStats. Must use `PersonSingleGameStatsRequest` instead.")
 	}
 }

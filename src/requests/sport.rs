@@ -9,6 +9,7 @@ use crate::cache::{Requestable};
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
+/// A [`Vec`] of [`Sport`]s.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SportsResponse {
@@ -28,6 +29,7 @@ impl Default for SportId {
 	}
 }
 
+/// Returns a [`SportsResponse`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct SportsRequest {

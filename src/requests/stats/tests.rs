@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use crate::person::PersonRequest;
 use crate::request::{RequestURL, RequestURLBuilderExt};
 use crate::{person_hydrations, stats_type};
-use crate::meta::{StandingsType, SituationCodeId};
+use crate::meta::{GameType, SituationCodeId};
 use crate::stats::units::ThreeDecimalPlaceRateStat;
 
 #[tokio::test]
@@ -136,7 +136,7 @@ async fn shohei_ohtani_hitting_2025_custom() {
 			.stats(HittingStats::builder()
 				.season(2025)
 				.opponent_player(453286)
-				.game_type(StandingsType::RegularSeason)
+				.game_type(GameType::RegularSeason)
 				.games_back(5)
 				.date_range(NaiveDate::from_ymd_opt(2025, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(2025, 6, 12).unwrap())
 				.situations(vec![SituationCodeId::new("c00")])))
@@ -178,7 +178,7 @@ async fn shohei_ohtani_pitching_2025_custom() {
 			.stats(PitchingStats::builder()
 				.season(2025)
 				.opponent_player(672386)
-				.game_type(StandingsType::RegularSeason)
+				.game_type(GameType::RegularSeason)
 				.games_back(5)
 				.date_range(NaiveDate::from_ymd_opt(2025, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(2025, 6, 12).unwrap())
 				.situations(vec![SituationCodeId::new("c00")])))

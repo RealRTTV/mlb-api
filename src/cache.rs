@@ -11,7 +11,9 @@
 //! 
 //! # Examples
 //! ```
-//! let person: PersonId = ...;
+//! use mlb_api::person::PersonId;
+//!
+//! let person: PersonId = 660_271.into();
 //! // dbg!(&person.full_name); // person.full_name does not exist
 //!
 //! let person: Arc<Person> = person.as_complete_or_request().await.unwrap();
@@ -19,7 +21,9 @@
 //! ```
 //! 
 //! ```
-//! let position: NamedPosition = ...; // very common type to see
+//! use mlb_api::meta::NamedPosition;
+//!
+//! let position: NamedPosition = NamedPosition { ..Default::default() }; // very common type to see
 //!
 //! let position: Arc<Position> = position.as_complete_or_request().await.unwrap();
 //! dbg!(&position.short_name);
@@ -37,6 +41,7 @@ use std::sync::Arc;
 use thiserror::Error;
 use crate::person::Person;
 use crate::person::players::PlayersRequest;
+use crate::sport::SportId;
 
 /// A type that can be requested via a URL, such as a [`Position`], [`Award`], or [`Team`].
 ///
@@ -196,7 +201,7 @@ impl<T: Requestable> CacheTable<T> {
 #[cfg(feature = "cache")]
 #[cfg(feature = "reqwest")]
 pub async fn precache() -> Result<(), crate::request::Error> {
-    let people_response = PlayersRequest::builder().build_and_get();
+    let people_response = PlayersRequest::for_sport(SportId::MLB).build_and_get();
     
     let award_response = crate::awards::AwardRequest::builder().build_and_get();
     let division_response = crate::divisions::DivisionsRequest::builder().build_and_get();
@@ -224,10 +229,11 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     <crate::meta::ScheduleEventType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::ScheduleEventType>::new().get().await?.entries);
     <crate::meta::SituationCode as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::SituationCode>::new().get().await?.entries);
     <crate::meta::SkyDescription as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::SkyDescription>::new().get().await?.entries);
-    <crate::meta::StandingsType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::StandingsType>::new().get().await?.entries);
+    <crate::meta::GameType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::GameType>::new().get().await?.entries);
+    <crate::meta::GameType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::GameType>::new().get().await?.entries);
     <crate::meta::WindDirection as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::WindDirection>::new().get().await?.entries);
 
-    <crate::person::Person as Requestable>::get_cache_table().write().await.add_entries(people_response.await?.people.into_iter().map(Box::new).map(Person::Ballplayer));
+    <Person as Requestable>::get_cache_table().write().await.add_entries(people_response.await?.people.into_iter().map(Person::Ballplayer));
 
     Ok(())
 }
@@ -259,10 +265,11 @@ pub fn precache() -> Result<(), crate::request::Error> {
     <crate::meta::ScheduleEventType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::ScheduleEventType>::new().get()?.entries);
     <crate::meta::SituationCode as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::SituationCode>::new().get()?.entries);
     <crate::meta::SkyDescription as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::SkyDescription>::new().get()?.entries);
-    <crate::meta::StandingsType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::StandingsType>::new().get()?.entries);
+    <crate::meta::GameType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::GameType>::new().get()?.entries);
+    <crate::meta::GameType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::GameType>::new().get().await?.entries);
     <crate::meta::WindDirection as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::WindDirection>::new().get()?.entries);
 
-    <crate::person::Person as Requestable>::get_cache_table().write().add_entries(PlayersRequest::builder().build_and_get()?.people);
+    <crate::person::Person as Requestable>::get_cache_table().write().add_entries(PlayersRequest::for_sport(SportId::MLB).build_and_get()?.people);
 
     Ok(())
 }

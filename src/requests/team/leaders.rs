@@ -1,3 +1,5 @@
+//! Stat Leaders per stat in a team. Returns a [`TeamStatLeadersResponse`].
+
 use crate::season::SeasonId;
 use crate::stats::leaders::StatLeaders;
 use crate::team::TeamId;
@@ -7,7 +9,7 @@ use itertools::Itertools;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use crate::meta::BaseballStatId;
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -29,8 +31,8 @@ pub struct TeamStatLeadersRequest {
 	#[builder(default)]
 	pub pool: PlayerPool,
 
-	/// [`None`] represents matching for all [`StandingsType`]s.
-	pub game_types: Option<Vec<StandingsType>>,
+	/// [`None`] represents matching for all [`GameType`]s.
+	pub game_types: Option<Vec<GameType>>,
 }
 
 impl<S: team_stat_leaders_request_builder::State + team_stat_leaders_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamStatLeadersRequestBuilder<S> {
@@ -62,7 +64,7 @@ mod tests {
 	use crate::meta::{MetaRequest, BaseballStat};
 	use crate::request::{RequestURL, RequestURLBuilderExt};
 	use crate::team::leaders::TeamStatLeadersRequest;
-	use crate::team::teams::TeamsRequest;
+	use crate::team::TeamsRequest;
 
 	#[tokio::test]
 	async fn test_all_mlb_teams_all_stats() {

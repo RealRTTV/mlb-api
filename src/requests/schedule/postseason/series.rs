@@ -7,7 +7,7 @@ use itertools::Itertools;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Display, Formatter};
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 use crate::sport::SportId;
 
@@ -32,7 +32,7 @@ pub struct SeriesData {
     #[serde(rename = "id", deserialize_with = "series_number_from_id")]
     pub series_number: u32,
     pub is_default: bool,
-    pub game_type: StandingsType,
+    pub game_type: GameType,
 }
 
 /// # Errors
@@ -55,7 +55,7 @@ pub struct SchedulePostseasonSeriesRequest {
     sport_id: Option<SportId>,
     #[builder(into)]
     team_id: Option<TeamId>,
-    game_types: Option<Vec<StandingsType>>,
+    game_types: Option<Vec<GameType>>,
     series_number: Option<u32>,
 }
 

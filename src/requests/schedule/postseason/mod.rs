@@ -8,7 +8,7 @@ use crate::team::TeamId;
 use bon::Builder;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 use crate::sport::SportId;
 
@@ -22,7 +22,7 @@ pub struct SchedulePostseasonRequest {
     sport_id: SportId,
     #[builder(into)]
     team_id: Option<TeamId>,
-    game_types: Option<Vec<StandingsType>>,
+    game_types: Option<Vec<GameType>>,
     series_number: Option<u32>,
 }
 

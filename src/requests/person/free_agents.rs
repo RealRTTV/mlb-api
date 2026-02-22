@@ -1,3 +1,5 @@
+//! Lists the registered free agents at the time.
+
 use crate::season::SeasonId;
 use crate::Copyright;
 use bon::Builder;
@@ -11,6 +13,7 @@ use crate::meta::NamedPosition;
 use crate::request::RequestURL;
 use crate::team::NamedTeam;
 
+/// A [`Vec`] of [`FreeAgent`]s
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FreeAgentsResponse {
@@ -34,6 +37,7 @@ struct __FreeAgentStruct {
 	position: NamedPosition,
 }
 
+/// Wrapper over [`NamedPerson`], displays the [`Team`](NamedTeam) they were with, the date the signed, their position, etc.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__FreeAgentStruct")]
 pub struct FreeAgent {
@@ -60,6 +64,7 @@ impl From<__FreeAgentStruct> for FreeAgent {
 	}
 }
 
+/// Returns a [`FreeAgentsResponse`].
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct FreeAgentsRequest {

@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::stats::wrappers::{GameTypePiece, OpposingTeamPiece, TeamPiece};
 use crate::team::NamedTeam;
@@ -11,7 +11,7 @@ use crate::team::NamedTeam;
 pub struct AccumulatedMatchup<T: RawStat> {
 	#[serde(rename = "opponent")]
 	pub opposing_team: NamedTeam,
-	pub game_type: StandingsType,
+	pub game_type: GameType,
 	pub team: NamedTeam,
 	
 	#[deref]
@@ -27,7 +27,7 @@ impl<T: RawStat> OpposingTeamPiece for AccumulatedMatchup<T> {
 }
 
 impl<T: RawStat> GameTypePiece for AccumulatedMatchup<T> {
-	fn game_type(&self) -> &StandingsType {
+	fn game_type(&self) -> &GameType {
 		&self.game_type
 	}
 }
@@ -42,7 +42,7 @@ impl<T: RawStat> Default for AccumulatedMatchup<T> {
 	fn default() -> Self {
 		Self {
 			opposing_team: NamedTeam::unknown_team(),
-			game_type: StandingsType::default(),
+			game_type: GameType::default(),
 			team: NamedTeam::unknown_team(),
 			
 			stats: T::default(),

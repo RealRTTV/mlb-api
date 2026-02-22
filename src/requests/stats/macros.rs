@@ -435,14 +435,12 @@ macro_rules! __stats0 {
 				}
 			}
 
-			impl $crate::hydrations::Hydrations for $name {}
-
 			$crate::__stats__request_data!($vis $name [$($stat_type),+]);
 
-			impl $crate::hydrations::HydrationText for $name {
+			impl $crate::hydrations::Hydrations for $name {
 				type RequestData = [<$name RequestData>];
 
-                fn hydration_text(data: &<Self as $crate::hydrations::HydrationText>::RequestData) -> ::std::borrow::Cow<'static, str> {
+                fn hydration_text(data: &<Self as $crate::hydrations::Hydrations>::RequestData) -> ::std::borrow::Cow<'static, str> {
 					let base: &'static str = $crate::__stats__base_hydration_text!([$($stat_type),+] $stat_groups);
 					let data: ::std::string::String = ::std::string::ToString::to_string(data);
 					if str::is_empty(&*data) {

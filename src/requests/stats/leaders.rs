@@ -1,3 +1,5 @@
+//! List of the top players leading in each stat.
+
 use crate::league::NamedLeague;
 use crate::sport::SportId;
 use crate::{Copyright, IntegerOrFloatStat, PlayerPool, MLB_API_DATE_FORMAT};
@@ -8,7 +10,7 @@ use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use crate::meta::BaseballStatId;
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::person::NamedPerson;
 use crate::request::RequestURL;
 use crate::season::SeasonId;
@@ -16,6 +18,7 @@ use crate::meta::StatGroup;
 use crate::meta::StatType;
 use crate::team::NamedTeam;
 
+/// Returns a [`Vec`] of [`StatLeaders`]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StatLeadersResponse {
@@ -23,11 +26,12 @@ pub struct StatLeadersResponse {
 	pub league_leaders: Vec<StatLeaders>,
 }
 
+/// A [`Vec`] of [`StatLeader`]s for a specific stat.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(try_from = "__StatLeadersStruct")]
 pub struct StatLeaders {
 	pub category: BaseballStatId,
-	pub game_type: StandingsType,
+	pub game_type: GameType,
 	pub leaders: Vec<StatLeader>,
 	pub stat_group: StatGroup,
 	pub total_splits: u32,
@@ -38,7 +42,7 @@ pub struct StatLeaders {
 #[doc(hidden)]
 struct __StatLeadersStruct {
 	leader_category: String,
-	game_type: StandingsType,
+	game_type: GameType,
 	#[serde(default)]
 	leaders: Vec<StatLeader>,
 	stat_group: String,
@@ -73,6 +77,7 @@ pub struct StatLeader {
 	pub season: SeasonId,
 }
 
+/// Returns a [`StatLeadersResponse`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct StatLeadersRequest {
@@ -97,7 +102,7 @@ pub struct StatLeadersRequest {
 	offset: Option<u16>,
 
 	/// [`None`] represents all game types.
-	game_types: Option<Vec<StandingsType>>,
+	game_types: Option<Vec<GameType>>,
 }
 
 impl<S: stat_leaders_request_builder::State + stat_leaders_request_builder::IsComplete> crate::request::RequestURLBuilderExt for StatLeadersRequestBuilder<S> {
@@ -137,13 +142,13 @@ mod tests {
 	use crate::stats::leaders::StatLeadersRequest;
 	use crate::PlayerPool;
 	use crate::meta::BaseballStat;
-	use crate::meta::StandingsType;
+	use crate::meta::GameType;
 	use crate::request::{RequestURL, RequestURLBuilderExt};
 
 	#[tokio::test]
 	async fn test_stat_leaders() {
 		let all_stats = MetaRequest::<BaseballStat>::new().get().await.unwrap().entries.into_iter().map(|x| x.id.clone()).collect::<Vec<_>>();
-		let all_game_types = MetaRequest::<StandingsType>::new().get().await.unwrap().entries;
+		let all_game_types = MetaRequest::<GameType>::new().get().await.unwrap().entries;
 
 		let _ = StatLeadersRequest::builder().stats(all_stats).pool(PlayerPool::All).limit(100).game_types(all_game_types).stat_types(vec![]).build_and_get().await.unwrap();
 	}

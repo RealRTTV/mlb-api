@@ -1,4 +1,4 @@
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::person::NamedPerson;
 use crate::stats::wrappers::{AccumulatedMatchup, BatterPiece, GameTypePiece, OpposingTeamPiece, TeamPiece};
 use crate::stats::{RawStat, SingletonSplitStat};
@@ -25,7 +25,7 @@ impl<T: RawStat> OpposingTeamPiece for AccumulatedVsTeamTotalMatchup<T> {
 }
 
 impl<T: RawStat> GameTypePiece for AccumulatedVsTeamTotalMatchup<T> {
-	fn game_type(&self) -> &StandingsType {
+	fn game_type(&self) -> &GameType {
 		&self.game_type
 	}
 }

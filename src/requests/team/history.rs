@@ -1,6 +1,8 @@
+//! The history of a team's ID, such as the Los Angeles Dodgers and the Brooklyn Dodgers.
+
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::team::teams::TeamsResponse;
+use crate::team::TeamsResponse;
 use crate::request::RequestURL;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
@@ -35,7 +37,7 @@ impl RequestURL for TeamHistoryRequest {
 #[cfg(test)]
 mod tests {
 	use crate::team::history::TeamHistoryRequest;
-	use crate::team::teams::TeamsRequest;
+	use crate::team::TeamsRequest;
 	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]

@@ -1,3 +1,5 @@
+//! Returns a list of uniform assets. No image sadly, just item names.
+
 use crate::cache::{Requestable, RequestableEntrypoint};
 use crate::season::SeasonId;
 use crate::team::TeamId;
@@ -11,6 +13,9 @@ use std::fmt::{Display, Formatter};
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
+/// A [`Vec`] of [`TeamUniformAssets`]s
+///
+/// Split by Team
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct UniformsResponse {
     pub copyright: Copyright,
@@ -20,6 +25,7 @@ pub struct UniformsResponse {
 id!(UniformAssetId { uniformAssetId: u32 });
 id!(UniformAssetCategoryId { uniformAssetTypeId: u32 });
 
+/// A [`Vec`] of a team's [`UniformAsset`]s
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamUniformAssets {
@@ -27,6 +33,7 @@ pub struct TeamUniformAssets {
     pub uniform_assets: Vec<UniformAsset>,
 }
 
+/// A uniform asset, like a Blue Jays Canada Day Hat.
 #[derive(Debug, Deserialize, Clone)]
 pub struct UniformAsset {
     #[serde(rename = "uniformAssetText")] pub name: String,
@@ -36,6 +43,7 @@ pub struct UniformAsset {
     pub id: UniformAssetId,
 }
 
+/// Category; Hat, Shirt, etc.
 #[derive(Debug, Deserialize, Clone)]
 pub struct UniformAssetCategory {
     #[serde(rename = "uniformAssetTypeText")] pub name: String,
@@ -47,6 +55,7 @@ pub struct UniformAssetCategory {
 id_only_eq_impl!(UniformAsset, id);
 id_only_eq_impl!(UniformAssetCategory, id);
 
+/// Returns a [`UniformsResponse`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct UniformsRequest {
@@ -113,7 +122,7 @@ impl RequestableEntrypoint for UniformAsset {
 #[cfg(test)]
 mod tests {
     use crate::team::uniforms::UniformsRequest;
-    use crate::team::teams::TeamsRequest;
+    use crate::team::TeamsRequest;
     use crate::request::RequestURLBuilderExt;
 
     #[tokio::test]

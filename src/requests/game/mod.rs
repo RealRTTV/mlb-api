@@ -8,8 +8,7 @@ use fxhash::FxHashMap;
 use serde::{Deserialize, Deserializer};
 use serde::de::{Error, MapAccess};
 use serde_with::{serde_as, DisplayFromStr};
-use crate::meta::GameStatus;
-use crate::meta::StandingsType;
+use crate::meta::{GameStatus, GameType};
 use crate::meta::LogicalEventId;
 use crate::person::{Ballplayer, NamedPerson, PersonId};
 use crate::request::RequestURL;
@@ -91,10 +90,10 @@ pub struct GameDataMeta {
 	#[serde(rename = "pk")]
 	pub id: GameId,
 	#[serde(rename = "type")]
-	pub game_type: StandingsType,
+	pub game_type: GameType,
 	pub double_header: DoubleHeaderKind,
-	/// Will state `P` for [`StandingsType::Playoffs`] games rather than what playoff series it is.
-	pub gameday_type: StandingsType,
+	/// Will state `P` for [`GameType::Playoffs`] games rather than what playoff series it is.
+	pub gameday_type: GameType,
 	#[serde(deserialize_with = "crate::from_yes_no")]
 	pub tiebreaker: bool,
 	/// No clue what this means
@@ -143,7 +142,7 @@ impl From<__GameDateTimeStruct> for GameDateTime {
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(try_from = "__GameWeatherStruct")]
 pub struct GameWeather {
-	pub condition: String, // todo: type?
+	pub condition: String,
 	pub temp: uom::si::f64::ThermodynamicTemperature,
 	pub wind_speed: uom::si::f64::Velocity,
 	pub wind_direction: WindDirectionId,

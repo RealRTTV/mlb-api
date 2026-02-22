@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::league::NamedLeague;
 use crate::person::NamedPerson;
 use crate::sport::SportId;
@@ -18,7 +18,7 @@ pub struct Career<T: RawStat> {
 	#[serde(default = "NamedLeague::unknown_league")]
 	pub league: NamedLeague,
 	pub sport: Option<SportId>,
-	pub game_type: StandingsType,
+	pub game_type: GameType,
 
 	#[deref]
 	#[deref_mut]
@@ -39,7 +39,7 @@ impl<T: RawStat> PlayerPiece for Career<T> {
 }
 
 impl<T: RawStat> GameTypePiece for Career<T> {
-	fn game_type(&self) -> &StandingsType {
+	fn game_type(&self) -> &GameType {
 		&self.game_type
 	}
 }
@@ -57,7 +57,7 @@ impl<T: RawStat> Default for Career<T> {
 			player: NamedPerson::unknown_person(),
 			league: NamedLeague::unknown_league(),
 			sport: None,
-			game_type: StandingsType::default(),
+			game_type: GameType::default(),
 			stats: T::default(),
 		}
 	}

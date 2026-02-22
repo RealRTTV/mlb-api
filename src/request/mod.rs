@@ -20,11 +20,11 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// Represents the error returned when making an HTTP request for stats
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-	/// Error from [`ureq`], likely network error.
+	/// Error from [`::ureq`], likely network error.
 	#[cfg(feature = "ureq")]
 	#[error(transparent)]
 	Network(#[from] ::ureq::Error),
-	/// Error from [`reqwest`], likely network error.
+	/// Error from [`::reqwest`], likely network error.
 	#[cfg(feature = "reqwest")]
 	#[error(transparent)]
 	Network(#[from] ::reqwest::Error),

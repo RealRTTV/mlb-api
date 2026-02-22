@@ -3,11 +3,12 @@ use serde::Deserialize;
 use std::ops::Deref;
 
 /// Types of roster definitions
-#[derive(Debug, Deserialize, Display, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, Display, PartialEq, Eq, Copy, Clone, Hash, Default)]
 #[serde(try_from = "__RosterTypeStruct")]
 pub enum RosterType {
 	#[display("40Man")]
 	FortyMan,
+	#[default]
 	#[display("fullSeason")]
 	FullSeason,
 	#[display("fullRoster")]

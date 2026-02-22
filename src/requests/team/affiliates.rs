@@ -1,10 +1,13 @@
+//! Returns a [`Vec`] of [`Team`](super::Team)s representing the minor league affiliates of a team.
+
 use crate::season::SeasonId;
 use crate::team::TeamId;
-use crate::team::teams::TeamsResponse;
+use crate::team::TeamsResponse;
 use crate::request::RequestURL;
 use bon::Builder;
 use std::fmt::{Display, Formatter};
 
+/// Returns a [`TeamsResponse`].
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct TeamAffiliatesRequest {
@@ -32,7 +35,7 @@ impl RequestURL for TeamAffiliatesRequest {
 mod tests {
 	use crate::request::{Error as RequestError, RequestURLBuilderExt};
 	use crate::team::affiliates::TeamAffiliatesRequest;
-	use crate::team::teams::TeamsRequest;
+	use crate::team::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]

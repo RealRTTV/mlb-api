@@ -58,7 +58,7 @@ pub trait Stats: 'static + Debug + PartialEq + Eq + Clone + Hydrations {}
 
 impl Stats for () {}
 
-pub(crate) trait Stat: Debug + Clone + PartialEq + Eq + Default {
+pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
 	type Split: DeserializeOwned;
 
 	type TryFromSplitError;
@@ -69,13 +69,13 @@ pub(crate) trait Stat: Debug + Clone + PartialEq + Eq + Default {
 }
 
 /// Represents the types defined in [`raw`], not the wrapped final types. In the serialized format, this represents the `stat` field.
-pub(crate) trait RawStat: Debug + DeserializeOwned + Clone + Eq + Default {}
+pub trait RawStat: Debug + DeserializeOwned + Clone + Eq + Default {}
 
 impl RawStat for () {}
 impl SingletonSplitStat for () {}
 
 /// Represents types that are made from a single 'split' in the serialized format (able to be deserialized)
-pub(crate) trait SingletonSplitStat: Debug + DeserializeOwned + Clone + PartialEq + Eq + Default {
+pub trait SingletonSplitStat: Debug + DeserializeOwned + Clone + PartialEq + Eq + Default {
 
 }
 
@@ -92,6 +92,7 @@ impl<T: SingletonSplitStat> Stat for T {
 	}
 }
 
+#[allow(unused)]
 pub(crate) trait StatTypeStats {
 	type Hitting: Stat;
 

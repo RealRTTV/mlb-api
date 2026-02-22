@@ -25,7 +25,7 @@ use std::iter::Sum;
 use std::num::NonZeroU32;
 use std::ops::Add;
 use crate::game::GameId;
-use crate::meta::StandingsType;
+use crate::meta::GameType;
 use crate::request::RequestURL;
 
 /// Response from the `attendance` endpoint.
@@ -65,7 +65,7 @@ impl From<AttendanceResponseStruct> for AttendanceResponse {
 ///
 /// Does not represent a single opening, those opening-by-opening requests require a little more MacGyver-ing with the date.
 ///
-/// Represents a full season of attendance data (segmented by [`StandingsType`]).
+/// Represents a full season of attendance data (segmented by [`GameType`]).
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "AnnualRecordStruct")]
 pub struct AttendanceRecord {
@@ -76,7 +76,7 @@ pub struct AttendanceRecord {
 	pub attendance_totals: HomeAwaySplit<u32>,
 	/// Minimum at an opening, then maximum at an opening
 	pub single_opening_min_max: Option<(DatedAttendance, DatedAttendance)>,
-	pub game_type: StandingsType,
+	pub game_type: GameType,
 }
 
 impl Add for AttendanceRecord {
@@ -120,7 +120,7 @@ impl Default for AttendanceRecord {
 			season: (Local::now().year() as u32).into(),
 			attendance_totals: HomeAwaySplit::new(0, 0),
 			single_opening_min_max: None,
-			game_type: StandingsType::default(),
+			game_type: GameType::default(),
 		}
 	}
 }
@@ -245,7 +245,7 @@ struct AnnualRecordStruct {
 	// attendance_total: u32,
 	attendance_total_away: Option<u32>,
 	attendance_total_home: Option<u32>,
-	game_type: StandingsType,
+	game_type: GameType,
 	// team: Team,
 }
 
@@ -361,7 +361,7 @@ pub struct AttendanceRequest {
 	#[builder(into)]
 	date: Option<NaiveDate>,
 	#[builder(default)]
-	game_type: StandingsType,
+	game_type: GameType,
 }
 
 impl<S: attendance_request_builder::State + attendance_request_builder::IsComplete> crate::request::RequestURLBuilderExt for AttendanceRequestBuilder<S> {
@@ -405,7 +405,7 @@ impl RequestURL for AttendanceRequest {
 mod tests {
 	use crate::attendance::AttendanceRequest;
 	use crate::request::{RequestURL, RequestURLBuilderExt};
-	use crate::team::teams::TeamsRequest;
+	use crate::team::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]
