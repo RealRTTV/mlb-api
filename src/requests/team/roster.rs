@@ -170,7 +170,7 @@ impl RosterHydrations for () {
 /// | `person` | [`person_hydrations!`](crate::person_hydrations) |
 ///
 /// ## Examples
-/// ```norun
+/// ```no_run
 /// person_hydrations! {
 ///     pub struct ExamplePersonHydrations {
 ///         nicknames

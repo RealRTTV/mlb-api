@@ -3,7 +3,7 @@
 use chrono::NaiveDate;
 use crate::person::PersonRequest;
 use crate::request::{RequestURL, RequestURLBuilderExt};
-use crate::{person_hydrations, stats_type};
+use crate::{person_hydrations, stats_type, TEST_YEAR};
 use crate::meta::{GameType, SituationCodeId};
 use crate::stats::units::ThreeDecimalPlaceRateStat;
 
@@ -41,7 +41,7 @@ async fn shohei_ohtani_pitching_2025() {
 	let request = PersonRequest::<PitchingStatsHydrations>::builder()
 		.id(660271)
 		.hydrations(PitchingStatsHydrations::builder()
-			.stats(PitchingStats::builder().season(2025).build())
+			.stats(PitchingStats::builder().season(TEST_YEAR).build())
 			.build())
 		.build();
 
@@ -90,7 +90,7 @@ async fn shohei_ohtani_hitting_2025() {
 	let request = PersonRequest::<HittingStatsHydrations>::builder()
 		.id(660271)
 		.hydrations(HittingStatsHydrations::builder()
-			.stats(HittingStats::builder().season(2025)))
+			.stats(HittingStats::builder().season(TEST_YEAR)))
 		.build();
 
 	dbg!(request.to_string());
@@ -134,11 +134,11 @@ async fn shohei_ohtani_hitting_2025_custom() {
 		.id(660271)
 		.hydrations(HittingStatsHydrations::builder()
 			.stats(HittingStats::builder()
-				.season(2025)
+				.season(TEST_YEAR)
 				.opponent_player(453286)
 				.game_type(GameType::RegularSeason)
 				.games_back(5)
-				.date_range(NaiveDate::from_ymd_opt(2025, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(2025, 6, 12).unwrap())
+				.date_range(NaiveDate::from_ymd_opt(TEST_YEAR as _, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR as _, 6, 12).unwrap())
 				.situations(vec![SituationCodeId::new("c00")])))
 		.build();
 
@@ -176,11 +176,11 @@ async fn shohei_ohtani_pitching_2025_custom() {
 		.id(660271)
 		.hydrations(PitchingStatsHydrations::builder()
 			.stats(PitchingStats::builder()
-				.season(2025)
+				.season(TEST_YEAR)
 				.opponent_player(672386)
 				.game_type(GameType::RegularSeason)
 				.games_back(5)
-				.date_range(NaiveDate::from_ymd_opt(2025, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(2025, 6, 12).unwrap())
+				.date_range(NaiveDate::from_ymd_opt(TEST_YEAR as _, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR as _, 6, 12).unwrap())
 				.situations(vec![SituationCodeId::new("c00")])))
 		.build();
 
@@ -221,7 +221,7 @@ async fn daulton_varsho_fielding_2025() {
 
 	let response = PersonRequest::<FieldingStatsHydrations>::builder()
 		.id(662139)
-		.hydrations(FieldingStatsHydrations::builder().stats(FieldingStats::builder().season(2025)))
+		.hydrations(FieldingStatsHydrations::builder().stats(FieldingStats::builder().season(TEST_YEAR)))
 		.build_and_get()
 		.await
 		.unwrap();
@@ -248,9 +248,9 @@ async fn daulton_varsho_fielding_2025_custom() {
 	let response = PersonRequest::<FieldingStatsHydrations>::builder()
 		.id(662139)
 		.hydrations(FieldingStatsHydrations::builder().stats(FieldingStats::builder()
-			.season(2025)
+			.season(TEST_YEAR)
 			.games_back(10)
-			.date_range(NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 8, 1).unwrap())
+			.date_range(NaiveDate::from_ymd_opt(TEST_YEAR as _, 6, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR as _, 8, 1).unwrap())
 		))
 		.build_and_get()
 		.await
@@ -285,7 +285,7 @@ async fn alejandro_kirk_catching_2025() {
 
 	let response = PersonRequest::<CatchingStatsHydrations>::builder()
 		.id(672386)
-		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(2025)))
+		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(TEST_YEAR)))
 		.build_and_get()
 		.await
 		.unwrap();
@@ -311,7 +311,7 @@ async fn alejandro_kirk_catching_2025_custom() {
 
 	let response = PersonRequest::<CatchingStatsHydrations>::builder()
 		.id(672386)
-		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(2025).date_range(NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()..=NaiveDate::from_ymd_opt(2025, 8, 1).unwrap()).games_back(10)))
+		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(TEST_YEAR).date_range(NaiveDate::from_ymd_opt(TEST_YEAR as _, 6, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR as _, 8, 1).unwrap()).games_back(10)))
 		.build_and_get()
 		.await
 		.unwrap();

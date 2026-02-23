@@ -9,7 +9,7 @@ use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use crate::cache::Requestable;
-use crate::season::{Season, SeasonState};
+use crate::season::{Season, SeasonId, SeasonState};
 
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
@@ -112,6 +112,8 @@ pub struct LeaguesRequest {
 	sport_id: Option<SportId>,
 	#[builder(setters(vis = "", name = league_ids_internal))]
 	league_ids: Option<Vec<LeagueId>>,
+	#[builder(into, default)]
+	season: SeasonId,
 }
 
 impl<S: leagues_request_builder::State + leagues_request_builder::IsComplete> RequestURLBuilderExt for LeaguesRequestBuilder<S> {
@@ -130,6 +132,7 @@ impl Display for LeaguesRequest {
 		write!(f, "http://statsapi.mlb.com/api/v1/leagues{}", gen_params! {
 			"sportId"?: self.sport_id,
 			"leagueIds"?: self.league_ids.as_ref().map(|ids| ids.iter().copied().join(",")),
+			"season": self.season,
 		})
 	}
 }

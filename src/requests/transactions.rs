@@ -657,6 +657,7 @@ mod tests {
 			.unwrap();
 		let bo_bichette = PlayersRequest::for_sport(SportId::MLB)
 			.season(2024)
+			.build_and_get()
 			.await
 			.unwrap()
 			.people

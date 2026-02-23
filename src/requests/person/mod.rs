@@ -396,7 +396,7 @@ pub trait PersonHydrations: Hydrations {}
 impl PersonHydrations for () {}
 
 /// Creates hydrations for a person
-///```norun
+///```no_run
 /// person_hydrations! {
 ///     pub struct ExampleHydrations {  ->  pub struct ExampleHydrations {
 ///         awards,                     ->      awards: Vec<Award>,
