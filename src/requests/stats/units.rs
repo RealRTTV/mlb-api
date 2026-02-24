@@ -1,4 +1,4 @@
-use derive_more::{Add, Deref, DerefMut, From};
+use derive_more::{Add, Deref, DerefMut, From, Into};
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
@@ -6,7 +6,7 @@ use std::ops::{Add, AddAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
-#[derive(Deref, DerefMut, From, Add, Copy, Clone)]
+#[derive(Deref, DerefMut, From, Add, Copy, Clone, Into)]
 pub struct ThreeDecimalPlaceRateStat(f64);
 
 impl ThreeDecimalPlaceRateStat {

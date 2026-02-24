@@ -1,7 +1,7 @@
-//! Standings of a team
+//! Standings of a team, wins, losses, etc
 
-use crate::divisions::DivisionId;
-use crate::league::LeagueId;
+use crate::divisions::{DivisionId, NamedDivision};
+use crate::league::{LeagueId, NamedLeague};
 use crate::meta::StandingsType;
 use crate::request::{RequestURL, RequestURLBuilderExt};
 use crate::season::SeasonId;
@@ -11,7 +11,7 @@ use crate::team::NamedTeam;
 use crate::Copyright;
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime};
-use derive_more::{Deref, DerefMut};
+use derive_more::{Add, AddAssign, Deref, DerefMut, Display};
 use itertools::Itertools;
 use serde::Deserialize;
 use std::cmp::Ordering;
@@ -62,6 +62,9 @@ pub struct TeamRecord {
     pub has_wildcard: bool,
     #[serde(deserialize_with = "crate::deserialize_datetime")]
     pub last_updated: NaiveDateTime,
+    pub streak: Streak,
+    #[serde(rename = "records")]
+    pub splits: RecordSplits,
 
     #[serde(rename = "clinchIndicator", default)]
     pub clinch_kind: ClinchKind,
@@ -84,6 +87,63 @@ pub struct TeamRecord {
     pub league_rank: Option<usize>,
     #[serde(deserialize_with = "crate::try_from_str", default)]
     pub sport_rank: Option<usize>,
+}
+
+impl TeamRecord {
+    /// Uses the pythagorean expected win loss pct formula
+    #[must_use]
+    pub fn expected_win_loss_pct(&self) -> ThreeDecimalPlaceRateStat {
+        /// Some use 2, some use 1.82, some use 1.80.
+        ///
+        /// The people who use 2 are using an overall less precise version
+        ///
+        /// I have no clue about 1.83 vs 1.80, so I took the mean.
+        const EXPONENT: f64 = 1.815;
+
+        let exponentified_runs_scored: f64 = (self.runs_scored as f64).powf(EXPONENT);
+        let exponentified_runs_allowed: f64 = (self.runs_allowed as f64).powf(EXPONENT);
+
+        (exponentified_runs_scored / (exponentified_runs_scored + exponentified_runs_allowed)).into()
+    }
+
+    /// Assumes 162 total games. Recommended to use the other function if available
+    ///
+    /// See [`Self::expected_end_of_season_record_with_total_games`]
+    #[must_use]
+    pub fn expected_end_of_season_record(&self) -> Record {
+        self.expected_end_of_season_record_with_total_games(162)
+    }
+
+    /// Expected record at the end of the season considering the games already played and the expected win loss pct.
+    #[must_use]
+    pub fn expected_end_of_season_record_with_total_games(&self, total_games: usize) -> Record {
+        let expected_pct: f64 = self.expected_win_loss_pct().into();
+        let remaining_games = total_games.saturating_sub(self.record.games_played());
+        let wins = (remaining_games as f64 * expected_pct).round() as usize;
+        let losses = remaining_games - wins;
+
+        self.record + Record { wins, losses }
+    }
+
+    /// Net runs scored for the team
+    #[must_use]
+    pub fn run_differential(&self) -> isize {
+        self.runs_scored as isize - self.runs_allowed as isize
+    }
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+pub struct RecordSplits {
+    #[serde(rename = "splitRecords", default)]
+    pub record_splits: Vec<RecordSplit>,
+    #[serde(rename = "divisionRecords", default)]
+    pub divisional_record_splits: Vec<DivisionalRecordSplit>,
+    #[serde(rename = "leagueRecords", default)]
+    pub league_record_splits: Vec<LeagueRecordSplit>,
+    #[serde(rename = "overallRecords", default)]
+    pub basic_record_splits: Vec<RecordSplit>,
+    #[serde(rename = "expectedRecords", default)]
+    pub expected_record_splits: Vec<RecordSplit>,
 }
 
 /// Different indicators for clinching the playoffs.
@@ -272,19 +332,142 @@ impl FromStr for GamesBack {
     }
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Add, AddAssign)]
 pub struct Record {
     wins: usize,
     losses: usize,
-    ties: usize,
 }
 
 impl Record {
     /// % of games that end in a win
     #[must_use]
     pub fn pct(self) -> ThreeDecimalPlaceRateStat {
-        (self.wins as f64 / (self.wins + self.losses + self.ties) as f64).into()
+        (self.wins as f64 / self.games_played() as f64).into()
     }
+
+    /// Number of games played
+    #[must_use]
+    pub fn games_played(self) -> usize {
+        self.wins + self.losses
+    }
+}
+
+// A repetition of a kind of game outcome; ex: W5 (last 5 games were wins), L1 (last 1 game was a loss).
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub struct Streak {
+    #[serde(rename = "streakNumber")]
+    pub quantity: usize,
+    #[serde(rename = "streakType")]
+    pub kind: StreakKind,
+}
+
+impl Display for Streak {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.kind, self.quantity)
+    }
+}
+
+// todo: hook into [`GameOutcome`]?
+/// A game outcome for streak purposes
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
+pub enum StreakKind {
+    /// A game that ended in a win for this team.
+    #[serde(rename = "wins")]
+    #[display("W")]
+    Win,
+    /// A game that ended in a loss for this team.
+    #[serde(rename = "losses")]
+    #[display("L")]
+    Loss,
+}
+
+/// A team's record, filtered by the [`RecordSplitKind`].
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Deref, DerefMut)]
+pub struct RecordSplit {
+    #[deref]
+    #[deref_mut]
+    #[serde(flatten)]
+    pub record: Record,
+    #[serde(rename = "type")]
+    pub kind: RecordSplitKind,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+pub struct DivisionalRecordSplit {
+    #[deref]
+    #[deref_mut]
+    #[serde(flatten)]
+    pub record: Record,
+    pub division: NamedDivision,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+pub struct LeagueRecordSplit {
+    #[deref]
+    #[deref_mut]
+    #[serde(flatten)]
+    pub record: Record,
+    pub league: NamedLeague,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Hash)]
+#[serde(rename_all = "camelCase")]
+pub enum RecordSplitKind {
+    /// Games as the home team
+    Home,
+    /// Games as the away team
+    Away,
+    /// Games in which you are "left" (?)
+
+    /// A
+    Left,
+    /// Games in which you are "left" && you are the home team
+    LeftHome,
+    /// Games in which you are "left" && you are the away team
+    LeftAway,
+    /// Games in which you are "right" (?)
+
+    Right,
+    /// Games in which you are "right" and the home team
+    RightHome,
+    /// Games in which you are "right" and the away team
+    RightAway,
+
+    /// Last 10 games of the season as of the current date.
+    /// Note that early in the season, [`Record::games_played`] may be < 10
+    LastTen,
+    /// Games that went to extra innings.
+    #[serde(rename = "extraInning")]
+    ExtraInnings,
+    /// Games won or lost by one run
+    OneRun,
+
+    /// what?
+    Winners,
+
+    /// Day games
+    Day,
+    /// Night games
+    Night,
+
+    /// Games played on grass
+    Grass,
+    /// Games played on turf
+    Turf,
+
+    /// Expected record using pythagorean expected win loss pct
+    ///
+    /// This value is calculated as a percentage and multiplied by the number of games that <u>have been</u> played.
+    #[allow(non_camel_case_types)]
+    #[serde(rename = "xWinLoss")]
+    xWinLoss,
+
+    /// Expected record for the season using pythagorean expected win loss pct
+    ///
+    /// This value is calculated as a percentage and multiplied by the number of games <u>in the season</u>.
+    #[allow(non_camel_case_types)]
+    #[serde(rename = "xWinLossSeason")]
+    xWinLossSeason,
 }
 
 // todo: hydrations

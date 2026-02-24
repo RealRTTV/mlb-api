@@ -14,7 +14,7 @@ categories = ["api-bindings", "asynchronous"]
 [dependencies]
 serde = { version = "1.0.228", features = ["serde_derive"] }
 serde_with = "3.16.1"
-derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str", "add", "add_assign", "as_ref", "try_from"] }
+derive_more = { version = "2.0.1", features = ["deref", "deref_mut", "display", "from", "from_str", "add", "add_assign", "as_ref", "try_from", "into"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 thiserror = "2.0.12"
 uom = { version = "0.37.0", features = ["serde", "use_serde", "i32"] }
