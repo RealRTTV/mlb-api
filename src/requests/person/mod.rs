@@ -620,7 +620,7 @@ impl Requestable for Person<()> {
 	where
 		Self: Sized,
 	{
-		response.people.into_iter().map(Person::Ballplayer)
+		response.people
 	}
 
 	#[cfg(feature = "cache")]
