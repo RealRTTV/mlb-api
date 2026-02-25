@@ -1,6 +1,6 @@
 //! Returns a list of coaches affiliated with the team; [`PeopleResponse`]
 
-use crate::person::people::PeopleResponse;
+use crate::person::PeopleResponse;
 use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::MLB_API_DATE_FORMAT;

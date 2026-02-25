@@ -1,6 +1,6 @@
 //! Returns a list of alumni associated with a team; [`PeopleResponse`].
 
-use crate::person::people::PeopleResponse;
+use crate::person::PeopleResponse;
 use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::request::RequestURL;

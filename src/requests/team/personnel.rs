@@ -1,6 +1,6 @@
 //! Returns a list of personnel associated with a [`Team`](super::Team); [`PeopleResponse`]
 
-use crate::person::people::PeopleResponse;
+use crate::person::PeopleResponse;
 use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::MLB_API_DATE_FORMAT;

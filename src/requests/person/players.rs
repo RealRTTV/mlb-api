@@ -1,6 +1,6 @@
 //! Lists all players in the [sport](SportId) in a given season.
 
-use crate::person::people::PeopleResponse;
+use crate::person::PeopleResponse;
 use crate::season::SeasonId;
 use crate::request::RequestURL;
 use bon::Builder;

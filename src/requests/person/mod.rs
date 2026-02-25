@@ -18,7 +18,7 @@
 //! }
 //! ```
 //! 3. [`Person`], which deserializes a lot of extra fields, see <http://statsapi.mlb.com/api/v1/people/660271>.
-//! Technically, [`Person`] is actually an enum which separates fields supplied for [`Ballplayers`] (handedness, draft year, etc.), and fields available to people like coaches and umpires (such as last name, age, etc.) [`RegularPerson`].
+//! Technically, [`Person`] is actually an enum which separates fields supplied for [`Ballplayer`]s (handedness, draft year, etc.), and fields available to people like coaches and umpires (such as last name, age, etc.) [`RegularPerson`].
 //!
 //! This module also contains [`person_hydrations`](crate::person_hydrations), which are used to get additional data about people when making requests.
 
@@ -26,19 +26,17 @@
 
 pub mod free_agents;
 pub mod stats;
-pub mod people;
 pub mod players;
 
 use crate::cache::Requestable;
 use crate::draft::School;
 use crate::hydrations::Hydrations;
 use crate::season::SeasonId;
-use crate::{Gender, Handedness, HeightMeasurement};
+use crate::{Copyright, Gender, Handedness, HeightMeasurement};
 use crate::request::RequestURL;
 use bon::Builder;
 use chrono::{Local, NaiveDate};
 use derive_more::{Deref, DerefMut, Display, From};
-use people::PeopleResponse;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
@@ -49,6 +47,16 @@ use crate::team::NamedTeam;
 
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
+
+/// Response containing a list of people
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[serde(bound = "H: PersonHydrations")]
+pub struct PeopleResponse<H: PersonHydrations> {
+	pub copyright: Copyright,
+	#[serde(default)]
+	pub people: Vec<Person<H>>,
+}
 
 /// A baseball player.
 ///

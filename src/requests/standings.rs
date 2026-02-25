@@ -46,7 +46,7 @@ pub struct DivisionalStandings {
     pub team_records: Vec<TeamRecord>,
 }
 
-/// A team's record and standings information. Lots of stuff here.
+/// Main bulk of the response; the team's record and standings information. Lots of stuff here.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamRecord {
@@ -132,6 +132,7 @@ impl TeamRecord {
     }
 }
 
+/// Different record splits depending on the Division, League, [`RecordSplitKind`], etc.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct RecordSplits {
     #[serde(rename = "splitRecords", default)]
