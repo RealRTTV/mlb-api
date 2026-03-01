@@ -23,13 +23,14 @@ use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use serde_with::serde_as;
 use crate::Copyright;
+use crate::hydrations::Hydrations;
 use crate::request::RequestURL;
 use crate::sport::SportId;
 
 #[serde_as]
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct __TeamRaw {
+#[serde(rename_all = "camelCase", bound = "H: TeamHydrations")]
+struct __TeamRaw<H: TeamHydrations> {
 	#[serde(default)]
 	all_star_status: AllStarStatus,
 	active: bool,
@@ -54,6 +55,8 @@ struct __TeamRaw {
 	spring_league: Option<LeagueId>,
 	#[serde(flatten)]
 	inner: NamedTeam,
+	#[serde(flatten)]
+	extras: H,
 }
 
 /// A detailed `struct` representing a baseball team.
@@ -63,32 +66,32 @@ struct __TeamRaw {
 /// Team {
 ///     all_star_status: AllStarStatus::Yes,
 ///     active: true,
-///     season: 2025.into(),
-///     venue: NamedVenue { name: "Rogers Centre".into(), id: 14.into() },
-///     location_name: Some("Toronto".to_owned()),
-///     first_year_of_play: 1977.into(),
-///     league: NamedLeague { name: "American League".into(), id: 103.into() },
-///     division: Some(NamedDivision { name: "American League East".into(), id: 201.into() }),
+///     season: 2025,
+///     venue: NamedVenue { name: "Rogers Centre", id: 14 },
+///     location_name: Some("Toronto"),
+///     first_year_of_play: 1977,
+///     league: NamedLeague { name: "American League", id: 103 },
+///     division: Some(NamedDivision { name: "American League East", id: 201 }),
 ///     sport: SportId::MLB,
 ///     parent_organization: None,
 ///     name: TeamName {
-///         team_code: "tor".into(),
-///         file_code: "tor".into(),
-///         abbreviation: "TOR".into(),
-///         team_name: "Blue Jays".into(),
-///         short_name: "Toronto".into(),
-///         franchise_name: "Toronto".into(),
-///         club_name: "Blue Jays".into(),
+///         team_code: "tor",
+///         file_code: "tor",
+///         abbreviation: "TOR",
+///         team_name: "Blue Jays",
+///         short_name: "Toronto",
+///         franchise_name: "Toronto",
+///         club_name: "Blue Jays",
 ///         full_name: "Toronto Blue Jays",
 ///     },
 ///     spring_venue: Some(VenueId::new(2536)),
 ///     spring_league: Some(LeagueId::new(115)),
-///     id: 141.into(),
+///     id: 141,
 /// }
 /// ```
 #[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
-#[serde(from = "__TeamRaw")]
-pub struct Team {
+#[serde(from = "__TeamRaw<H>", bound = "H: TeamHydrations")]
+pub struct Team<H: TeamHydrations> {
 	pub all_star_status: AllStarStatus,
 	pub active: bool,
 	pub season: SeasonId,
@@ -107,10 +110,12 @@ pub struct Team {
 	#[deref_mut]
 	#[serde(flatten)]
 	inner: NamedTeam,
+
+	pub extras: H,
 }
 
-impl From<__TeamRaw> for Team {
-	fn from(value: __TeamRaw) -> Self {
+impl<H: TeamHydrations> From<__TeamRaw<H>> for Team<H> {
+	fn from(value: __TeamRaw<H>) -> Self {
 		let __TeamRaw {
 			all_star_status,
 			active,
@@ -126,6 +131,7 @@ impl From<__TeamRaw> for Team {
 			spring_venue,
 			spring_league,
 			inner,
+			extras,
 		} = value;
 
 		Self {
@@ -143,6 +149,7 @@ impl From<__TeamRaw> for Team {
 			spring_league,
 			name: name.initialize(inner.id, inner.full_name.clone()),
 			inner,
+			extras,
 		}
 	}
 }
@@ -190,7 +197,14 @@ impl NamedTeam {
 }
 
 id_only_eq_impl!(NamedTeam, id);
-id_only_eq_impl!(Team, id);
+
+impl<H: TeamHydrations> PartialEq for Team<H> {
+	fn eq(&self, other: &Self) -> bool {
+		self.id == other.id
+	}
+}
+
+impl<H: TeamHydrations> Eq for Team<H> {}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -316,31 +330,78 @@ pub enum AllStarStatus {
 }
 
 /// A [`Vec`] of [`Team`]s
-///
-/// Hydrations:
-/// * `previousSchedule`
-/// * `nextSchedule`
-/// * `venue`
-/// * `springVenue`
-/// * `social`
-/// * `deviceProperties`
-/// * `game(promotions)`
-/// * `game(atBatPromotions)`
-/// * `game(tickets)`
-/// * `game(atBatTickets)`
-/// * `game(sponsorships)`
-/// * `league`
-/// * `person`
-/// * `sport`
-/// * `standings`
-/// * `division`
-/// * `xrefId`
-/// * `location`
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct TeamsResponse {
+pub struct TeamsResponse<H: TeamHydrations> {
 	pub copyright: Copyright,
-	pub teams: Vec<Team>,
+	pub teams: Vec<Team<H>>,
+}
+
+pub trait TeamHydrations: Hydrations {}
+
+impl TeamHydrations for () {}
+
+/// | Name                    | Type |
+/// |-------------------------|------|
+/// | `previousSchedule`      |      |
+/// | `nextSchedule`          |      |
+/// | `venue`                 |      |
+/// | `springVenue`           |      |
+/// | `social`                |      |
+/// | `deviceProperties`      |      |
+/// | `game`                  |      |
+/// | `league`                |      |
+/// | `sport`                 |      |
+/// | `standings`             |      |
+/// | `division`              |      |
+/// | `xrefId`                |      |
+/// | `location`              |      |
+#[macro_export]
+macro_rules! team_hydrations {
+	(@ inline_structs [$_01:ident : { $($_02:tt)* } $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::core::compile_error!("Found unknown inline struct");
+	};
+	(@ inline_structs [$field:ident $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		$crate::team_hydrations! { @ inline_structs [$($($tt)+)?]
+			$vis struct $name {
+				$($field_tt)*
+				$field,
+			}
+		}
+	};
+	(@ inline_structs [] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		$crate::team_hydrations! { @ actual
+			$vis struct $name {
+				$($field_tt)*
+			}
+		}
+	};
+	(@ actual $vis:vis struct $name:ident {
+		$(previous_schedule $previous_schedule:path ,)?
+		$(next_schedule $next_schedule:path ,)?
+		$(venue $venue:path ,)?
+		$(spring_venue $spring_venue:path ,)?
+		$(social $social_comma:tt)?
+		$(device_properties $device_properties_comma:tt)?
+		$(league $league:path, )?
+		$(sport $sport:path ,)?
+		$(standings $standings:path ,)?
+		$(division $division:path ,)?
+		$(xref_id $xref_id_comma:tt)?
+		$(location $location_comma:tt)?
+	}) => {
+		::pastey::paste! {
+			#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+			#[serde(rename_all = "camelCase")]
+			$vis struct $name {
+			}
+		}
+	};
+    ($vis:vis struct $name:ident {
+		$($tt:tt)*
+	}) => {
+		$crate::team_hydrations! { @ inline_structs [$($tt)*] $vis struct $name {} }
+	};
 }
 
 /// Returns a [`TeamsResponse`].

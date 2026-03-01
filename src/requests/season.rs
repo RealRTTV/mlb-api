@@ -131,6 +131,7 @@ impl From<SeasonRaw> for Season {
 }
 
 /// A season and it's info - dependent on [`SportId`].
+/// Stores multiple date ranges for different parts of the season (spring training, postseason, etc)
 ///
 /// These fields are arranged in a chronological order but the specification makes no guarantees that this order remain consistent.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -179,6 +180,8 @@ impl Eq for QualificationMultipliers {}
 /// Current state of the season
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum SeasonState {
+	#[serde(rename = "spring training")]
+	SpringTraining,
 	#[serde(rename = "inseason")]
 	Inseason,
 	#[serde(rename = "offseason")]

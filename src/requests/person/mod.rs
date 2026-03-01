@@ -404,6 +404,8 @@ pub trait PersonHydrations: Hydrations {}
 impl PersonHydrations for () {}
 
 /// Creates hydrations for a person
+/// 
+/// ## Examples
 ///```no_run
 /// person_hydrations! {
 ///     pub struct ExampleHydrations {  ->  pub struct ExampleHydrations {
@@ -480,7 +482,7 @@ macro_rules! person_hydrations {
         }
     };
     (@ inline_structs [$marker:ident : { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        compile_error!("Found unknown inline struct");
+        ::core::compile_error!("Found unknown inline struct");
     };
     (@ inline_structs [$marker:ident $(: $value:path)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
         ::pastey::paste! {
@@ -676,7 +678,7 @@ mod tests {
 			}
 		}
 
-		let _person = PersonRequest::<AllButStatHydrations>::builder().hydrations(AllButStatHydrationsRequestData::default()).id(665_489).build_and_get().await.unwrap().people.into_iter().next().unwrap();
+		let person = PersonRequest::<AllButStatHydrations>::builder().hydrations(AllButStatHydrationsRequestData::default()).id(665_489).build_and_get().await.unwrap().people.into_iter().next().unwrap();
 	}
 
 	#[rustfmt::skip]

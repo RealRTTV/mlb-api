@@ -8,6 +8,7 @@ use std::fmt::{Display, Formatter};
 use crate::cache::{Requestable};
 #[cfg(feature = "cache")]
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
+use crate::hydrations::Hydrations;
 
 /// A [`Vec`] of [`Sport`]s.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -76,6 +77,29 @@ pub struct Sport {
 }
 
 id_only_eq_impl!(Sport, id);
+
+pub trait SportsHydrations: Hydrations {}
+
+impl SportsHydrations for () {}
+
+/// Creates hydrations for a sport
+///
+/// ## Examples
+/// ```no_run
+/// ```
+///
+/// ## Sport Hydrations
+/// | Name                         | Type           |
+/// |------------------------------|----------------|
+/// | `season`                     | [`Season`]     |
+/// | `device_properties`          | [`DeviceProperties`]     |
+///
+/// [`Season`]: crate::season::Season
+/// [`DeviceProperties`]: crate::device_properties::DeviceProperties
+#[macro_export]
+macro_rules! sports_hydrations {
+    () => {};
+}
 
 #[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Sport>> = rwlock_const_new(CacheTable::new());

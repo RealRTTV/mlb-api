@@ -224,7 +224,7 @@ macro_rules! roster_hydrations {
         }
     };
     (@ inline_structs [$marker:ident : { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        compile_error!("Found unknown inline struct");
+        ::core::compile_error!("Found unknown inline struct");
     };
     (@ inline_structs [$marker:ident $(: $value:path)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
         ::pastey::paste! {

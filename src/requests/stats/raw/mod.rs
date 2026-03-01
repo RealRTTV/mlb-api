@@ -9,7 +9,7 @@ macro_rules! register_fields {
             $(
             ($name) => { $ty };
             )+
-            ($d ($d t:tt)*) => { compile_error!("Invalid field name") };
+            ($d ($d t:tt)*) => { ::core::compile_error!("Invalid field name") };
         }
     };
 }

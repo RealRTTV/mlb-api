@@ -28,7 +28,7 @@ pub struct AwardsResponse {
 /// An award, such as the Cy Young or MVP.
 #[derive(Debug, Deserialize, Clone)]
 pub struct Award {
-	/// Name of the awward
+	/// Name of the award
 	pub name: String,
 	/// Description of the award
 	pub description: Option<String>,
