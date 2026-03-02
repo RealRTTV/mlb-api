@@ -31,7 +31,6 @@ pub mod players;
 use crate::cache::Requestable;
 use crate::draft::School;
 use crate::hydrations::Hydrations;
-use crate::season::SeasonId;
 use crate::{Copyright, Gender, Handedness, HeightMeasurement};
 use crate::request::RequestURL;
 use bon::Builder;
@@ -668,7 +667,7 @@ mod tests {
 			}
 		}
 
-		let person = PersonRequest::<AllButStatHydrations>::builder().hydrations(AllButStatHydrationsRequestData::default()).id(665_489).build_and_get().await.unwrap().people.into_iter().next().unwrap();
+		let _person = PersonRequest::<AllButStatHydrations>::builder().hydrations(AllButStatHydrationsRequestData::default()).id(665_489).build_and_get().await.unwrap().people.into_iter().next().unwrap();
 	}
 
 	#[rustfmt::skip]

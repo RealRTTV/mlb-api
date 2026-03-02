@@ -89,7 +89,7 @@ impl<H: SportsHydrations> PartialEq for Sport<H> {
 }
 impl<H: SportsHydrations> Eq for Sport<H> {}
 
-pub trait SportsHydrations: Hydrations {}
+pub trait SportsHydrations: Hydrations<RequestData=()> {}
 
 impl SportsHydrations for () {}
 
@@ -198,6 +198,6 @@ mod tests {
 
 	#[tokio::test]
 	async fn parse_all_sports() {
-		let _result = SportsRequest::builder().build_and_get().await.unwrap();
+		let _result = SportsRequest::<()>::builder().build_and_get().await.unwrap();
 	}
 }

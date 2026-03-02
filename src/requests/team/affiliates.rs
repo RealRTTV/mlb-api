@@ -28,7 +28,7 @@ impl Display for TeamAffiliatesRequest {
 }
 
 impl RequestURL for TeamAffiliatesRequest {
-	type Response = TeamsResponse;
+	type Response = TeamsResponse<()>;
 }
 
 #[cfg(test)]

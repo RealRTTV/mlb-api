@@ -21,7 +21,7 @@ uom = { version = "0.37.0", features = ["serde", "use_serde", "i32"] }
 serde_json = "1.0.140"
 itertools = "0.14.0"
 fxhash = "0.2.1"
-compact_str = "0.9.0"
+chrono-tz = { version = "0.10.4", features = ["serde"] }
 pastey = "0.2.1"
 uuid = { version = "1.18.1", features = ["serde"] }
 bon = "3.8.1"

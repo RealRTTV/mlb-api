@@ -31,7 +31,7 @@ impl Display for TeamHistoryRequest {
 }
 
 impl RequestURL for TeamHistoryRequest {
-	type Response = TeamsResponse;
+	type Response = TeamsResponse<()>;
 }
 
 #[cfg(test)]

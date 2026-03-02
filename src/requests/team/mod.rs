@@ -442,10 +442,9 @@ macro_rules! team_hydrations {
 
 /// Returns a [`TeamsResponse`].
 #[derive(Builder)]
-#[builder(start_fn(vis = ""))]
 #[builder(derive(Into))]
 pub struct TeamsRequest<H: TeamHydrations> {
-	#[builder(setters(vis = "", name = "sport_id_internal"))]
+	#[builder(into)]
 	sport_id: Option<SportId>,
 	#[builder(into)]
 	season: Option<SeasonId>,
@@ -453,17 +452,17 @@ pub struct TeamsRequest<H: TeamHydrations> {
 	hydrations: H::RequestData,
 }
 
-impl<H: TeamHydrations> TeamsRequest<H> {
-	pub fn for_sport(sport_id: SportId) -> TeamsRequestBuilder<H, teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> where H::RequestData: Default {
-		Self::builder().sport_id_internal(sport_id).hydrations(H::RequestData::default())
+impl TeamsRequest<()> {
+	pub fn for_sport(sport_id: impl Into<SportId>) -> TeamsRequestBuilder<(), teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> {
+		Self::builder().sport_id(sport_id).hydrations(())
 	}
 
-	pub fn mlb_teams() -> TeamsRequestBuilder<H, teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> where H::RequestData: Default {
+	pub fn mlb_teams() -> TeamsRequestBuilder<(), teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> {
 		Self::for_sport(SportId::MLB)
 	}
 
-	pub fn all_sports() -> TeamsRequestBuilder<H, teams_request_builder::SetHydrations> where H::RequestData: Default {
-		Self::builder().hydrations(H::RequestData::default())
+	pub fn all_sports() -> TeamsRequestBuilder<(), teams_request_builder::SetHydrations> {
+		Self::builder().hydrations(())
 	}
 }
 
@@ -492,12 +491,12 @@ mod tests {
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_teams_all_seasons() {
 		for season in 1871..=TEST_YEAR {
-			let _response = TeamsRequest::<()>::all_sports().season(season).build_and_get().await.unwrap();
+			let _response = TeamsRequest::all_sports().season(season).build_and_get().await.unwrap();
 		}
 	}
 
 	#[tokio::test]
 	async fn parse_all_mlb_teams_this_season() {
-		let _ = TeamsRequest::<()>::mlb_teams().build_and_get().await.unwrap();
+		let _ = TeamsRequest::mlb_teams().build_and_get().await.unwrap();
 	}
 }

@@ -313,7 +313,7 @@ impl<T> From<(T, T)> for HomeAwaySplit<T> {
 /// Street address, city, etc.
 ///
 /// Pretty much nothing *has* to be supplied so you either get an address, phone number, everything, or just a country.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Location {
 	pub address_line_1: Option<String>,
@@ -324,6 +324,7 @@ pub struct Location {
 	#[serde(alias = "phone")]
 	pub phone_number: Option<String>,
 	pub city: Option<String>,
+	#[serde(alias = "province")]
 	pub state: Option<String>,
 	pub country: Option<String>,
 	#[serde(rename = "stateAbbrev")] pub state_abbreviation: Option<String>,
@@ -336,6 +337,60 @@ pub struct Location {
 
 impl Eq for Location {}
 
+/// Various information regarding a field.
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FieldInfo {
+	pub capacity: u32,
+	pub turf_type: TurfType,
+	pub roof_type: RoofType,
+	pub left_line: Option<u32>,
+	pub left: Option<u32>,
+	pub left_center: Option<u32>,
+	pub center: Option<u32>,
+	pub right_center: Option<u32>,
+	pub right: Option<u32>,
+	pub right_line: Option<u32>,
+}
+
+/// Different types of turf.
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Display)]
+pub enum TurfType {
+	#[serde(rename = "Artificial Turf")]
+	#[display("Artificial Turf")]
+	ArtificialTurf,
+
+	#[serde(rename = "Grass")]
+	#[display("Grass")]
+	Grass,
+}
+
+/// Different types of roof setups.
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Display)]
+pub enum RoofType {
+	#[serde(rename = "Retractable")]
+	#[display("Retractable")]
+	Retractable,
+
+	#[serde(rename = "Open")]
+	#[display("Open")]
+	Open,
+
+	#[serde(rename = "Dome")]
+	#[display("Dome")]
+	Dome,
+}
+
+/// Data regarding a timezone, uses [`chrono_tz`].
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TimeZoneData {
+	#[serde(rename = "id")]
+	pub timezone: chrono_tz::Tz,
+	pub offset: i32,
+	pub offset_at_game_time: i32,
+}
+
 /// More generalized than social media, includes retrosheet, fangraphs, (+ some socials), etc.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct ExternalReference {
@@ -344,6 +399,31 @@ pub struct ExternalReference {
 	#[serde(rename = "xrefType")]
 	pub xref_type: String,
 	pub season: Option<SeasonId>,
+}
+
+/// Tracking equipment, Hawk-Eye, PitchFx, etc.
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackingSystem {
+	pub id: TrackingSystemVendorId,
+	pub description: String,
+	pub pitch_vendor: Option<TrackingSystemVendor>,
+	pub hit_vendor: Option<TrackingSystemVendor>,
+	pub player_vendor: Option<TrackingSystemVendor>,
+	pub skeletal_vendor: Option<TrackingSystemVendor>,
+	pub bat_vendor: Option<TrackingSystemVendor>,
+	pub biomechanics_vendor: Option<TrackingSystemVendor>,
+}
+
+id!(TrackingSystemVendorId { id: u32 });
+
+/// A vendor for specific tracking concepts, such as Hawk-Eye for skeletal data.
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+pub struct TrackingSystemVendor {
+	pub id: TrackingSystemVendorId,
+	pub description: String,
+	#[serde(rename = "version")]
+	pub details: String,
 }
 
 /// Stat that is either an integer or float.

@@ -66,7 +66,7 @@ pub struct GameData {
 	game: GameDataMeta,
 	pub datetime: GameDateTime,
 	pub status: GameStatus,
-	pub teams: HomeAwaySplit<Team>,
+	pub teams: HomeAwaySplit<Team<()>>,
 	#[serde(deserialize_with = "deserialize_players_cache")]
 	pub players: FxHashMap<PersonId, Ballplayer<()>>,
 	pub venue: Venue,

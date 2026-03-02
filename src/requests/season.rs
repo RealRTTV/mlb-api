@@ -233,7 +233,7 @@ mod tests {
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parses_all_seasons() {
-		let all_sport_ids = SportsRequest::builder().build_and_get().await.unwrap().sports.into_iter().map(|sport| sport.id).collect::<Vec<_>>();
+		let all_sport_ids = SportsRequest::<()>::builder().build_and_get().await.unwrap().sports.into_iter().map(|sport| sport.id).collect::<Vec<_>>();
 
 		for season in 1871..=TEST_YEAR {
 			for id in all_sport_ids.iter().copied() {

@@ -233,7 +233,7 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     <crate::meta::GameType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::GameType>::new().get().await?.entries);
     <crate::meta::WindDirection as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::WindDirection>::new().get().await?.entries);
 
-    <Person as Requestable>::get_cache_table().write().await.add_entries(people_response.await?.people.into_iter().map(Person::Ballplayer));
+    <Person as Requestable>::get_cache_table().write().await.add_entries(people_response.await?.people);
 
     Ok(())
 }
