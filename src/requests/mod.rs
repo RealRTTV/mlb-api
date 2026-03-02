@@ -139,4 +139,4 @@ pub mod stats;
 pub mod transactions;
 pub mod venue;
 pub mod team;
-mod device_properties;
+// pub mod device_properties;

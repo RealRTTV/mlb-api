@@ -11,7 +11,7 @@ pub mod history;
 pub mod affiliates;
 // pub mod teams;
 
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use bon::Builder;
 use serde_with::DefaultOnError;
@@ -20,6 +20,7 @@ use crate::league::{LeagueId, NamedLeague};
 use crate::season::SeasonId;
 use crate::venue::{NamedVenue, VenueId};
 use derive_more::{Deref, DerefMut};
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde_with::serde_as;
 use crate::Copyright;
@@ -46,7 +47,7 @@ struct __TeamRaw<H: TeamHydrations> {
 	#[serde(default)]
 	#[serde_as(deserialize_as = "DefaultOnError")]
 	division: Option<NamedDivision>,
-	sport: SportId,
+	sport: H::Sport,
 	#[serde(flatten)]
 	parent_organization: Option<NamedOrganization>,
 	#[serde(flatten)]
@@ -100,7 +101,7 @@ pub struct Team<H: TeamHydrations> {
 	pub first_year_of_play: SeasonId,
 	pub league: NamedLeague,
 	pub division: Option<NamedDivision>,
-	pub sport: SportId,
+	pub sport: H::Sport,
 	pub parent_organization: Option<NamedOrganization>,
 	pub name: TeamName,
 	pub spring_venue: Option<VenueId>,
@@ -263,6 +264,7 @@ pub struct TeamName {
 	pub file_code: String,
 	pub abbreviation: String,
 	pub team_name: String,
+	/// Effectively `franchise_name` but has changes for duplicates like 'New York'
 	pub short_name: String,
 	pub franchise_name: String,
 	pub club_name: String,
@@ -331,33 +333,56 @@ pub enum AllStarStatus {
 
 /// A [`Vec`] of [`Team`]s
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", bound = "H: TeamHydrations")]
 pub struct TeamsResponse<H: TeamHydrations> {
 	pub copyright: Copyright,
 	pub teams: Vec<Team<H>>,
 }
 
-pub trait TeamHydrations: Hydrations {}
+pub trait TeamHydrations: Hydrations {
+	/// By default [`SportId`], with [`sport`] hydration, [`Sport`](crate::sport::Sport)
+	type Sport: Debug + DeserializeOwned + Eq + Clone;
+}
 
-impl TeamHydrations for () {}
+impl TeamHydrations for () {
+	type Sport = SportId;
+}
 
-/// | Name                    | Type |
-/// |-------------------------|------|
-/// | `previousSchedule`      |      |
-/// | `nextSchedule`          |      |
-/// | `venue`                 |      |
-/// | `springVenue`           |      |
-/// | `social`                |      |
-/// | `deviceProperties`      |      |
-/// | `game`                  |      |
-/// | `league`                |      |
-/// | `sport`                 |      |
-/// | `standings`             |      |
-/// | `division`              |      |
-/// | `xrefId`                |      |
-/// | `location`              |      |
+/// | Name                    | Type                             |
+/// |-------------------------|----------------------------------|
+/// | `previousSchedule`      |                                  |
+/// | `nextSchedule`          |                                  |
+/// | `venue`                 |                                  |
+/// | `springVenue`           |                                  |
+/// | `social`                | [`HashMap<String, Vec<String>>`] |
+/// | `game`                  |                                  |
+/// | `league`                |                                  |
+/// | `sport`                 | [`sports_hydrations!`]           |
+/// | `standings`             |                                  |
+/// | `division`              |                                  |
+/// | `xrefId`                | [`ExternalReference`]            |
+///
+/// [`sports_hydrations!`]: crate::sports_hydrations
+/// [`ExternalReference`]: crate::types::ExternalReference
+/// [`HashMap<String, Vec<String>>`]: std::collections::HashMap
 #[macro_export]
 macro_rules! team_hydrations {
+	(@ inline_structs [sport: { $($sport_tt:tt)* } $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::pastey::paste! {
+			$crate::sports_hydrations! {
+				$vis struct [<$name InlineSport>] {
+					$($sport_tt)*
+				}
+			}
+
+			$crate::team_hydrations! { @ inline_structs [$($($tt)+)?]
+				$vis struct $name {
+					$($field_tt)*
+					sport: [<$name InlineSport>],
+				}
+			}
+		}
+	};
 	(@ inline_structs [$_01:ident : { $($_02:tt)* } $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
 		::core::compile_error!("Found unknown inline struct");
 	};
@@ -376,24 +401,35 @@ macro_rules! team_hydrations {
 			}
 		}
 	};
+	(@ sport_type) => {
+		$crate::sport::SportId
+	};
+	(@ sport_type $hydrations:path) => {
+		$crate::sport::Sport<$hydrations>
+	};
 	(@ actual $vis:vis struct $name:ident {
 		$(previous_schedule $previous_schedule:path ,)?
 		$(next_schedule $next_schedule:path ,)?
 		$(venue $venue:path ,)?
 		$(spring_venue $spring_venue:path ,)?
 		$(social $social_comma:tt)?
-		$(device_properties $device_properties_comma:tt)?
 		$(league $league:path, )?
 		$(sport $sport:path ,)?
 		$(standings $standings:path ,)?
 		$(division $division:path ,)?
-		$(xref_id $xref_id_comma:tt)?
+		$(external_references $external_references_comma:tt)?
 		$(location $location_comma:tt)?
 	}) => {
 		::pastey::paste! {
 			#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
 			#[serde(rename_all = "camelCase")]
 			$vis struct $name {
+				$(#[serde(rename = "xrefIds")] external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
+				$(#[serde(default, rename = "social")] socials: ::std::collections::HashMap<::std::string::String, ::std::vec::Vec<::std::string::String> $social_comma>)?
+			}
+
+			impl $crate::team::TeamHydrations for $name {
+				type Sport = $crate::team_hydrations!(@ sport_type $($sport)?);
 			}
 		}
 	};
@@ -408,39 +444,42 @@ macro_rules! team_hydrations {
 #[derive(Builder)]
 #[builder(start_fn(vis = ""))]
 #[builder(derive(Into))]
-pub struct TeamsRequest {
+pub struct TeamsRequest<H: TeamHydrations> {
 	#[builder(setters(vis = "", name = "sport_id_internal"))]
 	sport_id: Option<SportId>,
 	#[builder(into)]
 	season: Option<SeasonId>,
+	#[builder(into)]
+	hydrations: H::RequestData,
 }
 
-impl TeamsRequest {
-	pub fn for_sport(sport_id: SportId) -> TeamsRequestBuilder<teams_request_builder::SetSportId> {
-		Self::builder().sport_id_internal(sport_id)
+impl<H: TeamHydrations> TeamsRequest<H> {
+	pub fn for_sport(sport_id: SportId) -> TeamsRequestBuilder<H, teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> where H::RequestData: Default {
+		Self::builder().sport_id_internal(sport_id).hydrations(H::RequestData::default())
 	}
 
-	pub fn mlb_teams() -> TeamsRequestBuilder<teams_request_builder::SetSportId> {
+	pub fn mlb_teams() -> TeamsRequestBuilder<H, teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> where H::RequestData: Default {
 		Self::for_sport(SportId::MLB)
 	}
 
-	pub fn all_sports() -> TeamsRequestBuilder {
-		Self::builder()
+	pub fn all_sports() -> TeamsRequestBuilder<H, teams_request_builder::SetHydrations> where H::RequestData: Default {
+		Self::builder().hydrations(H::RequestData::default())
 	}
 }
 
-impl<S: teams_request_builder::State + teams_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamsRequestBuilder<S> {
-	type Built = TeamsRequest;
+impl<H: TeamHydrations, S: teams_request_builder::State + teams_request_builder::IsComplete> crate::request::RequestURLBuilderExt for TeamsRequestBuilder<H, S> {
+	type Built = TeamsRequest<H>;
 }
 
-impl Display for TeamsRequest {
+impl<H: TeamHydrations> Display for TeamsRequest<H> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/teams{}", gen_params! { "sportId"?: self.sport_id, "season"?: self.season })
+		let hydrations = Some(H::hydration_text(&self.hydrations)).filter(|s| !s.is_empty());
+		write!(f, "http://statsapi.mlb.com/api/v1/teams{}", gen_params! { "sportId"?: self.sport_id, "season"?: self.season, "hydrate"?: hydrations })
 	}
 }
 
-impl RequestURL for TeamsRequest {
-	type Response = TeamsResponse;
+impl<H: TeamHydrations> RequestURL for TeamsRequest<H> {
+	type Response = TeamsResponse<H>;
 }
 
 #[cfg(test)]
@@ -453,12 +492,12 @@ mod tests {
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn parse_all_teams_all_seasons() {
 		for season in 1871..=TEST_YEAR {
-			let _response = TeamsRequest::all_sports().season(season).build_and_get().await.unwrap();
+			let _response = TeamsRequest::<()>::all_sports().season(season).build_and_get().await.unwrap();
 		}
 	}
 
 	#[tokio::test]
 	async fn parse_all_mlb_teams_this_season() {
-		let _ = TeamsRequest::mlb_teams().build_and_get().await.unwrap();
+		let _ = TeamsRequest::<()>::mlb_teams().build_and_get().await.unwrap();
 	}
 }

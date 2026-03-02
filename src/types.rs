@@ -11,6 +11,7 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
 use thiserror::Error;
+use crate::season::SeasonId;
 
 /// The copyright at the top of every request
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -320,6 +321,7 @@ pub struct Location {
 	pub address_line_3: Option<String>,
 	pub address_line_4: Option<String>,
 	pub attention: Option<String>,
+	#[serde(alias = "phone")]
 	pub phone_number: Option<String>,
 	pub city: Option<String>,
 	pub state: Option<String>,
@@ -333,6 +335,16 @@ pub struct Location {
 }
 
 impl Eq for Location {}
+
+/// More generalized than social media, includes retrosheet, fangraphs, (+ some socials), etc.
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+pub struct ExternalReference {
+	#[serde(rename = "xrefId")]
+	pub id: String,
+	#[serde(rename = "xrefType")]
+	pub xref_type: String,
+	pub season: Option<SeasonId>,
+}
 
 /// Stat that is either an integer or float.
 ///

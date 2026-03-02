@@ -388,16 +388,6 @@ pub struct Education {
 	pub colleges: Vec<School>,
 }
 
-/// More generalized than social media, includes retrosheet, fangraphs, etc.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct ExternalReference {
-	#[serde(rename = "xrefId")]
-	pub id: String,
-	#[serde(rename = "xrefType")]
-	pub xref_type: String,
-	pub season: Option<SeasonId>,
-}
-
 /// A type that is made with [`person_hydrations!`](crate::person_hydrations)
 pub trait PersonHydrations: Hydrations {}
 
@@ -447,7 +437,7 @@ impl PersonHydrations for () {}
 /// | `transactions`   | [`Vec<Transaction>`]             |
 /// | `social`         | [`HashMap<String, Vec<String>>`] |
 /// | `stats`          | [`stats_type!`]                  |
-/// | `xref_id`        | [`Vec<ExternalReference>`]       |
+/// | `external_references`        | [`Vec<ExternalReference>`]       |
 ///
 /// [`Vec<Award>`]: crate::awards::Award
 /// [`Team`]: crate::team::Team
@@ -462,7 +452,7 @@ impl PersonHydrations for () {}
 /// [`Vec<Transaction>`]: crate::transactions::Transaction
 /// [`HashMap<String, Vec<String>>`]: std::collections::HashMap
 /// [`stats_type!`]: crate::stats_type
-/// [`Vec<ExternalReference>`]: ExternalReference
+/// [`Vec<ExternalReference>`]: crate::types::ExternalReference
 #[macro_export]
 macro_rules! person_hydrations {
 	(@ inline_structs [stats: { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
@@ -518,7 +508,7 @@ macro_rules! person_hydrations {
 			$(transactions $transactions_comma:tt)?
 			$(social $social_comma:tt)?
 			$(stats: $stats:path ,)?
-			$(xref_id $xref_id_comma:tt)?
+			$(external_references $external_references_comma:tt)?
 		}
     ) => {
 		::pastey::paste! {
@@ -537,8 +527,8 @@ macro_rules! person_hydrations {
 				$(#[serde(default)] pub roster_entries: ::std::vec::Vec<$crate::team::roster::RosterEntry> $roster_entries_comma)?
 				$(#[serde(default)] pub transactions: ::std::vec::Vec<$crate::transactions::Transaction> $transactions_comma)?
 				$(#[serde(flatten)] pub stats: $stats ,)?
-				$(#[serde(default)] pub social: ::std::collections::HashMap<String, Vec<String>> $social_comma)?
-				$(#[serde(default, rename = "xrefIds")] pub xref_id: ::std::vec::Vec<ExternalReference> $xref_id_comma)?
+				$(#[serde(default, rename = "social")] pub socials: ::std::collections::HashMap<String, Vec<String>> $social_comma)?
+				$(#[serde(default, rename = "xrefIds")] pub external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
 			}
 
 			impl $crate::person::PersonHydrations for $name {}
@@ -560,11 +550,11 @@ macro_rules! person_hydrations {
 						$("rosterEntries," $roster_entries_comma)?
 						$("transactions," $transactions_comma)?
 						$("social," $social_comma)?
-						$("xrefId," $xref_id_comma)?
+						$("xrefId," $external_references_comma)?
 					));
 
 					$(
-					let text = ::std::borrow::Cow::Owned(::std::format!("{text}stats({})", <$stats as $crate::hydrations::Hydrations>::hydration_text(&_data.stats)));
+					let text = ::std::borrow::Cow::Owned(::std::format!("{text}stats({}),", <$stats as $crate::hydrations::Hydrations>::hydration_text(&_data.stats)));
 					)?
 
 					text
@@ -674,7 +664,7 @@ mod tests {
 				roster_entries,
 				transactions,
 				social,
-				xref_id
+				external_references
 			}
 		}
 

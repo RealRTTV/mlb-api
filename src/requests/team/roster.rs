@@ -250,17 +250,14 @@ macro_rules! roster_hydrations {
     }) => {
         $crate::roster_hydrations! { @ inline_structs [$($contents)*] $vis struct $name {} }
     };
-    (@ person_type [person: $person:ident $(,)?]) => {
-        $crate::person::Person<$person>
+    (@ person_type $hydrations:path) => {
+        $crate::person::Person<$hydrations>
     };
-    (@ person_type [$_01:ident (: $_02:path) $(, $($rest:tt)*)?]) => {
-        $crate::roster_hydrations! { @ person_type [$($($rest)*)?] }
-    };
-    (@ person_type [$(,)?]) => {
+    (@ person_type) => {
         $crate::person::NamedPerson
     };
     (@ actual $vis:vis struct $name:ident {
-        $(person: $person:ident ,)?
+        $(person: $person:path ,)?
     }) => {
         ::pastey::paste! {
             #[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
@@ -268,13 +265,13 @@ macro_rules! roster_hydrations {
             $vis struct $name {}
 
             impl $crate::team::roster::RosterHydrations for $name {
-                type Person = $crate::roster_hydrations!(@ person_type [$(person: $person ,)?]);
+                type Person = $crate::roster_hydrations!(@ person_type $($person)?);
             }
 
             impl $crate::hydrations::Hydrations for $name {
                 type RequestData = [<$name RequestData>];
 
-                #[allow(unused_variables)]
+                #[allow(unused_variables, reason = "branches")]
                 fn hydration_text(_data: &Self::RequestData) -> ::std::borrow::Cow<'static, str> {
                     let text = ::std::borrow::Cow::Borrowed("");
 

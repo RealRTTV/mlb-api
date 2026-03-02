@@ -59,6 +59,42 @@ id!(VenueId { id: u32 });
 id_only_eq_impl!(NamedVenue, id);
 id_only_eq_impl!(Venue, id);
 
+/// Creates hydrations for a venue
+///
+/// ## Examples
+/// ```no_run
+/// ```
+///
+/// ## Venue Hydrations
+/// | Name                  | Type                  |
+/// |-----------------------|-----------------------|
+/// | `location`            | [`Location`]          |
+/// | `timezone`            | [`TimeZoneData`]      |
+/// | `field_info`          | [`FieldInfo`]         |
+/// | `external_references` | [`ExternalReference`] |
+/// | `tracking_system`     | [`TrackingSystem`]    |
+///
+/// [`Location`]: crate::types::Location
+/// [`ExternalReference`]: crate::types::ExternalReference
+#[macro_export]
+macro_rules! venue_hydrations {
+    (@ inline_structs [$field:ident $(: $value: path)? $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+	    $crate::venue_hydrations! { @ inline structs [$($($tt)*)?] $vis struct $name { $($field_tt)* $field $(: $value)?, } }
+    };
+	(@ inline_structs [$(,)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		$crate::venue_hydrations! { @ actual $vis struct $name { $($field_tt)* } }
+	};
+	(@ actual $vis:vis struct $name:ident {
+		$(location $location_comma:tt)?
+		$(timezone $timezone_comma:tt)?
+		$(field_info $field_info_comma:tt)?
+		$(external_references $external_references_comma:tt)?
+		$(tracking_system $tracking_system_comma:tt)?
+	}) => {
+
+	};
+}
+
 #[cfg(feature = "cache")]
 static CACHE: RwLock<CacheTable<Venue>> = rwlock_const_new(CacheTable::new());
 
