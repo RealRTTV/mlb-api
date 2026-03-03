@@ -204,13 +204,13 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     let people_response = PlayersRequest::for_sport(SportId::MLB).build_and_get();
     
     let award_response = crate::awards::AwardRequest::builder().build_and_get();
-    let division_response = crate::divisions::DivisionsRequest::builder().build_and_get();
+    let division_response = crate::division::DivisionsRequest::builder().build_and_get();
     let conference_response = crate::conferences::ConferencesRequest::builder().build_and_get();
     let venue_response = crate::venue::VenuesRequest::builder().build_and_get();
     let league_response = crate::league::LeaguesRequest::builder().build_and_get();
     let sport_response = crate::sport::SportsRequest::builder().build_and_get();
     <crate::awards::Award as Requestable>::get_cache_table().write().await.add_entries(award_response.await?.awards);
-    <crate::divisions::Division as Requestable>::get_cache_table().write().await.add_entries(division_response.await?.divisions);
+    <crate::division::Division as Requestable>::get_cache_table().write().await.add_entries(division_response.await?.divisions);
     <crate::conferences::Conference as Requestable>::get_cache_table().write().await.add_entries(conference_response.await?.conferences);
     <crate::venue::Venue as Requestable>::get_cache_table().write().await.add_entries(venue_response.await?.venues);
     <crate::league::League as Requestable>::get_cache_table().write().await.add_entries(league_response.await?.leagues);
@@ -246,7 +246,7 @@ pub async fn precache() -> Result<(), crate::request::Error> {
 #[cfg(feature = "ureq")]
 pub fn precache() -> Result<(), crate::request::Error> {
     <crate::awards::Award as Requestable>::get_cache_table().write().add_entries(crate::awards::AwardRequest::builder().build_and_get()?.awards);
-    <crate::divisions::Division as Requestable>::get_cache_table().write().add_entries(crate::divisions::DivisionsRequest::builder().build_and_get()?.divisions);
+    <crate::division::Division as Requestable>::get_cache_table().write().add_entries(crate::division::DivisionsRequest::builder().build_and_get()?.divisions);
     <crate::conferences::Conference as Requestable>::get_cache_table().write().add_entries(crate::conferences::ConferencesRequest::builder().build_and_get()?.conferences);
     <crate::venue::Venue as Requestable>::get_cache_table().write().add_entries(crate::venue::VenuesRequest::builder().build_and_get()?.venues);
     <crate::league::League as Requestable>::get_cache_table().write().add_entries(crate::league::LeaguesRequest::builder().build_and_get()?.leagues);

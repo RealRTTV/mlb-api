@@ -397,7 +397,7 @@ impl PersonHydrations for () {}
 /// ## Examples
 ///```no_run
 /// person_hydrations! {
-///     pub struct ExampleHydrations {  ->  pub struct ExampleHydrations {
+///     pub struct TestHydrations {  ->  pub struct TestHydrations {
 ///         awards,                     ->      awards: Vec<Award>,
 ///         social,                     ->      social: HashMap<String, Vec<String>>,
 ///         stats: MyStats,             ->      stats: MyStats,
@@ -405,17 +405,17 @@ impl PersonHydrations for () {}
 /// }
 ///
 /// person_hydrations! {
-///     pub struct ExampleHydrations {        ->  pub struct ExampleHydrations {
-///         stats: { [Season] = [Hitting] },  ->      stats: ExampleHydrationsInlineStats,
+///     pub struct TestHydrations {        ->  pub struct TestHydrations {
+///         stats: { [Season] = [Hitting] },  ->      stats: TestHydrationsInlineStats,
 ///     }                                     ->  }
 /// }
 ///
-/// let request = PersonRequest::<ExampleHydrations>::builder()
+/// let request = PersonRequest::<TestHydrations>::builder()
 ///     .id(660_271)
-///     .hydrations(ExampleHydrations::builder())
+///     .hydrations(TestHydrations::builder())
 ///     .build();
 ///
-/// let repsonse = request.get();
+/// let response = request.get().await.unwrap();
 ///```
 ///
 /// ## Person Hydrations

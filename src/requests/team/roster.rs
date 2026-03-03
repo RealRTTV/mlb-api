@@ -335,14 +335,14 @@ mod tests {
     #[tokio::test]
     async fn hydrations_test() {
         roster_hydrations! {
-            pub struct ExampleHydrations {
+            pub struct TestHydrations {
                 person: {
                     nicknames
                 },
             }
         }
 
-        let request = RosterRequest::<ExampleHydrations>::builder().hydrations(ExampleHydrationsRequestData::default()).team_id(141).season(TEST_YEAR).roster_type(RosterType::default()).build();
+        let request = RosterRequest::<TestHydrations>::builder().hydrations(TestHydrationsRequestData::default()).team_id(141).season(TEST_YEAR).roster_type(RosterType::default()).build();
         // println!("Request: {request}");
         let _response = request.get().await.unwrap();
         /*for entry in _response.roster {

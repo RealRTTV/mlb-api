@@ -63,7 +63,7 @@ pub mod all_star;
 pub mod attendance;
 pub mod awards;
 pub mod conferences;
-pub mod divisions;
+pub mod division;
 pub mod draft;
 pub mod game;
 // pub mod high_low; // i think this is part of game

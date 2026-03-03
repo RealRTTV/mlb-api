@@ -125,6 +125,11 @@ impl<S: leagues_request_builder::State> LeaguesRequestBuilder<S> {
 	pub fn league_ids<T: Into<LeagueId>>(self, league_ids: Vec<T>) -> LeaguesRequestBuilder<leagues_request_builder::SetLeagueIds<S>> where S::LeagueIds: leagues_request_builder::IsUnset {
 		self.league_ids_internal(league_ids.into_iter().map(T::into).collect::<Vec<_>>())
 	}
+
+	#[allow(dead_code, reason = "could be used by the end user")]
+	pub fn league_id(self, league_id: impl Into<LeagueId>) -> LeaguesRequestBuilder<leagues_request_builder::SetLeagueIds<S>> where S::LeagueIds: leagues_request_builder::IsUnset {
+		self.league_ids_internal(vec![league_id.into()])
+	}
 }
 
 impl Display for LeaguesRequest {

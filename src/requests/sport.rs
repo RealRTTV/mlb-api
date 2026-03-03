@@ -98,12 +98,12 @@ impl SportsHydrations for () {}
 /// ## Examples
 /// ```no_run
 /// sports_hydrations! {
-///     pub struct ExampleHydrations {
+///     pub struct TestHydrations {
 ///         season,
 ///     }
 /// }
 ///
-/// let response = SportsRequest::<ExampleHydrations>::builder().build_and_get().await.unwrap();
+/// let response = SportsRequest::<TestHydrations>::builder().build_and_get().await.unwrap();
 /// for sport in response.sports {
 ///     dbg!(&sport.extras.season_date_info);
 /// }
@@ -199,5 +199,16 @@ mod tests {
 	#[tokio::test]
 	async fn parse_all_sports() {
 		let _result = SportsRequest::<()>::builder().build_and_get().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn parse_all_sports_with_hydrations() {
+		sports_hydrations! {
+			pub struct TestHydrations {
+				season
+			}
+		}
+
+		let _result = SportsRequest::<TestHydrations>::builder().build_and_get().await.unwrap();
 	}
 }

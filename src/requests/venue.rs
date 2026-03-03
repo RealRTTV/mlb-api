@@ -78,6 +78,17 @@ impl VenueHydrations for () {}
 ///
 /// ## Examples
 /// ```no_run
+/// venue_hydrations! {
+///     pub struct TestHydrations {
+///         location,
+///         timezone,
+///         field_info,
+///         external_references,
+///         tracking_system,
+///     }
+/// }
+///
+/// let [venue]: [Venue<TestHydrations>; 1] = VenuesRequest::<TestHydrations>::builder().venue_ids([14.into()]).build_and_get().await.unwrap().venues.try_into().unwrap();
 /// ```
 ///
 /// ## Venue Hydrations
@@ -233,7 +244,7 @@ mod tests {
 	#[tokio::test]
 	async fn parse_all_mlb_venues_hydrated() {
 		venue_hydrations! {
-			pub struct ExampleHydrations {
+			pub struct TestHydrations {
 				location,
 				timezone,
 				field_info,
@@ -242,6 +253,6 @@ mod tests {
 			}
 		}
 
-		let _response = VenuesRequest::<ExampleHydrations>::builder().sport_id(SportId::MLB).build_and_get().await.unwrap();
+		let _response = VenuesRequest::<TestHydrations>::builder().sport_id(SportId::MLB).build_and_get().await.unwrap();
 	}
 }

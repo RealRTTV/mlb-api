@@ -1,6 +1,6 @@
 //! Standings of a team, wins, losses, etc
 
-use crate::divisions::{DivisionId, NamedDivision};
+use crate::division::{DivisionId, NamedDivision};
 use crate::league::{LeagueId, NamedLeague};
 use crate::meta::StandingsType;
 use crate::request::{RequestURL, RequestURLBuilderExt};

@@ -137,7 +137,7 @@ entrypoint!(Division.id => Division);
 
 #[cfg(test)]
 mod tests {
-	use crate::divisions::DivisionsRequest;
+	use crate::division::DivisionsRequest;
 	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]
