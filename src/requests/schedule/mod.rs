@@ -220,6 +220,10 @@ impl Standings {
 	}
 }
 
+pub trait ScheduleHydrations {
+	
+}
+
 #[allow(dead_code, reason = "rust analyzer says that opponent_id and season are dead, while being used in Display")]
 #[derive(Builder)]
 #[builder(derive(Into))]
