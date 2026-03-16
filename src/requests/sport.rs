@@ -117,7 +117,7 @@ impl SportsHydrations for () {}
 /// [`Season`]: crate::season::Season
 #[macro_export]
 macro_rules! sports_hydrations {
-	(@ inline_structs [$field:ident $(: $value:path)? $(, $($t:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+	(@ inline_structs [$field:ident $(: $value:ty)? $(, $($t:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
 		$crate::sports_hydrations! { @ inline_structs [$($($t)*)?] $vis struct $name { $($field_tt)* $field $(: $value)?, } }
 	};
 	(@ inline_structs [$(,)?] $vis:vis struct $name:ident { $($t:tt)* }) => {
@@ -126,23 +126,21 @@ macro_rules! sports_hydrations {
 	(@ actual $vis:vis struct $name:ident {
 		$(season $season_comma:tt)?
 	}) => {
-		::pastey::paste! {
-			#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
-			#[serde(rename_all = "camelCase")]
-			$vis struct $name {
-				$(pub season_date_info: $crate::season::Season $season_comma)?
-			}
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[serde(rename_all = "camelCase")]
+		$vis struct $name {
+			$(pub season_date_info: $crate::season::Season $season_comma)?
+		}
 
-			impl $crate::sport::SportsHydrations for $name {}
+		impl $crate::sport::SportsHydrations for $name {}
 
-			impl $crate::hydrations::Hydrations for $name {
-				type RequestData = ();
+		impl $crate::hydrations::Hydrations for $name {
+			type RequestData = ();
 
-				fn hydration_text((): &Self::RequestData) -> ::std::borrow::Cow<'static, str> {
-					::std::borrow::Cow::Borrowed(::std::concat!(
-						$("season," $season_comma)?
-					))
-				}
+			fn hydration_text((): &Self::RequestData) -> ::std::borrow::Cow<'static, str> {
+				::std::borrow::Cow::Borrowed(::std::concat!(
+					$("season," $season_comma)?
+				))
 			}
 		}
 	};

@@ -339,7 +339,7 @@ pub struct TeamsResponse<H: TeamHydrations> {
 	pub teams: Vec<Team<H>>,
 }
 
-pub trait TeamHydrations: Hydrations {
+pub trait TeamHydrations: Hydrations<RequestData=()> {
 	/// By default [`SportId`]; with [`sport`] hydration: [`Sport`](crate::sport::Sport)
 	type Sport: Debug + DeserializeOwned + Eq + Clone;
 
@@ -385,17 +385,11 @@ impl TeamHydrations for () {
 ///
 /// team_hydrations! {
 ///     pub struct ExampleHydrations {
-///          previous_schedule,
-///          next_schedule,
-///          venue: { ... },
-///          spring_venue: { ... },
+///          venue: { field_info },
 ///          social,
-///          game: { ... },
-///          league,
-///          sport: { ... },
-///          standings: { ... },
-///          division,
-///          external_references,
+///          sport: (),
+///          standings: (),
+///          external_references
 ///     }
 /// }
 ///
@@ -412,22 +406,22 @@ impl TeamHydrations for () {
 /// | `venue`                 | [`venue_hydrations!`]            |
 /// | `spring_venue`          | [`venue_hydrations!`]            |
 /// | `social`                | [`HashMap<String, Vec<String>>`] |
-/// | `game`                  |                                  |
 /// | `league`                | [`League`]                       |
 /// | `sport`                 | [`sports_hydrations!`]           |
-/// | `standings`             |                                  |
+/// | `standings`             | [`standings_hydrations!`]        |
 /// | `division`              | [`Division`]                     |
 /// | `external_references`   | [`ExternalReference`]            |
 ///
 /// [`venue_hydrations!`]: crate::venue_hydrations
 /// [`sports_hydrations!`]: crate::sports_hydrations
+/// [`standings_hydrations!`]: crate::standings_hydrations
 /// [`HashMap<String, Vec<String>>`]: std::collections::HashMap
 /// [`League`]: crate::league::League
 /// [`Division`]: crate::division::Division
 /// [`ExternalReference`]: crate::types::ExternalReference
 #[macro_export]
 macro_rules! team_hydrations {
-	(@ inline_structs [venue: { $($inline_tt:tt)* } $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+	(@ inline_structs [venue: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
 		::pastey::paste! {
 			$crate::venue_hydrations! {
 				$vis struct [<$name InlineVenue>] {
@@ -435,7 +429,7 @@ macro_rules! team_hydrations {
 				}
 			}
 
-			$crate::team_hydrations! { @ inline_structs [$($($tt)+)?]
+			$crate::team_hydrations! { @ inline_structs [$($($tt)*)?]
 				$vis struct $name {
 					$($field_tt)*
 					venue: [<$name InlineVenue>],
@@ -443,7 +437,7 @@ macro_rules! team_hydrations {
 			}
 		}
 	};
-	(@ inline_structs [spring_venue: { $($inline_tt:tt)* } $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+	(@ inline_structs [spring_venue: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
 		::pastey::paste! {
 			$crate::venue_hydrations! {
 				$vis struct [<$name InlineSpringVenue>] {
@@ -451,7 +445,7 @@ macro_rules! team_hydrations {
 				}
 			}
 
-			$crate::team_hydrations! { @ inline_structs [$($($tt)+)?]
+			$crate::team_hydrations! { @ inline_structs [$($($tt)*)?]
 				$vis struct $name {
 					$($field_tt)*
 					spring_venue: [<$name InlineSpringVenue>],
@@ -459,7 +453,7 @@ macro_rules! team_hydrations {
 			}
 		}
 	};
-	(@ inline_structs [sport: { $($inline_tt:tt)* } $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+	(@ inline_structs [sport: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
 		::pastey::paste! {
 			$crate::sports_hydrations! {
 				$vis struct [<$name InlineSport>] {
@@ -467,7 +461,7 @@ macro_rules! team_hydrations {
 				}
 			}
 
-			$crate::team_hydrations! { @ inline_structs [$($($tt)+)?]
+			$crate::team_hydrations! { @ inline_structs [$($($tt)*)?]
 				$vis struct $name {
 					$($field_tt)*
 					sport: [<$name InlineSport>],
@@ -475,11 +469,27 @@ macro_rules! team_hydrations {
 			}
 		}
 	};
-	(@ inline_structs [$_01:ident : { $($_02:tt)* } $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+	(@ inline_structs [standings: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::pastey::paste! {
+			$crate::standings_hydrations! {
+				$vis struct [<$name InlineStandings>] {
+					$($inline_tt)*
+				}
+			}
+
+			$crate::team_hydrations! { @ inline_structs [$($($tt)*)?]
+				$vis struct $name {
+					$($field_tt)*
+					standings: [<$name InlineStandings>],
+				}
+			}
+		}
+	};
+	(@ inline_structs [$_01:ident : { $($_02:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
 		::core::compile_error!("Found unknown inline struct");
 	};
-	(@ inline_structs [$field:ident $(: $value:path)? $(, $($tt:tt)+)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		$crate::team_hydrations! { @ inline_structs [$($($tt)+)?]
+	(@ inline_structs [$field:ident $(: $value:ty)? $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		$crate::team_hydrations! { @ inline_structs [$($($tt)*)?]
 			$vis struct $name {
 				$($field_tt)*
 				$field $(: $value)?,
@@ -494,16 +504,16 @@ macro_rules! team_hydrations {
 		}
 	};
 
-	(@ sport_type) => { $crate::sport::SportId };
-	(@ sport_type $hydrations:path) => { $crate::sport::Sport<$hydrations> };
+	(@ sport) => { $crate::sport::SportId };
+	(@ sport $hydrations:ty) => { $crate::sport::Sport<$hydrations> };
 
 	(@ venue) => { $crate::venue::NamedVenue };
-	(@ venue $hydrations:path) => { $crate::venue::Venue<$hydrations> };
+	(@ venue $hydrations:ty) => { $crate::venue::Venue<$hydrations> };
 	(@ unknown_venue) => { $crate::venue::NamedVenue::unknown_venue() };
-	(@ unknown_venue $hydrations:path) => { unimplemented!() }; // todo: hrmm... forward error?
+	(@ unknown_venue $hydrations:ty) => { unimplemented!() }; // todo: hrmm... forward error?
 
 	(@ spring_venue) => { $crate::venue::VenueId };
-	(@ spring_venue $hydrations:path) => { $crate::venue::Venue<$hydrations> };
+	(@ spring_venue $hydrations:ty) => { $crate::venue::Venue<$hydrations> };
 
 	(@ league) => { $crate::league::NamedLeague };
 	(@ league ,) => { $crate::league::League };
@@ -514,44 +524,61 @@ macro_rules! team_hydrations {
 	(@ division ,) => { $crate::division::Division };
 
 	(@ actual $vis:vis struct $name:ident {
-		$(previous_schedule $previous_schedule:path ,)?
-		$(next_schedule $next_schedule:path ,)?
-		$(venue $venue:path ,)?
-		$(spring_venue $spring_venue:path ,)?
+		$(previous_schedule: $previous_schedule:ty ,)?
+		$(next_schedule: $next_schedule:ty ,)?
+		$(venue: $venue:ty ,)?
+		$(spring_venue: $spring_venue:ty ,)?
 		$(social $social_comma:tt)?
 		$(league $league_comma:tt)?
-		$(sport $sport:path ,)?
-		$(standings $standings:path ,)?
-		$(division $division_comma:tt)?
+		$(sport: $sport:ty ,)?
+		$(standings: $standings:ty ,)?
+		$(division $division_comma:ty ,)?
 		$(external_references $external_references_comma:tt)?
-		$(location $location_comma:tt)?
 	}) => {
-		::pastey::paste! {
-			#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
-			#[serde(rename_all = "camelCase")]
-			$vis struct $name {
-				$(#[serde(rename = "xrefIds")] external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
-				$(#[serde(default, rename = "social")] socials: ::std::collections::HashMap<::std::string::String, ::std::vec::Vec<::std::string::String> $social_comma>)?
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[serde(rename_all = "camelCase")]
+		$vis struct $name {
+			$(#[serde(rename = "xrefIds")] external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
+			$(#[serde(default, rename = "social")] socials: ::std::collections::HashMap<::std::string::String, ::std::vec::Vec<::std::string::String> $social_comma>)?
+		}
+
+		impl $crate::team::TeamHydrations for $name {
+			type Sport = $crate::team_hydrations!(@ sport $($sport)?);
+
+			type Venue = $crate::team_hydrations!(@ venue $($venue)?);
+
+			type SpringVenue = $crate::team_hydrations!(@ spring_venue $($spring_venue)?);
+
+			type League = $crate::team_hydrations!(@ league $($league_comma)?);
+
+			type Division = $crate::team_hydrations!(@ league $($division_comma)?);
+
+			fn unknown_venue() -> Self::Venue {
+				$crate::team_hydrations!(@ unknown_venue $($venue)?)
 			}
 
-			impl $crate::team::TeamHydrations for $name {
-				type Sport = $crate::team_hydrations!(@ sport_type $($sport)?);
+			fn unknown_league() -> Self::League {
+				$crate::team_hydrations!(@ unknown_league $($league_comma)?)
+			}
+		}
 
-				type Venue = $crate::team_hydrations!(@ venue $($venue)?);
+		impl $crate::hydrations::Hydrations for $name {
+			type RequestData = ();
 
-				type SpringVenue = $crate::team_hydrations!(@ spring_venue $($spring_venue)?);
+			fn hydration_text(&(): Self::RequestData) -> ::std::borrow::Cow<'static, str> {
+				let text = ::std::borrow::Cow::Borrowed(::core::concat!(
+					$("social," $social_comma)?
+					$("xrefId," $external_references_comma)?
+					$("league," $league_comma)?
+					$("division," $division_comma)?
+				));
 
-				type League = $crate::team_hydrations!(@ league $($league_comma)?);
+				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}venue({}),", <$venue as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}springVenue({}),", <$spring_venue as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}sport({}),", <$sport as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}standings({}),", <$standings as $crate::hydrations::Hydrations>::hydration_text(&())));)?
 
-				type Division = $crate::team_hydrations!(@ league $($division_comma)?);
-
-				fn unknown_venue() -> Self::Venue {
-					$crate::team_hydrations!(@ unknown_venue $($venue)?)
-				}
-
-				fn unknown_league() -> Self::League {
-					$crate::team_hydrations!(@ unknown_league $($league_comma)?)
-				}
+				text
 			}
 		}
 	};

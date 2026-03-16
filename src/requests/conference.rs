@@ -123,7 +123,7 @@ entrypoint!(ConferenceId => Conference);
 
 #[cfg(test)]
 mod tests {
-	use crate::conferences::ConferencesRequest;
+	use crate::conference::ConferencesRequest;
 	use crate::request::RequestURLBuilderExt;
 
 	#[tokio::test]

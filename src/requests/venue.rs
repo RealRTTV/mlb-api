@@ -78,6 +78,8 @@ impl VenueHydrations for () {}
 ///
 /// ## Examples
 /// ```no_run
+/// use mlb_api::venue_hydrations;
+/// 
 /// venue_hydrations! {
 ///     pub struct TestHydrations {
 ///         location,

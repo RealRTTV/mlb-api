@@ -473,7 +473,7 @@ macro_rules! person_hydrations {
     (@ inline_structs [$marker:ident : { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
         ::core::compile_error!("Found unknown inline struct");
     };
-    (@ inline_structs [$marker:ident $(: $value:path)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+    (@ inline_structs [$marker:ident $(: $value:ty)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
         ::pastey::paste! {
             $crate::person_hydrations! { @ inline_structs [$($($rest)*)?]
                 $vis struct $name {
@@ -506,7 +506,7 @@ macro_rules! person_hydrations {
 			$(roster_entries $roster_entries_comma:tt)?
 			$(transactions $transactions_comma:tt)?
 			$(social $social_comma:tt)?
-			$(stats: $stats:path ,)?
+			$(stats: $stats:ty ,)?
 			$(external_references $external_references_comma:tt)?
 		}
     ) => {

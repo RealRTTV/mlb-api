@@ -226,7 +226,7 @@ macro_rules! roster_hydrations {
     (@ inline_structs [$marker:ident : { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
         ::core::compile_error!("Found unknown inline struct");
     };
-    (@ inline_structs [$marker:ident $(: $value:path)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+    (@ inline_structs [$marker:ident $(: $value:ty)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
         ::pastey::paste! {
             $crate::roster_hydrations! { @ inline_structs [$($($rest)*)?]
                 $vis struct $name {
@@ -257,7 +257,7 @@ macro_rules! roster_hydrations {
         $crate::person::NamedPerson
     };
     (@ actual $vis:vis struct $name:ident {
-        $(person: $person:path ,)?
+        $(person: $person:ty ,)?
     }) => {
         ::pastey::paste! {
             #[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]

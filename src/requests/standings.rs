@@ -1,6 +1,6 @@
 //! Standings of a team, wins, losses, etc
 
-use crate::division::{DivisionId, NamedDivision};
+use crate::division::NamedDivision;
 use crate::league::{LeagueId, NamedLeague};
 use crate::meta::StandingsType;
 use crate::request::{RequestURL, RequestURLBuilderExt};
@@ -16,41 +16,44 @@ use itertools::Itertools;
 use serde::Deserialize;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
+use std::marker::PhantomData;
 use std::str::FromStr;
+use serde::de::DeserializeOwned;
+use crate::hydrations::Hydrations;
 use crate::types::MLB_API_DATE_FORMAT;
 
 /// A [`Vec`] of [`DivisionalStandings`]
 ///
 /// The request divides the league into its divisions and then the divisions into their teams.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct StandingsResponse {
+#[serde(rename_all = "camelCase", bound = "H: StandingsHydrations")]
+pub struct StandingsResponse<H: StandingsHydrations> {
     pub copyright: Copyright,
     #[serde(rename = "records")]
-    pub divisions: Vec<DivisionalStandings>
+    pub divisions: Vec<DivisionalStandings<H>>
 }
 
 /// [`TeamRecord`]s per division. `last_updated` field might be useful for caching
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct DivisionalStandings {
+#[serde(rename_all = "camelCase", bound = "H: StandingsHydrations")]
+pub struct DivisionalStandings<H: StandingsHydrations> {
     pub standings_type: StandingsType,
     #[serde(rename = "league")]
-    pub league_id: LeagueId,
+    pub league_id: H::League,
     #[serde(rename = "division")]
-    pub division_id: DivisionId,
+    pub division_id: H::Division,
     #[serde(rename = "sport")]
-    pub sport_id: SportId,
+    pub sport_id: H::Sport,
     #[serde(deserialize_with = "crate::deserialize_datetime")]
     pub last_updated: NaiveDateTime,
-    pub team_records: Vec<TeamRecord>,
+    pub team_records: Vec<TeamRecord<H>>,
 }
 
 /// Main bulk of the response; the team's record and standings information. Lots of stuff here.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
-#[serde(rename_all = "camelCase")]
-pub struct TeamRecord {
-    pub team: NamedTeam,
+#[serde(rename_all = "camelCase", bound = "H: StandingsHydrations")]
+pub struct TeamRecord<H: StandingsHydrations> {
+    pub team: H::Team,
     pub season: SeasonId,
     pub games_played: usize,
     pub runs_allowed: usize,
@@ -89,7 +92,7 @@ pub struct TeamRecord {
     pub sport_rank: Option<usize>,
 }
 
-impl TeamRecord {
+impl<H: StandingsHydrations> TeamRecord<H> {
     /// Uses the pythagorean expected win loss pct formula
     #[must_use]
     pub fn expected_win_loss_pct(&self) -> ThreeDecimalPlaceRateStat {
@@ -186,13 +189,13 @@ impl ClinchKind {
     /// ```
     /// use mlb_api::standings::ClinchKind;
     ///
-    /// assert!(ClinchKind::Bye.clinched_postseason());
-    /// assert!(ClinchKind::WildCard.clinched_postseason());
-    /// assert!(ClinchKind::Postseason.clinched_postseason());
-    /// assert!(!ClinchKind::None.clinched_postseason());
+    /// assert!(  ClinchKind::Bye.clinched_postseason());
+    /// assert!(  ClinchKind::WildCard.clinched_postseason());
+    /// assert!(  ClinchKind::Postseason.clinched_postseason());
+    /// assert!(! ClinchKind::None.clinched_postseason());
     /// ```
     #[must_use]
-    pub fn clinched_postseason(self) -> bool {
+    pub const fn clinched_postseason(self) -> bool {
         self as u8 >= Self::Postseason as u8
     }
 
@@ -202,13 +205,13 @@ impl ClinchKind {
     /// ```
     /// use mlb_api::standings::ClinchKind;
     ///
-    /// assert!(ClinchKind::Bye.is_final());
-    /// assert!(ClinchKind::WildCard.is_final());
-    /// assert!(!ClinchKind::Postseason.is_final());
-    /// assert!(!ClinchKind::None.is_final());
+    /// assert!(  ClinchKind::Bye.is_final());
+    /// assert!(  ClinchKind::WildCard.is_final());
+    /// assert!(! ClinchKind::Postseason.is_final());
+    /// assert!(! ClinchKind::None.is_final());
     /// ```
     #[must_use]
-    pub fn is_final(self) -> bool {
+    pub const fn is_final(self) -> bool {
         self as u8 >= Self::WildCard as u8
     }
 
@@ -220,14 +223,14 @@ impl ClinchKind {
     ///
     /// use mlb_api::standings::ClinchKind;
     ///
-    /// assert!(!ClinchKind::Bye.guaranteed_in_wildcard());
-    /// assert!(ClinchKind::Divisional.guaranteed_in_wildcard());
-    /// assert!(ClinchKind::WildCard.guaranteed_in_wildcard());
-    /// assert!(!ClinchKind::None.guaranteed_in_wildcard());
-    /// assert!(!ClinchKind::Postseason.guaranteed_in_wildcard());
+    /// assert!(! ClinchKind::Bye.guaranteed_in_wildcard());
+    /// assert!(  ClinchKind::Divisional.guaranteed_in_wildcard());
+    /// assert!(  ClinchKind::WildCard.guaranteed_in_wildcard());
+    /// assert!(! ClinchKind::None.guaranteed_in_wildcard());
+    /// assert!(! ClinchKind::Postseason.guaranteed_in_wildcard());
     /// ```
     #[must_use]
-    pub fn guaranteed_in_wildcard(self) -> bool {
+    pub const fn guaranteed_in_wildcard(self) -> bool {
         matches!(self, Self::WildCard | Self::Divisional)
     }
 
@@ -238,14 +241,14 @@ impl ClinchKind {
     ///
     /// use mlb_api::standings::ClinchKind;
     ///
-    /// assert!(!ClinchKind::Bye.guaranteed_in_wildcard());
-    /// assert!(ClinchKind::Divisional.guaranteed_in_wildcard());
-    /// assert!(ClinchKind::WildCard.guaranteed_in_wildcard());
-    /// assert!(ClinchKind::None.guaranteed_in_wildcard());
-    /// assert!(ClinchKind::Postseason.guaranteed_in_wildcard());
+    /// assert!(! ClinchKind::Bye.guaranteed_in_wildcard());
+    /// assert!(  ClinchKind::Divisional.guaranteed_in_wildcard());
+    /// assert!(  ClinchKind::WildCard.guaranteed_in_wildcard());
+    /// assert!(  ClinchKind::None.guaranteed_in_wildcard());
+    /// assert!(  ClinchKind::Postseason.guaranteed_in_wildcard());
     /// ```
     #[must_use]
-    pub fn potentially_in_wildcard(self) -> bool {
+    pub const fn potentially_in_wildcard(self) -> bool {
         matches!(self, Self::WildCard | Self::Divisional | Self::Postseason | Self::None)
     }
 }
@@ -314,13 +317,10 @@ impl FromStr for GamesBack {
     fn from_str(mut s: &str) -> Result<Self, Self::Err> {
         if s == "-" { return Ok(Self { games: 0, half: false }) }
 
-        let sign: isize = match s.strip_prefix("+") {
-            Some(s2) => {
+        let sign: isize = s.strip_prefix("+").map_or(-1, |s2| {
                 s = s2;
                 1
-            }
-            None => -1,
-        };
+            });
 
         let (games, half) = s.split_once('.').unwrap_or((s, ""));
         let games = games.parse::<usize>().map_err(|_| "invalid game quantity")?;
@@ -459,23 +459,170 @@ pub enum RecordSplitKind {
     /// Expected record using pythagorean expected win loss pct
     ///
     /// This value is calculated as a percentage and multiplied by the number of games that <u>have been</u> played.
-    #[allow(non_camel_case_types)]
+    #[allow(non_camel_case_types, reason = "proper case")]
     #[serde(rename = "xWinLoss")]
     xWinLoss,
 
     /// Expected record for the season using pythagorean expected win loss pct
     ///
     /// This value is calculated as a percentage and multiplied by the number of games <u>in the season</u>.
-    #[allow(non_camel_case_types)]
+    #[allow(non_camel_case_types, reason = "proper case")]
     #[serde(rename = "xWinLossSeason")]
     xWinLossSeason,
 }
 
-// todo: hydrations
+pub trait StandingsHydrations: Hydrations<RequestData=()> {
+    type Team: Debug + DeserializeOwned + Eq + Clone;
+    type League: Debug + DeserializeOwned + Eq + Clone;
+    type Division: Debug + DeserializeOwned + Eq + Clone;
+    type Sport: Debug + DeserializeOwned + Eq + Clone;
+}
+
+impl StandingsHydrations for () {
+    type Team = NamedTeam;
+    type League = NamedLeague;
+    type Division = NamedDivision;
+    type Sport = SportId;
+}
+
+/// Creates hydrations for a standings request
+///
+/// ## Examples
+/// ```no_run
+/// use mlb_api::standings::{StandingsRequest, StandingsResponse};
+/// use mlb_api::standings_hydrations;
+///
+/// standings_hydrations! {
+///     pub struct ExampleHydrations {
+///         team: (),
+///         league,
+///         sport: { season }
+///     }
+/// }
+///
+/// let response: StandingsResponse<ExampleHydrations> = StandingsRequest::<ExampleHydrations>::builder().build_and_get().await.unwrap();
+/// ``` 
+/// 
+/// ## Standings Hydrations
+/// <u>Note: Fields must appear in exactly this order (or be omitted)</u>
+///
+/// | Name       | Type                   |
+/// |------------|------------------------|
+/// | `team`     | [`team_hydrations!`]   |
+/// | `league`   | [`League`]             |
+/// | `division` | [`Division`]           |
+/// | `sport`    | [`sports_hydrations!`] |
+///
+/// [`team_hydrations!`]: crate::team_hydrations
+/// [`League`]: crate::league::League
+/// [`Division`]: crate::division::Division
+/// [`sports_hydrations!`]: crate::sports_hydrations
+/// [`Conference`]: crate::conference::Conference
+#[macro_export]
+macro_rules! standings_hydrations {
+    (@ inline_structs [team: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        ::pastey::paste! {
+            $crate::team_hydrations! {
+                $vis struct [<$name InlineTeam>] {
+                    $($inline_tt)*
+                }
+            }
+
+            $crate::standings_hydrations! { @ inline_structs [$($($tt)*)?]
+                $vis struct $name {
+                    $($field_tt)*
+                    team: [<$name InlineTeam>],
+                }
+            }
+        }
+    };
+    (@ inline_structs [sport: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        ::pastey::paste! {
+            $crate::sports_hydrations! {
+                $vis struct [<$name InlineSport>] {
+                    $($inline_tt)*
+                }
+            }
+
+            $crate::standings_hydrations! { @ inline_structs [$($($tt)*)?]
+                $vis struct $name {
+                    $($field_tt)*
+                    sport: [<$name InlineSport>],
+                }
+            }
+        }
+    };
+    (@ inline_structs [$_01:ident : { $($_02:tt)* $(, $($tt:tt)*)?}] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        ::core::compile_error!("Found unknown inline struct");
+    };
+    (@ inline_structs [$field:ident $(: $value:ty)? $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        $crate::standings_hydrations! { @ inline_structs [$($($tt)*)?]
+            $vis struct $name {
+                $($field_tt)*
+                $field $(: $value)?,
+            }
+        }
+    };
+    (@ inline_structs [] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+        $crate::standings_hydrations!(@ actual $vis struct $name { $($field_tt)* });
+    };
+
+    (@ team) => { $crate::team::NamedTeam };
+    (@ team $team:ty) => { $crate::team::Team<$team> };
+
+	(@ league) => { $crate::league::NamedLeague };
+	(@ league ,) => { $crate::league::League };
+	(@ unknown_league) => { $crate::league::NamedLeague::unknown_league() };
+	(@ unknown_league ,) => { unimplemented!() }; // todo: hrmm... forward error?
+
+    (@ division) => { $crate::division::NamedDivision };
+	(@ division ,) => { $crate::division::Division };
+
+    (@ sport) => { $crate::sport::SportId };
+	(@ sport $hydrations:ty) => { $crate::sport::Sport<$hydrations> };
+
+    (@ actual $vis:vis struct $name:ident {
+        $(team: $team:ty ,)?
+        $(league $league_comma:tt)?
+        $(division $division_comma:tt)?
+        $(sport: $sport:ty ,)?
+    }) => {
+        $vis struct $name {}
+
+        impl $crate::standings::StandingsHydrations for $name {
+            type Team = $crate::standings_hydrations!(@ team $($team)?);
+            type League = $crate::standings_hydrations!(@ league $($league_comma)?);
+            type Division = $crate::standings_hydrations!(@ division $($division_comma)?);
+            type Sport = $crate::standings_hydrations!(@ sport $($sport)?);
+        }
+
+        impl $crate::hydrations::Hydrations for $name {
+            type RequestData = ();
+
+            fn hydration_text(&(): &Self::RequestData) -> ::std::borrow::Cow<'static, str> {
+                let text = ::std::borrow::Cow::Borrowed(::core::concat!(
+                    $("league," $league_comma)?
+                    $("division," $division_comma)?
+                ));
+
+                $(let text = ::std::borrow::Cow::Owned!(::std::format!("{text}team({}),", <$team as $crate::hydrations::Hydrations>::hydration_text(&())));)?;
+                $(let text = ::std::borrow::Cow::Owned!(::std::format!("{text}sport({}),", <$sport as $crate::hydrations::Hydrations>::hydration_text(&())));)?;
+
+                text
+            }
+        }
+    };
+    ($vis:vis struct $name:ident {
+        $($field_tt:tt)*
+    }) => {
+        $crate::standings_hydrations!(@ inline_structs [$($field_tt)*] $vis struct $name {})
+    };
+}
+
 /// Returns a [`StandingsResponse`].
 #[derive(Builder)]
 #[builder(derive(Into))]
-pub struct StandingsRequest {
+pub struct StandingsRequest<H: StandingsHydrations> {
     #[builder(into)]
     league_id: LeagueId,
     #[builder(into, default)]
@@ -483,25 +630,29 @@ pub struct StandingsRequest {
     standings_types: Option<Vec<StandingsType>>,
     #[builder(into)]
     date: Option<NaiveDate>,
+    #[builder(skip)]
+    _marker: PhantomData<H>,
 }
 
-impl<S: standings_request_builder::State + standings_request_builder::IsComplete> RequestURLBuilderExt for StandingsRequestBuilder<S> {
-    type Built = StandingsRequest;
+impl<H: StandingsHydrations, S: standings_request_builder::State + standings_request_builder::IsComplete> RequestURLBuilderExt for StandingsRequestBuilder<H, S> {
+    type Built = StandingsRequest<H>;
 }
 
-impl Display for StandingsRequest {
+impl<H: StandingsHydrations> Display for StandingsRequest<H> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let hydrations = Some(H::hydration_text(&())).filter(|s| !s.is_empty());
         write!(f, "http://statsapi.mlb.com/api/v1/standings{params}", params = gen_params! {
             "leagueId": self.league_id,
             "season": self.season,
             "standingsTypes"?: self.standings_types.as_ref().map(|x| x.iter().copied().join(",")),
             "date"?: self.date.map(|x| x.format(MLB_API_DATE_FORMAT)),
+            "hydrate"?: hydrations,
         })
     }
 }
 
-impl RequestURL for StandingsRequest {
-    type Response = StandingsResponse;
+impl<H: StandingsHydrations> RequestURL for StandingsRequest<H> {
+    type Response = StandingsResponse<H>;
 }
 
 #[cfg(test)]
@@ -515,8 +666,8 @@ mod tests {
     #[tokio::test]
     async fn all_mlb_leagues_2025() {
         for league_id in [LeagueId::new(103), LeagueId::new(104)] {
-            let _ = StandingsRequest::builder().season(TEST_YEAR).league_id(league_id).build_and_get().await.unwrap();
-            let _ = StandingsRequest::builder().season(TEST_YEAR).date(NaiveDate::from_ymd_opt(TEST_YEAR as _, 09, 26).unwrap()).league_id(league_id).build_and_get().await.unwrap();
+            let _ = StandingsRequest::<()>::builder().season(TEST_YEAR).league_id(league_id).build_and_get().await.unwrap();
+            let _ = StandingsRequest::<()>::builder().season(TEST_YEAR).date(NaiveDate::from_ymd_opt(TEST_YEAR as _, 09, 26).unwrap()).league_id(league_id).build_and_get().await.unwrap();
         }
     }
 }

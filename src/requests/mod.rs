@@ -62,7 +62,7 @@ macro_rules! entrypoint {
 pub mod all_star;
 pub mod attendance;
 pub mod awards;
-pub mod conferences;
+pub mod conference;
 pub mod division;
 pub mod draft;
 pub mod game;

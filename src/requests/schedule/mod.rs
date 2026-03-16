@@ -244,7 +244,6 @@ pub struct ScheduleRequest {
 	season: Option<SeasonId>,
 }
 
-
 impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::request::RequestURLBuilderExt for ScheduleRequestBuilder<S> {
     type Built = ScheduleRequest;
 }

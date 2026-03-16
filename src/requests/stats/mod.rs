@@ -53,11 +53,6 @@ mod tests;
 
 // pub use derived::*;
 
-#[doc(hidden)]
-pub trait Stats: 'static + Debug + PartialEq + Eq + Clone + Hydrations {}
-
-impl Stats for () {}
-
 pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
 	type Split: DeserializeOwned;
 

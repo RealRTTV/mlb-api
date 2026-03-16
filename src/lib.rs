@@ -61,6 +61,8 @@ macro_rules! id {
 	};
 }
 
+// todo: add macro to lookup one stat type under one stat group for a player and return the type directly.
+
 pub mod hydrations;
 pub mod request;
 mod types;
