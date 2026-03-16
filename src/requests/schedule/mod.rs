@@ -3,48 +3,51 @@
 // #![allow(non_snake_case)]
 
 use crate::game::{DoubleHeaderKind, GameId};
+use crate::hydrations::Hydrations;
 use crate::league::LeagueId;
-use crate::season::SeasonId;
-use crate::team::TeamId;
-use crate::{Copyright, HomeAwaySplit, NaiveDateRange, MLB_API_DATE_FORMAT};
-use crate::venue::{NamedVenue, VenueId};
+use crate::meta::DayNight;
 use crate::meta::GameStatus;
 use crate::meta::GameType;
 use crate::request::RequestURL;
-use crate::meta::DayNight;
+use crate::season::SeasonId;
 use crate::sport::SportId;
+use crate::team::NamedTeam;
+use crate::team::TeamId;
+use crate::venue::{NamedVenue, VenueId};
+use crate::{Copyright, HomeAwaySplit, MLB_API_DATE_FORMAT, NaiveDateRange};
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, Utc};
 use either::Either;
 use itertools::Itertools;
 use serde::Deserialize;
-use serde_with::serde_as;
+use serde::de::DeserializeOwned;
 use serde_with::DefaultOnError;
-use std::fmt::{Display, Formatter};
+use serde_with::serde_as;
+use std::fmt::{Debug, Display, Formatter};
+use std::marker::PhantomData;
 use uuid::Uuid;
-use crate::team::NamedTeam;
 
 pub mod postseason;
 pub mod tied;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ScheduleResponse {
+#[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
+pub struct ScheduleResponse<H: ScheduleHydrations> {
 	pub copyright: Copyright,
-	pub dates: Vec<ScheduleDate>,
+	pub dates: Vec<ScheduleDate<H>>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ScheduleDate {
+#[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
+pub struct ScheduleDate<H: ScheduleHydrations> {
 	pub date: NaiveDate,
-	pub games: Vec<ScheduleGame>,
+	pub games: Vec<ScheduleGame<H>>,
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(from = "__ScheduleGameStruct")]
-pub struct ScheduleGame {
+#[serde(from = "__ScheduleGameStruct<H>", bound = "H: ScheduleHydrations")]
+pub struct ScheduleGame<H: ScheduleHydrations> {
 	pub game_id: GameId,
 	pub game_guid: Uuid,
 	pub game_type: GameType,
@@ -53,7 +56,7 @@ pub struct ScheduleGame {
 	/// Different from `game_date.date()` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
 	pub official_date: NaiveDate,
 	pub status: GameStatus,
-	pub teams: HomeAwaySplit<TeamWithStandings>,
+	pub teams: HomeAwaySplit<TeamWithStandings<H>>,
 	pub venue: NamedVenue,
 	pub is_tie: bool,
 
@@ -78,8 +81,8 @@ pub struct ScheduleGame {
 
 #[serde_as]
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct __ScheduleGameStruct {
+#[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
+struct __ScheduleGameStruct<H: ScheduleHydrations> {
 	#[serde(rename = "gamePk")]
 	game_id: GameId,
 	game_guid: Uuid,
@@ -89,7 +92,7 @@ struct __ScheduleGameStruct {
 	game_date: NaiveDateTime,
 	official_date: NaiveDate,
 	status: GameStatus,
-	teams: HomeAwaySplit<TeamWithStandings>,
+	teams: HomeAwaySplit<TeamWithStandings<H>>,
 	#[serde_as(deserialize_as = "DefaultOnError")]
 	venue: Option<NamedVenue>,
 	is_tie: Option<bool>,
@@ -114,7 +117,7 @@ struct __ScheduleGameStruct {
 	series_data: Option<SeriesData>,
 }
 
-impl From<__ScheduleGameStruct> for ScheduleGame {
+impl<H: ScheduleHydrations> From<__ScheduleGameStruct<H>> for ScheduleGame<H> {
 	#[allow(clippy::cast_possible_wrap, reason = "not gonna happen")]
 	fn from(
 		__ScheduleGameStruct {
@@ -139,7 +142,7 @@ impl From<__ScheduleGameStruct> for ScheduleGame {
 			reverse_home_away_status,
 			inning_break_length,
 			series_data,
-		}: __ScheduleGameStruct,
+		}: __ScheduleGameStruct<H>,
 	) -> Self {
 		Self {
 			game_id,
@@ -176,9 +179,9 @@ pub struct SeriesData {
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct TeamWithStandings {
-	pub team: NamedTeam,
+#[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
+pub struct TeamWithStandings<H: ScheduleHydrations> {
+	pub team: H::Team,
 	#[serde(rename = "leagueRecord")]
 	pub standings: Standings,
 	#[serde(flatten)]
@@ -220,14 +223,173 @@ impl Standings {
 	}
 }
 
-pub trait ScheduleHydrations {
-	
+pub trait ScheduleHydrations: Hydrations<RequestData = ()> {
+	type Team: Debug + DeserializeOwned + Clone + Eq;
+
+	type Venue: Debug + DeserializeOwned + Clone + Eq;
+}
+
+impl ScheduleHydrations for () {
+	type Team = NamedTeam;
+
+	type Venue = NamedVenue;
+}
+
+/// Creates hydrations for a schedule
+///
+/// ## Schedule Hydrations
+/// | Name                                           | Type                 |
+/// |------------------------------------------------|----------------------|
+/// | `team`                                         | [`team_hydrations!`] |
+/// | `game`                                         |                      |
+/// | `linescore`                                    |                      |
+/// | `decisions`                                    |                      |
+/// | `scoring_plays`                                |                      |
+/// | `broadcasts`                                   |                      |
+/// | `radio_broadcasts`                             |                      |
+/// | `metadata`                                     |                      |
+/// | `series_status`                                |                      |
+/// | `venue`                                        | [`venue_hydrations!`]|
+/// | `weather`                                      |                      |
+/// | `game_info`                                    |                      |
+/// | `officials`                                    |                      |
+/// | `probable_officials`                           |                      |
+/// | `tracking_version`                             |                      |
+/// | `coaching_video`                               |                      |
+/// | `probable_pitcher`                             |                      |
+/// | `probable_pitcher(all)`                        |                      |
+/// | `probable_pitcher(note)`                       |                      |
+/// | `probable_pitcher(show_on_preview)`            |                      |
+/// | `review`                                       |                      |
+/// | `event(performers)`                            |                      |
+/// | `event(promotions)`                            |                      |
+/// | `event(timezone)`                              |                      |
+/// | `event(tickets)`                               |                      |
+/// | `event(venue)`                                 |                      |
+/// | `event(designations)`                          |                      |
+/// | `event(game)`                                  |                      |
+/// | `event(status)`                                |                      |
+/// | `event(sport)`                                 |                      |
+/// | `event(league)`                                |                      |
+/// | `event(division)`                              |                      |
+/// | `linescore(positions)`                         |                      |
+/// | `linescore(matchup)`                           |                      |
+/// | `linescore(runners)`                           |                      |
+/// | `lineups`                                      |                      |
+/// | `live_lookin`                                  |                      |
+/// | `flags`                                        |                      |
+/// | `alerts`                                       |                      |
+/// | `previous_play`                                |                      |
+/// | `home_runs`                                    |                      |
+/// | `xrefId`                                       |                      |
+/// | `person`                                       |                      |
+/// | `stats`                                        |                      |
+/// | `game_id`                                      |                      |
+/// | `story`                                        |                      |
+/// | `rule_settings`                                |                      |
+/// | `abs_challenge`                                |                      |
+/// | `acs_challenge`                                |                      |
+/// | `status_flags`                                 |                      |
+/// | `weather_forecast`                             |                      |
+///
+/// [`team_hydrations!`]: crate::team_hydrations
+/// [`venue_hydrations!`]: crate::venue_hydrations
+#[macro_export]
+macro_rules! schedule_hydrations {
+	(@ inline_structs [team: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::pastey::paste! {
+			$crate::team_hydrations! {
+				$vis struct [<$name InlineTeam>] {
+					$($inline_tt)*
+				}
+			}
+
+			$crate::schedule_hydrations! { @ inline_structs [$($($tt)*)?]
+				$vis struct $name {
+					$($field_tt)*
+					team: [<$name InlineTeam>],
+				}
+			}
+		}
+	};
+	(@ inline_structs [venue: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::pastey::paste! {
+			$crate::venue_hydrations! {
+				$vis struct [<$name InlineVenue>] {
+					$($inline_tt)*
+				}
+			}
+
+			$crate::schedule_hydrations! { @ inline_structs [$($($tt)*)?]
+				$vis struct $name {
+					$($field_tt)*
+					venue: [<$name InlineVenue>],
+				}
+			}
+		}
+	};
+	(@ inline_structs [$_01:ident : { $($_02:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::core::compile_error!("Found unknown inline struct");
+	};
+	(@ inline_structs [$field:ident $(: $value:ty)? $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		$crate::schedule_hydrations! { @ inline_structs [$($($tt)*)?]
+			$vis struct $name {
+				$($field_tt)*
+				$field $(: $value)?,
+			}
+		}
+	};
+	(@ inline_structs [] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		$crate::schedule_hydrations! { @ actual
+			$vis struct $name {
+				$($field_tt)*
+			}
+		}
+	};
+
+    (@ team) => { $crate::team::NamedTeam };
+	(@ team $hydrations:ty) => { $crate::team::Team<$hydrations> };
+
+    (@ venue) => { $crate::venue::NamedVenue };
+	(@ venue $hydrations:ty) => { $crate::venue::Venue<$hydrations> };
+
+	(@ actual $vis:vis struct $name:ident {
+		$(team: $team:ty ,)?
+		$(venue: $venue:ty)?
+	}) => {
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[serde(rename_all = "camelCase")]
+		$vis struct $name {
+
+		}
+
+		impl $crate::schedule::ScheduleHydrations for $name {
+			type Team = $crate::schedule_hydrations!(@ team $($team)?);
+
+			type Venue = $crate::schedule_hydrations!(@ venue $($venue)?);
+		}
+
+		impl $crate::hydrations::Hydrations for $name {
+			type RequestData = ();
+
+			fn hydration_text(&(): Self::RequestData) -> ::std::borrow::Cow<'static, str> {
+				let text = ::std::borrow::Cow::Borrowed(::core::concat!(
+
+				));
+
+				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}team({}),", <$team as $crate::hydrations::Hydrations>::hydration_text(&()))))?
+				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}venue({}),", <$venue as $crate::hydrations::Hydrations>::hydration_text(&()))))?
+
+				text
+			}
+		}
+	};
 }
 
 #[allow(dead_code, reason = "rust analyzer says that opponent_id and season are dead, while being used in Display")]
 #[derive(Builder)]
 #[builder(derive(Into))]
-pub struct ScheduleRequest {
+pub struct ScheduleRequest<H: ScheduleHydrations> {
 	#[builder(into)]
 	#[builder(default)]
 	sport_id: SportId,
@@ -246,32 +408,48 @@ pub struct ScheduleRequest {
 	opponent_id: Option<TeamId>,
 	#[builder(into)]
 	season: Option<SeasonId>,
+	#[builder(skip)]
+	_marker: PhantomData<H>,
 }
 
-impl<S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::request::RequestURLBuilderExt for ScheduleRequestBuilder<S> {
-    type Built = ScheduleRequest;
+impl<H: ScheduleHydrations, S: schedule_request_builder::State + schedule_request_builder::IsComplete> crate::request::RequestURLBuilderExt for ScheduleRequestBuilder<H, S> {
+	type Built = ScheduleRequest<H>;
 }
 
-impl<S: schedule_request_builder::State> ScheduleRequestBuilder<S> {
-	pub fn game_ids(self, game_ids: Vec<impl Into<GameId>>) -> ScheduleRequestBuilder<schedule_request_builder::SetGameIds<S>> where S::GameIds: schedule_request_builder::IsUnset {
+impl<H: ScheduleHydrations, S: schedule_request_builder::State> ScheduleRequestBuilder<H, S> {
+	pub fn game_ids(self, game_ids: Vec<impl Into<GameId>>) -> ScheduleRequestBuilder<H, schedule_request_builder::SetGameIds<S>>
+	where
+		S::GameIds: schedule_request_builder::IsUnset,
+	{
 		self.game_ids_internal(game_ids.into_iter().map(Into::into).collect())
 	}
 
-	pub fn venue_ids(self, venue_ids: Vec<impl Into<VenueId>>) -> ScheduleRequestBuilder<schedule_request_builder::SetVenueIds<S>> where S::VenueIds: schedule_request_builder::IsUnset {
+	pub fn venue_ids(self, venue_ids: Vec<impl Into<VenueId>>) -> ScheduleRequestBuilder<H, schedule_request_builder::SetVenueIds<S>>
+	where
+		S::VenueIds: schedule_request_builder::IsUnset,
+	{
 		self.venue_ids_internal(venue_ids.into_iter().map(Into::into).collect())
 	}
 
-	pub fn date(self, date: NaiveDate) -> ScheduleRequestBuilder<schedule_request_builder::SetDate<S>> where S::Date: schedule_request_builder::IsUnset {
+	pub fn date(self, date: NaiveDate) -> ScheduleRequestBuilder<H, schedule_request_builder::SetDate<S>>
+	where
+		S::Date: schedule_request_builder::IsUnset,
+	{
 		self.date_internal(Either::Left(date))
 	}
 
-	pub fn date_range(self, range: NaiveDateRange) -> ScheduleRequestBuilder<schedule_request_builder::SetDate<S>> where S::Date: schedule_request_builder::IsUnset {
+	pub fn date_range(self, range: NaiveDateRange) -> ScheduleRequestBuilder<H, schedule_request_builder::SetDate<S>>
+	where
+		S::Date: schedule_request_builder::IsUnset,
+	{
 		self.date_internal(Either::Right(range))
 	}
 }
 
-impl Display for ScheduleRequest {
+impl<H: ScheduleHydrations> Display for ScheduleRequest<H> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		let hydrations = Some(H::hydration_text(&())).filter(|s| !s.is_empty());
+
 		write!(
 			f,
 			"http://statsapi.mlb.com/api/v1/schedule{params}",
@@ -286,41 +464,47 @@ impl Display for ScheduleRequest {
 				"endDate"?: self.date.as_ref().right().map(|range| range.end().format(MLB_API_DATE_FORMAT)),
 				"opponentId"?; self.opponent_id,
 				"season"?: self.season,
+				"hydrate"?: hydrations,
 			}
 		)
 	}
 }
 
-impl RequestURL for ScheduleRequest {
-	type Response = ScheduleResponse;
+impl<H: ScheduleHydrations> RequestURL for ScheduleRequest<H> {
+	type Response = ScheduleResponse<H>;
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::schedule::ScheduleRequest;
 	use crate::TEST_YEAR;
-	use chrono::NaiveDate;
 	use crate::request::RequestURLBuilderExt;
+	use crate::schedule::ScheduleRequest;
+	use chrono::NaiveDate;
 
 	#[tokio::test]
 	async fn test_one_date() {
 		let date = NaiveDate::from_ymd_opt(2020, 8, 2).expect("Valid date");
-		let _ = ScheduleRequest::builder().date(date).build_and_get().await.unwrap();
+		let _ = ScheduleRequest::<()>::builder().date(date).build_and_get().await.unwrap();
 	}
 
 	#[tokio::test]
 	async fn test_all_dates_current_year() {
-		let _ = ScheduleRequest::builder().date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).expect("Valid date")..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).expect("Valid date")).build_and_get().await.unwrap();
+		let _ = ScheduleRequest::<()>::builder()
+			.date_range(NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 1, 1).expect("Valid date")..=NaiveDate::from_ymd_opt(TEST_YEAR.try_into().unwrap(), 12, 31).expect("Valid date"))
+			.build_and_get()
+			.await
+			.unwrap();
 	}
 
 	#[tokio::test]
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
 	async fn test_all_dates_all_years() {
 		for year in 1876..=TEST_YEAR {
-			let _ = ScheduleRequest::builder().date_range(NaiveDate::from_ymd_opt(year.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(year.try_into().unwrap(), 12, 31).unwrap())
-			.build_and_get()
-			.await
-			.unwrap();
+			let _ = ScheduleRequest::<()>::builder()
+				.date_range(NaiveDate::from_ymd_opt(year.try_into().unwrap(), 1, 1).unwrap()..=NaiveDate::from_ymd_opt(year.try_into().unwrap(), 12, 31).unwrap())
+				.build_and_get()
+				.await
+				.unwrap();
 		}
 	}
 }
