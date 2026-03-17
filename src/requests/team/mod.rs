@@ -13,6 +13,7 @@ pub mod affiliates;
 
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::marker::PhantomData;
 use bon::Builder;
 use serde_with::DefaultOnError;
 use crate::division::NamedDivision;
@@ -401,8 +402,8 @@ impl TeamHydrations for () {
 ///
 /// | Name                    | Type                             |
 /// |-------------------------|----------------------------------|
-/// | `previous_schedule`     |                                  |
-/// | `next_schedule`         |                                  |
+/// | `previous_schedule`     | [`schedule_hydrations!`]         |
+/// | `next_schedule`         | [`schedule_hydrations!`]         |
 /// | `venue`                 | [`venue_hydrations!`]            |
 /// | `spring_venue`          | [`venue_hydrations!`]            |
 /// | `social`                | [`HashMap<String, Vec<String>>`] |
@@ -412,6 +413,7 @@ impl TeamHydrations for () {
 /// | `division`              | [`Division`]                     |
 /// | `external_references`   | [`ExternalReference`]            |
 ///
+/// [`schedule_hydrations!`]: crate::schedule_hydrations
 /// [`venue_hydrations!`]: crate::venue_hydrations
 /// [`sports_hydrations!`]: crate::sports_hydrations
 /// [`standings_hydrations!`]: crate::standings_hydrations
@@ -421,6 +423,38 @@ impl TeamHydrations for () {
 /// [`ExternalReference`]: crate::types::ExternalReference
 #[macro_export]
 macro_rules! team_hydrations {
+	(@ inline_structs [previous_schedule: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::pastey::paste! {
+			$crate::schedule_hydrations! {
+				$vis struct [<$name InlinePreviousSchedule>] {
+					$($inline_tt)*
+				}
+			}
+
+			$crate::team_hydrations! { @ inline_structs [$($($tt)*)?]
+				$vis struct $name {
+					$($field_tt)*
+					venue: [<$name InlinePreviousSchedule>],
+				}
+			}
+		}
+	};
+	(@ inline_structs [next_schedule: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
+		::pastey::paste! {
+			$crate::schedule_hydrations! {
+				$vis struct [<$name InlineNextSchedule>] {
+					$($inline_tt)*
+				}
+			}
+
+			$crate::team_hydrations! { @ inline_structs [$($($tt)*)?]
+				$vis struct $name {
+					$($field_tt)*
+					venue: [<$name InlineNextSchedule>],
+				}
+			}
+		}
+	};
 	(@ inline_structs [venue: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
 		::pastey::paste! {
 			$crate::venue_hydrations! {
@@ -532,12 +566,13 @@ macro_rules! team_hydrations {
 		$(league $league_comma:tt)?
 		$(sport: $sport:ty ,)?
 		$(standings: $standings:ty ,)?
-		$(division $division_comma:ty ,)?
+		$(division $division_comma:tt)?
 		$(external_references $external_references_comma:tt)?
 	}) => {
 		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
-		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
+			$(#[serde(rename = "previousGameSchedule")] previous_schedule: $crate::schedule::ScheduleResponse<$previous_schedule>,)?
+			$(#[serde(rename = "nextGameSchedule")] next_schedule: $crate::schedule::ScheduleResponse<$next_schedule>,)?
 			$(#[serde(rename = "xrefIds")] external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
 			$(#[serde(default, rename = "social")] socials: ::std::collections::HashMap<::std::string::String, ::std::vec::Vec<::std::string::String> $social_comma>)?
 		}
@@ -565,7 +600,7 @@ macro_rules! team_hydrations {
 		impl $crate::hydrations::Hydrations for $name {
 			type RequestData = ();
 
-			fn hydration_text(&(): Self::RequestData) -> ::std::borrow::Cow<'static, str> {
+			fn hydration_text(&(): &Self::RequestData) -> ::std::borrow::Cow<'static, str> {
 				let text = ::std::borrow::Cow::Borrowed(::core::concat!(
 					$("social," $social_comma)?
 					$("xrefId," $external_references_comma)?
@@ -573,10 +608,12 @@ macro_rules! team_hydrations {
 					$("division," $division_comma)?
 				));
 
-				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}venue({}),", <$venue as $crate::hydrations::Hydrations>::hydration_text(&())));)?
-				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}springVenue({}),", <$spring_venue as $crate::hydrations::Hydrations>::hydration_text(&())));)?
-				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}sport({}),", <$sport as $crate::hydrations::Hydrations>::hydration_text(&())));)?
-				$(let text = ::std::borrow::Cow::Owned(::std::format!("{text}standings({}),", <$standings as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::<'static, str>::Owned(::std::format!("{text}previousSchedule({}),", <$previous_schedule as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::<'static, str>::Owned(::std::format!("{text}nextSchedule({}),", <$next_schedule as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::<'static, str>::Owned(::std::format!("{text}venue({}),", <$venue as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::<'static, str>::Owned(::std::format!("{text}springVenue({}),", <$spring_venue as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::<'static, str>::Owned(::std::format!("{text}sport({}),", <$sport as $crate::hydrations::Hydrations>::hydration_text(&())));)?
+				$(let text = ::std::borrow::Cow::<'static, str>::Owned(::std::format!("{text}standings({}),", <$standings as $crate::hydrations::Hydrations>::hydration_text(&())));)?
 
 				text
 			}
@@ -598,22 +635,22 @@ pub struct TeamsRequest<H: TeamHydrations> {
 	#[builder(into)]
 	season: Option<SeasonId>,
 	#[builder(into)]
-	hydrations: H::RequestData,
-	#[builder(into)]
 	team_id: Option<TeamId>,
+	#[builder(skip)]
+	_marker: PhantomData<H>,
 }
 
 impl TeamsRequest<()> {
-	pub fn for_sport(sport_id: impl Into<SportId>) -> TeamsRequestBuilder<(), teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> {
-		Self::builder().sport_id(sport_id).hydrations(())
+	pub fn for_sport(sport_id: impl Into<SportId>) -> TeamsRequestBuilder<(), teams_request_builder::SetSportId> {
+		Self::builder().sport_id(sport_id)
 	}
 
-	pub fn mlb_teams() -> TeamsRequestBuilder<(), teams_request_builder::SetHydrations<teams_request_builder::SetSportId>> {
+	pub fn mlb_teams() -> TeamsRequestBuilder<(), teams_request_builder::SetSportId> {
 		Self::for_sport(SportId::MLB)
 	}
 
-	pub fn all_sports() -> TeamsRequestBuilder<(), teams_request_builder::SetHydrations> {
-		Self::builder().hydrations(())
+	pub fn all_sports() -> TeamsRequestBuilder<()> {
+		Self::builder()
 	}
 }
 
@@ -623,7 +660,7 @@ impl<H: TeamHydrations, S: teams_request_builder::State + teams_request_builder:
 
 impl<H: TeamHydrations> Display for TeamsRequest<H> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		let hydrations = Some(H::hydration_text(&self.hydrations)).filter(|s| !s.is_empty());
+		let hydrations = Some(H::hydration_text(&())).filter(|s| !s.is_empty());
 		write!(f, "http://statsapi.mlb.com/api/v1/teams{}", gen_params! { "sportId"?: self.sport_id, "season"?: self.season, "teamId"?: self.team_id, "hydrate"?: hydrations })
 	}
 }
@@ -649,5 +686,27 @@ mod tests {
 	#[tokio::test]
 	async fn parse_all_mlb_teams_this_season() {
 		let _ = TeamsRequest::mlb_teams().build_and_get().await.unwrap();
+	}
+
+	#[tokio::test]
+	async fn parse_all_mlb_teams_this_season_hydrated() {
+		team_hydrations! {
+			pub struct TestHydrations {
+				previous_schedule: (),
+				next_schedule: (),
+				venue: (),
+				spring_venue: (),
+				social,
+				league,
+				sport: (),
+				standings: (),
+				division,
+				external_references,
+			}
+		}
+
+		let request = TeamsRequest::<TestHydrations>::builder().sport_id(SportId::MLB).season(TEST_YEAR).build();
+		println!("request = {request}");
+		let _response = request.get().await.unwrap();
 	}
 }

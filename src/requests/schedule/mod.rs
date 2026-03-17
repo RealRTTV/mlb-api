@@ -33,6 +33,7 @@ pub mod tied;
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
 pub struct ScheduleResponse<H: ScheduleHydrations> {
+	#[serde(default)] // Schedules in Team Hydrations don't have the copyright.
 	pub copyright: Copyright,
 	pub dates: Vec<ScheduleDate<H>>,
 }
