@@ -57,7 +57,7 @@ struct SeasonRaw {
 	pub has_wildcard: bool,
 
 	#[serde(rename = "preSeasonStartDate")]
-	pub preseason_start: NaiveDate,
+	pub preseason_start: Option<NaiveDate>,
 	#[serde(rename = "preSeasonEndDate")]
 	pub preseason_end: Option<NaiveDate>,
 	#[serde(rename = "springStartDate")]
@@ -85,7 +85,7 @@ struct SeasonRaw {
 	#[serde(rename = "offseasonStartDate")]
 	pub offseason_start: Option<NaiveDate>,
 	#[serde(rename = "offSeasonEndDate")]
-	pub offseason_end: NaiveDate,
+	pub offseason_end: Option<NaiveDate>,
 	#[serde(flatten)]
 	pub qualification_multipliers: Option<QualificationMultipliers>,
 }
@@ -113,17 +113,21 @@ impl From<SeasonRaw> for Season {
 			qualification_multipliers,
 		} = value;
 
+        // their API does the same thing.
+		let season_start = season_start.unwrap_or_else(|| NaiveDate::from_ymd_opt(*id as _, 1, 1).expect("Valid year"));
+		let offseason_end = offseason_end.unwrap_or_else(|| NaiveDate::from_ymd_opt(*id as _, 12, 31).expect("Valid year"));
+
 		Self {
 			id,
 			has_wildcard,
-			preseason: preseason_start..=preseason_end.unwrap_or(preseason_start),
-			spring: spring_start.and_then(|start| spring_end.map(|end| start..=end)),
-			season: season_start.unwrap_or(preseason_start)..=season_end.unwrap_or(offseason_end),
-			regular_season: regular_season_start.or(season_start).unwrap_or(preseason_start)..=regular_season_end.or(season_end).unwrap_or(offseason_end),
+			preseason: preseason_start.unwrap_or(season_start)..=preseason_end.unwrap_or(season_start),
+			spring: spring_start.zip(spring_end).map(|(start, end)| start..=end),
+			season: season_start..=season_end.unwrap_or(offseason_end),
+			regular_season: regular_season_start.unwrap_or(season_start)..=regular_season_end.or(season_end).unwrap_or(offseason_end),
 			first_half_end,
 			all_star,
 			second_half_start,
-			postseason: postseason_start.and_then(|start| postseason_end.map(|end| start..=end)),
+			postseason: postseason_start.zip(postseason_end).map(|(start, end)| start..=end),
 			offseason: offseason_start.unwrap_or(offseason_end)..=offseason_end,
 			qualification_multipliers,
 		}

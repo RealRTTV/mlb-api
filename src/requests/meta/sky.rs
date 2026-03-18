@@ -5,7 +5,7 @@ id!(#[doc = "A [`String`] describing the conditions of the sky"] SkyDescriptionI
 /// A detailed `struct` representing the sky conditions
 ///
 /// ## Examples
-/// ```
+/// ```no_run
 /// SkyDescription {
 ///     description: "Clear".into(),
 ///     id: "Clear".into(),

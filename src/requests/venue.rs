@@ -77,7 +77,7 @@ impl VenueHydrations for () {}
 /// Creates hydrations for a venue
 ///
 /// ## Examples
-/// ```no_run
+/// ```
 /// use mlb_api::venue_hydrations;
 /// 
 /// venue_hydrations! {

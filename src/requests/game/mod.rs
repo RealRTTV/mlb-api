@@ -1,107 +1,48 @@
 //! The thing you're most likely here for.
 
+#![allow(unused_imports, reason = "usage of children modules")]
+
 use std::fmt::{Display, Formatter};
-use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use derive_more::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut, From, Not};
 use fxhash::FxHashMap;
 use serde::{Deserialize, Deserializer};
 use serde::de::{Error, MapAccess};
 use serde_with::{serde_as, DisplayFromStr};
-use crate::meta::{GameStatus, GameType};
-use crate::meta::LogicalEventId;
-use crate::person::{Ballplayer, NamedPerson, PersonId};
-use crate::request::RequestURL;
-use crate::season::SeasonId;
+use crate::person::{Ballplayer, PersonId};
 use crate::meta::DayNight;
-use crate::team::Team;
-use crate::{Copyright, HomeAwaySplit, DayHalf};
-use crate::venue::{Venue, VenueId};
+use crate::{DayHalf, HomeAwaySplit, ResourceUsage};
 use crate::meta::WindDirectionId;
 
-pub mod boxscore;
-pub mod changes;
-pub mod color;
-pub mod content;
-pub mod context_metrics;
-pub mod diff;
-pub mod linescore;
-pub mod pace;
-pub mod pbp;
-pub mod timestamps;
-pub mod uniforms;
-pub mod win_probability;
+mod boxscore;
+mod changes;
+mod color;
+mod content;
+mod context_metrics;
+mod diff;
+mod linescore;
+mod pace;
+mod plays;
+mod timestamps;
+mod uniforms;
+mod win_probability;
+mod live_feed;
 
-id!(GameId { gamePk: u32 });
+pub use boxscore::*;
+pub use changes::*;
+pub use color::*;
+pub use content::*;
+pub use context_metrics::*;
+pub use diff::*;
+pub use linescore::*;
+pub use pace::*;
+pub use plays::*;
+pub use timestamps::*;
+pub use uniforms::*;
+pub use win_probability::*;
+pub use live_feed::*;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct GameResponse {
-	pub copyright: Copyright,
-	#[serde(rename = "gamePk")]
-	pub id: GameId,
-	#[serde(rename = "metaData")]
-	pub meta: GameMetadata,
-	#[serde(rename = "gameData")]
-	pub data: GameData,
-	#[serde(rename = "liveData")]
-	pub live: GameLiveData,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct GameMetadata {
-	pub wait: u32,
-	// pub timestamp: String, // todo
-	pub game_events: Vec<String>, // todo: what is this type
-	pub logical_events: Vec<LogicalEventId>,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
-#[serde(rename_all = "camelCase")]
-pub struct GameData {
-	#[deref]
-	#[deref_mut]
-	#[serde(rename = "game")]
-	game: GameDataMeta,
-	pub datetime: GameDateTime,
-	pub status: GameStatus,
-	pub teams: HomeAwaySplit<Team<()>>,
-	#[serde(deserialize_with = "deserialize_players_cache")]
-	pub players: FxHashMap<PersonId, Ballplayer<()>>,
-	pub venue: Venue,
-	pub official_venue: VenueId,
-	pub weather: GameWeather,
-	#[serde(rename = "gameInfo")]
-	pub info: GameInfo,
-	pub review: GameReview,
-	#[serde(rename = "flags")]
-	pub live_tags: GameLiveTags,
-	// pub alerts: Vec<()>, // todo: type?
-	pub probable_pitchers: HomeAwaySplit<NamedPerson>,
-	pub official_scorer: NamedPerson,
-	pub primary_datacaster: NamedPerson,
-	pub mound_visits: HomeAwaySplit<ResourceUsage>,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct GameDataMeta {
-	#[serde(rename = "pk")]
-	pub id: GameId,
-	#[serde(rename = "type")]
-	pub game_type: GameType,
-	pub double_header: DoubleHeaderKind,
-	/// Will state `P` for [`GameType::Playoffs`] games rather than what playoff series it is.
-	pub gameday_type: GameType,
-	#[serde(deserialize_with = "crate::from_yes_no")]
-	pub tiebreaker: bool,
-	/// No clue what this means
-	pub game_number: u32,
-	pub season: SeasonId,
-	#[serde(rename = "seasonDisplay")]
-	pub displayed_season: SeasonId,
-}
+id!(#[doc = "A [`u32`] representing a baseball game. [Sport](crate::sport)-independent"] GameId { gamePk: u32 });
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -117,6 +58,7 @@ struct __GameDateTimeStruct {
 	ampm: DayHalf,
 }
 
+/// Date & Time of the game. Note that the time is typically rounded to the hour and the :07, :05 on the hour is for the first pitch, which is a different timestamp.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__GameDateTimeStruct")]
 pub struct GameDateTime {
@@ -139,31 +81,32 @@ impl From<__GameDateTimeStruct> for GameDateTime {
 	}
 }
 
+/// General weather conditions, temperature, wind, etc.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
-#[serde(try_from = "__GameWeatherStruct")]
-pub struct GameWeather {
+#[serde(try_from = "__WeatherConditionsStruct")]
+pub struct WeatherConditions {
 	pub condition: String,
 	pub temp: uom::si::f64::ThermodynamicTemperature,
 	pub wind_speed: uom::si::f64::Velocity,
 	pub wind_direction: WindDirectionId,
 }
 
-impl Eq for GameWeather {}
+impl Eq for WeatherConditions {}
 
 #[serde_as]
 #[derive(Deserialize)]
 #[doc(hidden)]
-struct __GameWeatherStruct {
+struct __WeatherConditionsStruct {
 	condition: String,
 	#[serde_as(as = "DisplayFromStr")]
 	temp: i32,
 	wind: String,
 }
 
-impl TryFrom<__GameWeatherStruct> for GameWeather {
+impl TryFrom<__WeatherConditionsStruct> for WeatherConditions {
 	type Error = &'static str;
 
-	fn try_from(value: __GameWeatherStruct) -> Result<Self, Self::Error> {
+	fn try_from(value: __WeatherConditionsStruct) -> Result<Self, Self::Error> {
 		let (speed, direction) = value.wind.split_once(" mph, ").ok_or("invalid wind format")?;
 		let speed = speed.parse::<i32>().map_err(|_| "invalid wind speed")?;
 		Ok(Self {
@@ -175,6 +118,7 @@ impl TryFrom<__GameWeatherStruct> for GameWeather {
 	}
 }
 
+/// Misc
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GameInfo {
@@ -186,25 +130,20 @@ pub struct GameInfo {
 	pub game_duration: u32,
 }
 
+/// Review usage for each team and if the game supports challenges.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct GameReview {
+pub struct ReviewData {
 	pub has_challenges: bool,
 	#[serde(flatten)]
 	pub teams: HomeAwaySplit<ResourceUsage>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ResourceUsage {
-	used: u32,
-	remaining: u32,
-}
-
+/// Tags about a game, such as a perfect game in progress, no-hitter, etc.
 #[allow(clippy::struct_excessive_bools, reason = "")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct GameLiveTags {
+pub struct GameTags {
 	no_hitter: bool,
 	perfect_game: bool,
 
@@ -215,9 +154,7 @@ pub struct GameLiveTags {
 	home_team_perfect_game: bool,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct GameLiveData {}
-
+/// Double-header information.
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum DoubleHeaderKind {
 	#[serde(rename = "N")]
@@ -240,7 +177,63 @@ impl DoubleHeaderKind {
 	}
 }
 
-fn deserialize_players_cache<'de, D: Deserializer<'de>>(deserializer: D) -> Result<FxHashMap<PersonId, Ballplayer<()>>, D::Error> {
+#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Eq, Deref, DerefMut, From)]
+pub struct Inning(usize);
+
+impl Display for Inning {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		crate::write_nth(self.0, f)
+	}
+}
+
+/// Half of the inning.
+#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Eq, Not)]
+pub enum InningHalf {
+	#[serde(rename = "Top")]
+	Top,
+	#[serde(rename = "Bottom")]
+	Bottom,
+}
+
+impl InningHalf {
+	/// A unicode character representing an up or down arrow.
+	#[must_use]
+	pub fn unicode_char_filled(self) -> char {
+		match self {
+			Self::Top => '▲',
+			Self::Bottom => '▼',
+		}
+	}
+	
+	/// A hollow character representing the inning half
+	#[must_use]
+	pub fn unicode_char_empty(self) -> char {
+		match self {
+			Self::Top => '△',
+			Self::Bottom => '▽',
+		}
+	}
+}
+
+/// The balls and strikes in a given at bat. Along with the number of outs (this technically can change during the AB due to pickoffs etc)
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub struct AtBatCount {
+	pub balls: u8,
+	pub strikes: u8,
+	pub outs: u8,
+}
+
+/// The classic "R | H | E" and LOB in a scoreboard.
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct RHE {
+    pub runs: usize,
+    pub hits: usize,
+    pub errors: usize,
+    pub left_on_base: usize,
+}
+
+pub(crate) fn deserialize_players_cache<'de, D: Deserializer<'de>>(deserializer: D) -> Result<FxHashMap<PersonId, Ballplayer<()>>, D::Error> {
 	struct PlayersCacheVisitor;
 
 	impl<'de2> serde::de::Visitor<'de2> for PlayersCacheVisitor {
@@ -267,38 +260,4 @@ fn deserialize_players_cache<'de, D: Deserializer<'de>>(deserializer: D) -> Resu
 	}
 
 	deserializer.deserialize_map(PlayersCacheVisitor)
-}
-
-#[derive(Builder)]
-#[builder(derive(Into))]
-pub struct GameRequest {
-	#[builder(into)]
-	id: GameId,
-}
-
-impl<S: game_request_builder::State + game_request_builder::IsComplete> crate::request::RequestURLBuilderExt for GameRequestBuilder<S> {
-	type Built = GameRequest;
-}
-
-impl Display for GameRequest {
-	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1.1/game/{}/feed/live", self.id)
-	}
-}
-
-impl RequestURL for GameRequest {
-	type Response = GameResponse;
-}
-
-#[cfg(test)]
-mod tests {
-	use crate::game::GameRequest;
-	use crate::request::RequestURLBuilderExt;
-
-	#[tokio::test]
-	async fn ws_gm7_2025() {
-		dbg!(GameRequest::builder().id(813024).build().to_string());
-		let response = GameRequest::builder().id(813024).build_and_get().await.unwrap();
-		dbg!(response);
-	}
 }

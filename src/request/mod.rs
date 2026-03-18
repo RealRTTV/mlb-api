@@ -78,6 +78,9 @@ pub trait RequestURLBuilderExt where Self: Sized {
 	fn build_and_get(self) -> Result<<Self::Built as RequestURL>::Response> {
 		let built = Self::Built::from(self);
 		let url = built.to_string();
+		if cfg!(test) {
+			println!("url = {url}");
+		}
 		get::<<Self::Built as RequestURL>::Response>(url)
 	}
 
@@ -86,6 +89,9 @@ pub trait RequestURLBuilderExt where Self: Sized {
 		async {
 			let built = Self::Built::from(self);
 			let url = built.to_string();
+			if cfg!(test) {
+				println!("url = {url}");
+			}
 			get::<<Self::Built as RequestURL>::Response>(url).await
 		}
 	}

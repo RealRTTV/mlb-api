@@ -9,7 +9,6 @@ pub mod stats;
 pub mod uniforms;
 pub mod history;
 pub mod affiliates;
-// pub mod teams;
 
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -64,7 +63,7 @@ struct __TeamRaw<H: TeamHydrations> {
 /// A detailed `struct` representing a baseball team.
 ///
 /// ## Examples
-/// ```
+/// ```no_run
 /// Team {
 ///     all_star_status: AllStarStatus::Yes,
 ///     active: true,
@@ -159,7 +158,7 @@ impl<H: TeamHydrations> From<__TeamRaw<H>> for Team<H> {
 /// A team with a name and [id](TeamId)
 /// 
 /// ## Examples
-/// ```
+/// ```no_run
 /// use mlb_api::team::NamedTeam;
 ///
 /// NamedTeam {
@@ -380,7 +379,7 @@ impl TeamHydrations for () {
 /// Creates hydrations for a team
 ///
 /// ## Examples
-/// ```no_run
+/// ```
 /// use mlb_api::team::{Team, TeamsRequest};
 /// use mlb_api::team_hydrations;
 ///
@@ -705,8 +704,6 @@ mod tests {
 			}
 		}
 
-		let request = TeamsRequest::<TestHydrations>::builder().sport_id(SportId::MLB).season(TEST_YEAR).build();
-		println!("request = {request}");
-		let _response = request.get().await.unwrap();
+		let _ = TeamsRequest::<TestHydrations>::builder().sport_id(SportId::MLB).season(TEST_YEAR).build_and_get().await.unwrap();
 	}
 }

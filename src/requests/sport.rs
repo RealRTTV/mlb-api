@@ -59,7 +59,7 @@ impl<H: SportsHydrations> RequestURL for SportsRequest<H> {
 /// A detailed `struct` representing information about a sport (or Organized Baseball Level)
 ///
 /// ## Examples
-/// ```
+/// ```no_run
 /// Sport {
 ///     code: "mlb",
 ///     name: "Major League Baseball",

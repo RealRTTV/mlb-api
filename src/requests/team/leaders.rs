@@ -27,7 +27,7 @@ pub struct TeamStatLeadersRequest {
 	pub team_id: TeamId,
 	pub stats: Vec<BaseballStatId>,
 	#[builder(into)]
-	pub season: Option<SeasonId>,
+	pub season: SeasonId,
 	#[builder(default)]
 	pub pool: PlayerPool,
 
@@ -47,7 +47,7 @@ impl Display for TeamStatLeadersRequest {
 			self.team_id,
 			params = gen_params! {
 				"leaderCategories": self.stats.iter().join(","),
-				"season"?: self.season,
+				"season": self.season,
 				"pool": self.pool,
 				"game_types"?: self.game_types.as_ref().map(|x| x.iter().join(",")),
 			}
@@ -61,7 +61,8 @@ impl RequestURL for TeamStatLeadersRequest {
 
 #[cfg(test)]
 mod tests {
-	use crate::meta::{MetaRequest, BaseballStat};
+	use crate::TEST_YEAR;
+    use crate::meta::{MetaRequest, BaseballStat};
 	use crate::request::{RequestURL, RequestURLBuilderExt};
 	use crate::team::leaders::TeamStatLeadersRequest;
 	use crate::team::TeamsRequest;
@@ -71,7 +72,7 @@ mod tests {
 		let all_stats = MetaRequest::<BaseballStat>::new().get().await.unwrap().entries.into_iter().map(|stat| stat.id.clone()).collect::<Vec<_>>();
 
 		for team in TeamsRequest::mlb_teams().build_and_get().await.unwrap().teams {
-			let request = TeamStatLeadersRequest::builder().team_id(team.id).stats(all_stats.clone()).build();
+			let request = TeamStatLeadersRequest::builder().team_id(team.id).season(TEST_YEAR).stats(all_stats.clone()).build();
 			let _all_stats = request.get()
 			.await
 			.unwrap_or_else(|_| panic!("expected team #{} to be valid; {request}", team.id));

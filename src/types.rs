@@ -599,6 +599,23 @@ impl<'a> TryFrom<&'a str> for HeatmapTemperature {
 	}
 }
 
+pub(crate) fn write_nth(n: usize, f: &mut Formatter<'_>) -> std::fmt::Result {
+	write!(f, "{n}")?;
+	let (tens, ones) = (n / 10, n % 10);
+	let is_teen = (tens % 10) == 1;
+	if is_teen {
+		write!(f, "th")?;
+	} else {
+		write!(f, "{}", match ones {
+			1 => "st",
+			2 => "nd",
+			3 => "rd",
+			_ => "th",
+		})?;
+	}
+	Ok(())
+}
+
 /// AM/PM
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, FromStr)]
 #[serde(try_from = "&str")]
@@ -625,6 +642,13 @@ impl<'a> TryFrom<&'a str> for DayHalf {
 	fn try_from(value: &'a str) -> Result<Self, Self::Error> {
 		<Self as FromStr>::from_str(value)
 	}
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ResourceUsage {
+	used: u32,
+	remaining: u32,
 }
 
 #[cfg(test)]

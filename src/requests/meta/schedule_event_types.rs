@@ -3,7 +3,7 @@ use serde::Deserialize;
 id!(#[doc = "A [`String`] code representing a [`ScheduleEventType`]"] ScheduleEventTypeId { code: String });
 
 /// A detailed `struct` representing an event in the schedule.
-/// ```
+/// ```no_run
 /// ScheduleEventType {
 ///     name: "All-Star Weekend Event".into(),
 ///     id: "A".into(),

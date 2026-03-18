@@ -1,6 +1,6 @@
 //! Standings of a team, wins, losses, etc
 
-use crate::division::NamedDivision;
+use crate::division::{DivisionId, NamedDivision};
 use crate::league::{LeagueId, NamedLeague};
 use crate::meta::StandingsType;
 use crate::request::{RequestURL, RequestURLBuilderExt};
@@ -220,7 +220,6 @@ impl ClinchKind {
     /// If the postseason decision [is not final](Self::is_final), the team is considered to *not* play in the wild card round. If you want different behavior use [`Self::guaranteed_in_wildcard`].
     /// ## Examples
     /// ```
-    ///
     /// use mlb_api::standings::ClinchKind;
     ///
     /// assert!(! ClinchKind::Bye.guaranteed_in_wildcard());
@@ -238,7 +237,6 @@ impl ClinchKind {
     ///
     /// ## Examples
     /// ```
-    ///
     /// use mlb_api::standings::ClinchKind;
     ///
     /// assert!(! ClinchKind::Bye.guaranteed_in_wildcard());
@@ -480,8 +478,8 @@ pub trait StandingsHydrations: Hydrations<RequestData=()> {
 
 impl StandingsHydrations for () {
     type Team = NamedTeam;
-    type League = NamedLeague;
-    type Division = NamedDivision;
+    type League = LeagueId;
+    type Division = DivisionId;
     type Sport = SportId;
 }
 
