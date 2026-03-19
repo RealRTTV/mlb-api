@@ -11,7 +11,7 @@ use fxhash::FxHashMap;
 use serde::Deserialize;
 use serde_with::{serde_as, DefaultOnError};
 
-use crate::{Copyright, HomeAwaySplit, game::{GameId, LabelledValue, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
+use crate::{Copyright, HomeAwaySplit, game::{BattingOrderIndex, GameId, LabelledValue, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
 
 /// See [`self`]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -27,19 +27,15 @@ pub struct Boxscore {
 }
 
 /// One of three "top performers" of the game, measured by game score.
+///
+/// Originally an enum but the amount of two-way-players that exist make it pointlessly annoying and easy to break.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(tag = "type")]
-pub enum TopPerformer {
-    #[serde(rename = "hitter", rename_all = "camelCase")]
-    Hitter {
-        player: PlayerWithGameData,
-        game_score: usize,
-    },
-    #[serde(rename = "starter", rename_all = "camelCase")]
-    Starter {
-        player: PlayerWithGameData,
-        game_score: usize,
-    },
+#[serde(rename_all = "camelCase")]
+pub struct TopPerformer {
+    player: PlayerWithGameData,
+    game_score: usize,
+    #[serde(rename = "type")]
+    player_kind: String,
 }
 
 /// A person with some potentially useful information regarding their performance in the current game.
@@ -47,17 +43,16 @@ pub enum TopPerformer {
 #[serde(rename_all = "camelCase")]
 pub struct PlayerWithGameData {
 	pub person: NamedPerson,
-	pub jersey_number: JerseyNumber,
+	pub jersey_number: Option<JerseyNumber>,
 	pub position: NamedPosition,
 	pub status: RosterStatus,
-	#[serde(rename = "parentTeamId")]
-	pub parent_team: TeamId,
 	pub stats: BoxscoreStatCollection,
 	/// Uses the active game's [`GameType`], not the regular season stats.
 	pub season_stats: BoxscoreStatCollection,
 	pub game_status: PlayerGameStatusFlags,
 	#[serde(default)]
 	pub all_positions: Vec<NamedPosition>,
+	pub batting_order: Option<BattingOrderIndex>,
 }
 
 /// A team with some potentially useful information regarding their performance in the current game.

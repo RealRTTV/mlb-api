@@ -299,6 +299,46 @@ pub enum OfficialType {
 	RightField,
 }
 
+/// A position in the batting order, 1st, 2nd, 3rd, 4th, etc.
+///
+/// Note that this number is split in two, the general batting order position is the `major` while if there is a lineup movement then the player would have an increased `minor` since they replace an existing batting order position.
+///
+/// Example:
+/// Alice bats 1st (major = 1, minor = 0)
+/// Bob pinch hits and bats 1st for Alice (major = 1, minor = 1)
+/// Alice somehow hits again (major = 1, minor = 0)
+/// Charlie pinch runs and takes over from then on (major = 1, minor = 2)
+///
+/// Note: These minors are [`Display`]ed incremented one more than is done internally, so (major = 1, minor = 1) displays as `1st (2)`.
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub struct BattingOrderIndex {
+	pub major: usize,
+	pub minor: usize,
+}
+
+impl<'de> Deserialize<'de> for BattingOrderIndex {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+	    D: Deserializer<'de>
+	{
+		let v: usize = String::deserialize(deserializer)?.parse().map_err(D::Error::custom)?;
+		Ok(Self {
+			major: v / 100,
+			minor: v % 100,
+		})
+	}
+}
+
+impl Display for BattingOrderIndex {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		crate::write_nth(self.major, f)?;
+		if self.minor > 0 {
+			write!(f, " ({})", self.minor + 1)?;
+		}
+		Ok(())
+	}
+}
+
 pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserializer<'de>>(deserializer: D) -> Result<FxHashMap<PersonId, T>, D::Error> {
 	struct PlayersCacheVisitor<T2: DeserializeOwned>(PhantomData<T2>);
 
