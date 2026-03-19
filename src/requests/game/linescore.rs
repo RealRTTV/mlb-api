@@ -126,10 +126,13 @@ mod tests {
 		let postseason = season.postseason.expect("Expected the MLB to have a postseason");
 		let games = ScheduleRequest::<()>::builder().date_range(postseason).sport_id(SportId::MLB).build_and_get().await.unwrap();
 		let games = games.dates.into_iter().flat_map(|date| date.games).filter(|game| game.game_type.is_postseason()).map(|game| game.game_id).collect::<Vec<_>>();
+		let mut has_errors = false;
 		for game in games {
 			if let Err(e) = LinescoreRequest::builder().id(game).build_and_get().await {
 			    dbg!(e);
+			    has_errors = true;
 			}
 		}
+		assert!(!has_errors, "Has errors.");
 	}
 }
