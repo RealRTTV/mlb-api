@@ -45,6 +45,24 @@ pub enum GameType {
 	Championship,
 }
 
+impl GameType {
+	/// Whether a game is part of the postseason or not
+	///
+	/// ## Examples
+	/// ```
+	/// use mlb_api::meta::GameType;
+	///
+	/// assert!(! GameType::SpringTraining.is_postseason());
+	/// assert!(  GameType::WorldSeries.is_postseason());
+	/// assert!(  GameType::WildCardSeries.is_postseason());
+	/// assert!(! GameType::RegularSeason.is_postseason());
+	/// ```
+	#[must_use]
+	pub const fn is_postseason(self) -> bool {
+		matches!(self, Self::DivisionalSeries | Self::WildCardSeries | Self::ChampionshipSeries | Self::WorldSeries | Self::Playoffs | Self::Championship)
+	}
+}
+
 impl Debug for GameType {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(

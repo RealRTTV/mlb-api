@@ -5,7 +5,7 @@ use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
 use serde::Deserialize;
-use crate::game::{DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameTags, ResourceUsage, ReviewData, WeatherConditions};
+use crate::game::{Boxscore, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameTags, ResourceUsage, ReviewData, WeatherConditions};
 use crate::game::linescore::Linescore;
 use crate::meta::{GameStatus, GameType};
 use crate::meta::LogicalEventId;
@@ -96,7 +96,7 @@ pub struct LiveFeedDataMeta {
 pub struct LiveFeedLiveData {
 	// pub plays: ...,
 	pub linescore: Linescore,
-	// pub boxscore: ...,
+	pub boxscore: Boxscore,
 	// pub decisions: ...,
 	// pub leaders: ...,
 }
@@ -127,11 +127,27 @@ impl RequestURL for LiveFeedRequest {
 mod tests {
 	use crate::game::LiveFeedRequest;
 	use crate::request::RequestURLBuilderExt;
+    use crate::schedule::ScheduleRequest;
+    use crate::season::{Season, SeasonsRequest};
+    use crate::sport::SportId;
 
 	#[tokio::test]
 	async fn ws_gm7_2025_live_feed() {
 		dbg!(LiveFeedRequest::builder().id(813_024).build().to_string());
 		let response = LiveFeedRequest::builder().id(813_024).build_and_get().await.unwrap();
 		dbg!(response);
+	}
+
+	#[tokio::test]
+	async fn postseason_2025_live_feed() {
+		let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
+		let postseason = season.postseason.expect("Expected the MLB to have a postseason");
+		let games = ScheduleRequest::<()>::builder().date_range(postseason).sport_id(SportId::MLB).build_and_get().await.unwrap();
+		let games = games.dates.into_iter().flat_map(|date| date.games).filter(|game| game.game_type.is_postseason()).map(|game| game.game_id).collect::<Vec<_>>();
+		for game in games {
+			if let Err(e) = LiveFeedRequest::builder().id(game).build_and_get().await {
+				dbg!(e);
+			}
+		}
 	}
 }

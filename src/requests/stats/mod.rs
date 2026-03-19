@@ -123,7 +123,7 @@ impl<T: Stat> Stat for Option<T> {
 pub mod stat_types {
 	use super::{StatTypeStats, PlayStat, PitchStat};
 	use crate::stats::raw::{catching, fielding, hitting, pitching, FieldedMatchup};
-	use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, ByMonth, ByPosition, BySeason, ByWeekday, Career, Map, Map2D, SingleMatchup, WithGame, WithHomeAndAway, WithMonth, WithPlayer, WithPositionAndSeason, WithSeason, WithTeam, WithWeekday, WithWinLoss};
+	use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, ByMonth, ByPosition, BySeason, ByWeekday, Career, Map, Map2D, SingleMatchup, WithGame, WithHomeAndAway, WithMonth, WithNone, WithPlayer, WithPositionAndSeason, WithSeason, WithTeam, WithWeekday, WithWinLoss};
 
 	macro_rules! stat_type_stats {
 		($name:ident {
@@ -188,4 +188,5 @@ pub mod stat_types {
 	stat_type_stats!(StatSplitsAdvanced { WithSeason<hitting::__StatSplitsAdvancedStatsData>, WithSeason<pitching::__StatSplitsAdvancedStatsData>, (), () });
 	// stat_type_stats!(AtGameStart { Multiple<WithGame<hitting::AtGameStart>>, Multiple<WithGame<pitching::AtGameStart>>, Multiple<WithGame<catching::AtGameStart>>, Multiple<WithGame<fielding::AtGameStart>> });
 	// 'vsOpponents'?
+	stat_type_stats!(Boxscore { WithNone<hitting::__BoxscoreStatsData>, WithNone<pitching::__BoxscoreStatsData>, (), WithNone<fielding::__BoxscoreStatsData>, });
 }

@@ -1,16 +1,21 @@
 //! The thing you're most likely here for.
+//!
+//! This module itself acts like [`crate::types`] but for misc game-specific types as there are many.
 
 #![allow(unused_imports, reason = "usage of children modules")]
 
 use std::fmt::{Display, Formatter};
+use std::marker::PhantomData;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use derive_more::{Deref, DerefMut, From, Not};
 use fxhash::FxHashMap;
 use serde::{Deserialize, Deserializer};
-use serde::de::{Error, MapAccess};
+use serde::de::{DeserializeOwned, Error, MapAccess};
 use serde_with::{serde_as, DisplayFromStr};
-use crate::person::{Ballplayer, PersonId};
-use crate::meta::DayNight;
+use crate::person::{Ballplayer, JerseyNumber, NamedPerson, PersonId};
+use crate::meta::{DayNight, NamedPosition};
+use crate::team::TeamId;
+use crate::team::roster::RosterStatus;
 use crate::{DayHalf, HomeAwaySplit, ResourceUsage};
 use crate::meta::WindDirectionId;
 
@@ -198,7 +203,7 @@ pub enum InningHalf {
 impl InningHalf {
 	/// A unicode character representing an up or down arrow.
 	#[must_use]
-	pub fn unicode_char_filled(self) -> char {
+	pub const fn unicode_char_filled(self) -> char {
 		match self {
 			Self::Top => '▲',
 			Self::Bottom => '▼',
@@ -207,7 +212,7 @@ impl InningHalf {
 	
 	/// A hollow character representing the inning half
 	#[must_use]
-	pub fn unicode_char_empty(self) -> char {
+	pub const fn unicode_char_empty(self) -> char {
 		match self {
 			Self::Top => '△',
 			Self::Bottom => '▽',
@@ -227,17 +232,78 @@ pub struct AtBatCount {
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RHE {
+	/// Sometimes not present if the inning half isn't played. But weirdly hits and errors are present fields? Gonna make this default to 0
+	#[serde(default)]
     pub runs: usize,
     pub hits: usize,
     pub errors: usize,
     pub left_on_base: usize,
 }
 
-pub(crate) fn deserialize_players_cache<'de, D: Deserializer<'de>>(deserializer: D) -> Result<FxHashMap<PersonId, Ballplayer<()>>, D::Error> {
-	struct PlayersCacheVisitor;
+/// Unparsed miscellaneous data.
+///
+/// Some of these values might be handwritten per game so parsing them would prove rather difficult.
+/// 
+/// ## Examples
+/// | Name          | Value     |
+/// |---------------|-----------|
+/// | First pitch   | 8:10 PM.  |
+/// | Weather       | 68 degrees, Roof Closed |
+/// | Att           | 44,713.   |
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+pub struct LabelledValue {
+	pub label: String,
+	#[serde(default)]
+	pub value: String,
+}
 
-	impl<'de2> serde::de::Visitor<'de2> for PlayersCacheVisitor {
-		type Value = FxHashMap<PersonId, Ballplayer<()>>;
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+pub struct SectionedLabelledValues {
+	#[serde(rename = "title")]
+	pub section: String,
+	#[serde(rename = "fieldList")]
+	pub values: Vec<LabelledValue>,
+}
+
+/// Various flags about the player in the current game
+#[allow(clippy::struct_excessive_bools, reason = "not what's happening here")]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayerGameStatusFlags {
+	pub is_current_batter: bool,
+	pub is_current_pitcher: bool,
+	pub is_on_bench: bool,
+	pub is_substitute: bool,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Official {
+	pub official: NamedPerson,
+	pub official_type: OfficialType,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub enum OfficialType {
+	#[serde(rename = "Home Plate")]
+	HomePlate,
+	#[serde(rename = "First Base")]
+	FirstBase,
+	#[serde(rename = "Second Base")]
+	SecondBase,
+	#[serde(rename = "Third Base")]
+	ThirdBase,
+	#[serde(rename = "Left Field")]
+	LeftField,
+	#[serde(rename = "Right Field")]
+	RightField,
+}
+
+pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserializer<'de>>(deserializer: D) -> Result<FxHashMap<PersonId, T>, D::Error> {
+	struct PlayersCacheVisitor<T2: DeserializeOwned>(PhantomData<T2>);
+
+	impl<'de2, T2: DeserializeOwned> serde::de::Visitor<'de2> for PlayersCacheVisitor<T2> {
+		type Value = FxHashMap<PersonId, T2>;
 
 		fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
 			formatter.write_str("a map")
@@ -259,5 +325,5 @@ pub(crate) fn deserialize_players_cache<'de, D: Deserializer<'de>>(deserializer:
 		}
 	}
 
-	deserializer.deserialize_map(PlayersCacheVisitor)
+	deserializer.deserialize_map(PlayersCacheVisitor::<T>(PhantomData))
 }

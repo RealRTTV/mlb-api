@@ -85,6 +85,7 @@ pub struct LinescoreDefense {
     pub offense: LinescoreOffense,
 }
 
+/// Returns a [`Linescore`]
 #[derive(Builder)]
 #[builder(derive(Into))]
 pub struct LinescoreRequest {
@@ -110,9 +111,25 @@ impl RequestURL for LinescoreRequest {
 mod tests {
     use crate::game::LinescoreRequest;
     use crate::request::RequestURLBuilderExt;
+    use crate::schedule::ScheduleRequest;
+    use crate::season::{Season, SeasonsRequest};
+    use crate::sport::SportId;
 
     #[tokio::test]
     async fn ws_gm7_2025_linescore() {
         let _ = LinescoreRequest::builder().id(813_024).build_and_get().await.unwrap();
     }
+    
+    #[tokio::test]
+	async fn postseason_2025_linescore() {
+		let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
+		let postseason = season.postseason.expect("Expected the MLB to have a postseason");
+		let games = ScheduleRequest::<()>::builder().date_range(postseason).sport_id(SportId::MLB).build_and_get().await.unwrap();
+		let games = games.dates.into_iter().flat_map(|date| date.games).filter(|game| game.game_type.is_postseason()).map(|game| game.game_id).collect::<Vec<_>>();
+		for game in games {
+			if let Err(e) = LinescoreRequest::builder().id(game).build_and_get().await {
+			    dbg!(e);
+			}
+		}
+	}
 }

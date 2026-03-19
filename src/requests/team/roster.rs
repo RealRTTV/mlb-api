@@ -1,6 +1,6 @@
 //! Returns a list of [`RosterPlayer`]s on a teams roster.
 
-use crate::person::NamedPerson;
+use crate::person::{JerseyNumber, NamedPerson};
 use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::{Copyright, MLB_API_DATE_FORMAT};
@@ -31,8 +31,7 @@ pub struct RosterResponse<H: RosterHydrations = ()> {
 #[serde(rename_all = "camelCase")]
 pub struct RosterPlayer<H: RosterHydrations = ()> {
     pub person: H::Person,
-    #[serde(deserialize_with = "crate::try_from_str")]
-    pub jersey_number: Option<u8>,
+    pub jersey_number: JerseyNumber,
     pub position: NamedPosition,
     pub status: RosterStatus,
     pub parent_team_id: Option<TeamId>,

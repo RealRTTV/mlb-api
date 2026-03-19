@@ -2,7 +2,7 @@
 //! 
 //! Lists of different people with different positions
 
-use crate::person::NamedPerson;
+use crate::person::{JerseyNumber, NamedPerson};
 use crate::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
@@ -45,8 +45,7 @@ pub struct JobsResponse {
 pub struct EmployedPerson {
     #[serde(default = "NamedPerson::unknown_person")]
     pub person: NamedPerson,
-    #[serde(deserialize_with = "crate::try_from_str")]
-    pub jersey_number: Option<u8>,
+    pub jersey_number: JerseyNumber,
     #[serde(rename = "job")] pub job_name: String,
     pub job_id: JobTypeId,
     #[serde(rename = "title")] pub job_title: String,

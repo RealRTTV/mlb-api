@@ -297,3 +297,14 @@ group_and_type!(SimplifiedGameLog {
 	#[cfg_attr(test, serde(default = "crate::stats::raw::default_stat"))]
 	"pickoffs" => pickoffs,
 });
+group_and_type!(Boxscore {
+	"gamesStarted" => games_started,
+	"caughtStealing" => caught_stealing,
+	"stolenBases" => stolen_bases,
+	"assists" => assists,
+	"putOuts" => putouts,
+	"errors" => errors,
+	"chances" => chances,
+	"passedBall" => passed_balls,
+	"pickoffs" => pickoffs,
+});
