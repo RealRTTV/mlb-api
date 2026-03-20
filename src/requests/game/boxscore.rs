@@ -14,8 +14,9 @@ use serde_with::{serde_as, DefaultOnError};
 use crate::{Copyright, HomeAwaySplit, game::{BattingOrderIndex, GameId, LabelledValue, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
 
 /// See [`self`]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct Boxscore {
     #[serde(default)]
     pub copyright: Copyright,
@@ -29,8 +30,9 @@ pub struct Boxscore {
 /// One of three "top performers" of the game, measured by game score.
 ///
 /// Originally an enum but the amount of two-way-players that exist make it pointlessly annoying and easy to break.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct TopPerformer {
     player: PlayerWithGameData,
     game_score: usize,
@@ -39,8 +41,9 @@ pub struct TopPerformer {
 }
 
 /// A person with some potentially useful information regarding their performance in the current game.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct PlayerWithGameData {
 	pub person: NamedPerson,
 	pub jersey_number: Option<JerseyNumber>,
@@ -56,8 +59,9 @@ pub struct PlayerWithGameData {
 }
 
 /// A team with some potentially useful information regarding their performance in the current game.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct TeamWithGameData {
     pub team: NamedTeam,
     pub team_stats: BoxscoreStatCollection,
@@ -77,8 +81,9 @@ pub struct TeamWithGameData {
 /// Hitting, Pitching, and Fielding stats.
 #[allow(private_interfaces, reason = "the underlying type is pub")]
 #[serde_as]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct BoxscoreStatCollection {
     #[serde(rename = "batting")]
     #[serde_as(deserialize_as = "DefaultOnError")]

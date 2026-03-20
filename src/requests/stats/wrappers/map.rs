@@ -22,8 +22,6 @@ impl<T: PartialEq, A: MapKey<T>> PartialEq for Map<T, A> {
 	}
 }
 
-impl<T: Eq, A: MapKey<T>> Eq for Map<T, A> {}
-
 impl<T: Clone, A: MapKey<T>> Clone for Map<T, A> {
 	fn clone(&self) -> Self {
 		Self {
@@ -80,8 +78,6 @@ impl<T: PartialEq, A: MapKey<T>, B: MapKey<T>> PartialEq for Map2D<T, A, B> {
 		self.inner == other.inner
 	}
 }
-
-impl<T: Eq, A: MapKey<T>, B: MapKey<T>> Eq for Map2D<T, A, B> {}
 
 impl<T, A: MapKey<T>, B: MapKey<T>> Default for Map2D<T, A, B> {
 	fn default() -> Self {

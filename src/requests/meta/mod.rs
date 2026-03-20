@@ -173,13 +173,13 @@ use std::marker::PhantomData;
 
 /// Represents a type that is metadata.
 pub trait MetaKind {
-	type Complete: Debug + DeserializeOwned + Eq + Clone;
+	type Complete: Debug + DeserializeOwned + PartialEq + Clone;
 
 	const ENDPOINT_NAME: &'static str;
 }
 
 /// Generalized response for the meta endpoints.
-#[derive(Debug, Deref, DerefMut, PartialEq, Eq, Clone)]
+#[derive(Debug, Deref, DerefMut, PartialEq, Clone)]
 pub struct MetaResponse<T: MetaKind> {
 	pub entries: Vec<<T as MetaKind>::Complete>,
 }

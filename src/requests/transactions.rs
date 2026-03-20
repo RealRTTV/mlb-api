@@ -13,14 +13,14 @@ use std::ops::{Deref, DerefMut};
 use crate::sport::SportId;
 use crate::team::NamedTeam;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionsResponse {
 	pub copyright: Copyright,
 	pub transactions: Vec<Transaction>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionCommon {
 	pub id: TransactionId,
@@ -30,7 +30,7 @@ pub struct TransactionCommon {
 	pub dates: TransactionDates,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionDates {
 	pub date: NaiveDate,
@@ -39,7 +39,7 @@ pub struct TransactionDates {
 }
 
 //noinspection DuplicatedCode
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(tag = "typeCode")]
 pub enum Transaction {
 	#[serde(rename = "ASG", rename_all = "camelCase")]

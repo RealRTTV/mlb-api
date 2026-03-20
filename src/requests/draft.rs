@@ -14,7 +14,7 @@ use thiserror::Error;
 use crate::team::NamedTeam;
 
 /// Returns a [`DraftYear`].
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftResponse {
 	pub copyright: Copyright,
@@ -22,7 +22,7 @@ pub struct DraftResponse {
 }
 
 /// A collection of [`DraftRound`]s in a year's draft.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftYear {
 	#[serde(rename = "draftYear")]
@@ -37,7 +37,7 @@ pub struct DraftYear {
 /// - `"SUP-3"`
 /// - `"4"`
 /// - `"4C"`
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftRound {
 	pub round: String,
@@ -47,7 +47,7 @@ pub struct DraftRound {
 id!(#[doc = "Different from [`PersonId`](crate::person::PersonId).\n\nInternal eBIS person id, I'd be surprised if you had a use for this."] #[allow(non_camel_case_types)] eBISPersonId { id: u32 });
 
 /// Returns a [`Vec`] of [`DraftPick`]s for the prospects.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftProspectsResponse {
 	pub copyright: Copyright,
@@ -60,7 +60,7 @@ pub struct DraftProspectsResponse {
 }
 
 /// An individual draft pick.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DraftPick {
 	/// a `PlayerId` on the eBIS System
@@ -102,7 +102,7 @@ impl DraftPick {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct School {
 	pub name: Option<String>,
@@ -112,7 +112,7 @@ pub struct School {
 	pub state: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display)]
 #[serde(try_from = "__DraftTypeStruct")]
 pub enum DraftType {
 	#[display("June Amateur Draft")]

@@ -5,7 +5,8 @@ use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
 use serde::Deserialize;
-use crate::game::{Boxscore, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameTags, ResourceUsage, ReviewData, WeatherConditions};
+use serde::de::IgnoredAny;
+use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameTags, ResourceUsage, ReviewData, WeatherConditions};
 use crate::game::linescore::Linescore;
 use crate::meta::{GameStatus, GameType};
 use crate::meta::LogicalEventId;
@@ -17,8 +18,9 @@ use crate::{Copyright, HomeAwaySplit};
 use crate::venue::{Venue, VenueId};
 
 /// See [`self`]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LiveFeedResponse {
 	pub copyright: Copyright,
 	#[serde(rename = "gamePk")]
@@ -29,21 +31,30 @@ pub struct LiveFeedResponse {
 	pub data: LiveFeedData,
 	#[serde(rename = "liveData")]
 	pub live: LiveFeedLiveData,
+
+	#[doc(hidden)]
+	#[serde(rename = "link")]
+	__link: IgnoredAny,
 }
 
 /// Metadata about the game, often not useful.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LiveFeedMetadata {
 	pub wait: u32,
-	// pub timestamp: String, // todo
 	pub game_events: Vec<String>, // todo: what is this type
 	pub logical_events: Vec<LogicalEventId>,
+
+    #[doc(hidden)]
+    #[serde(rename = "timeStamp")]
+	__timestamp: IgnoredAny,
 }
 
 /// General information about the game
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LiveFeedData {
 	#[deref]
 	#[deref_mut]
@@ -62,16 +73,20 @@ pub struct LiveFeedData {
 	pub review: ReviewData,
 	#[serde(rename = "flags")]
 	pub live_tags: GameTags,
-	// pub alerts: Vec<()>, // todo: type?
 	pub probable_pitchers: HomeAwaySplit<NamedPerson>,
 	pub official_scorer: NamedPerson,
 	pub primary_datacaster: NamedPerson,
 	pub mound_visits: HomeAwaySplit<ResourceUsage>,
+
+    #[doc(hidden)]
+    #[serde(rename = "alerts")]
+	__alerts: IgnoredAny,
 }
 
 /// More specific information about the "game", child of [`LiveFeedData`]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LiveFeedDataMeta {
 	#[serde(rename = "pk")]
 	pub id: GameId,
@@ -87,17 +102,21 @@ pub struct LiveFeedDataMeta {
 	pub season: SeasonId,
 	#[serde(rename = "seasonDisplay")]
 	pub displayed_season: SeasonId,
+
+	#[doc(hidden)]
+	#[serde(rename = "id")]
+	__id: IgnoredAny,
 }
 
 /// Live data about the game -- i.e. stuff that changes as the game goes on.
 /// 
 /// Includes a lot of sub-requests within it, such as the [`super::PlayByPlay`] and [`super::Linescore`].
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct LiveFeedLiveData {
 	// pub plays: ...,
 	pub linescore: Linescore,
 	pub boxscore: Boxscore,
-	// pub decisions: ...,
+	pub decisions: Decisions,
 	// pub leaders: ...,
 }
 

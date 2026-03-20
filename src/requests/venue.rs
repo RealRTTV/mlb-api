@@ -16,14 +16,14 @@ use crate::sport::SportId;
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 use crate::hydrations::Hydrations;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: VenueHydrations")]
 pub struct VenuesResponse<H: VenueHydrations> {
 	pub copyright: Copyright,
 	pub venues: Vec<Venue<H>>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedVenue {
 	pub name: String,
@@ -68,7 +68,6 @@ impl<H: VenueHydrations> PartialEq for Venue<H> {
 		self.id == other.id
 	}
 }
-impl<H: VenueHydrations> Eq for Venue<H> {}
 
 pub trait VenueHydrations: Hydrations<RequestData=()> {}
 
@@ -122,7 +121,7 @@ macro_rules! venue_hydrations {
 		$(external_references $external_references_comma:tt)?
 		$(tracking_system $tracking_system_comma:tt)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
 			$(#[serde(default)] pub location: $crate::types::Location $location_comma)?

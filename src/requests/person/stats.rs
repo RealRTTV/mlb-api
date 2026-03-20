@@ -18,7 +18,7 @@ use crate::stats::parse::{__ParsedStats, make_stat_split};
 use crate::stats::raw::{fielding, hitting, pitching};
 use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, WithNone};
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct PersonSingleGameStatsResponse {
 	pub copyright: Copyright,
 	#[serde(flatten)]
@@ -71,27 +71,27 @@ mod tests {
 	}
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SingleGameStats {
 	pub game_log: SingleGameStatsSimplifiedGameLogSplit,
 	pub vs_player5_y: SingleGameStatsVsPlayer5YSplit,
 	pub play_log: SingleGameStatsSimplifiedPlayLogSplit,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SingleGameStatsSimplifiedGameLogSplit {
 	pub hitting: Box<WithNone<hitting::__SimplifiedGameLogStatsData>>,
 	pub pitching: Box<WithNone<pitching::__SimplifiedGameLogStatsData>>,
 	pub fielding: Box<WithNone<fielding::__SimplifiedGameLogStatsData>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SingleGameStatsVsPlayer5YSplit {
 	pub hitting: Box<AccumulatedVsPlayerMatchup<hitting::__VsPlayerStatsData>>,
 	pub pitching: Box<AccumulatedVsPlayerMatchup<pitching::__VsPlayerStatsData>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SingleGameStatsSimplifiedPlayLogSplit {
 	pub hitting: Box<Vec<WithNone<PlayStat>>>,
 }

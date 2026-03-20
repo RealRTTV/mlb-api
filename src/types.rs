@@ -14,7 +14,7 @@ use thiserror::Error;
 use crate::season::SeasonId;
 
 /// The copyright at the top of every request
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "__CopyrightStruct")]
 pub enum Copyright {
 	/// Typical copyright format
@@ -99,7 +99,7 @@ pub fn from_yes_no<'de, D: Deserializer<'de>>(deserializer: D) -> Result<bool, D
 /// Measurement of a person's height
 ///
 /// Not using [`uom`] because we want feet and inches, not just one of the measurements.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum HeightMeasurement {
 	/// `{a: u8}' {b: u8}"`
 	FeetAndInches { feet: u8, inches: u8 },
@@ -148,7 +148,7 @@ pub enum HeightMeasurementParseError {
 }
 
 /// General filter for players in requests
-#[derive(Debug, Display, PartialEq, Eq, Copy, Clone, Default)]
+#[derive(Debug, Display, PartialEq, Copy, Clone, Default)]
 pub enum PlayerPool {
 	/// All players (no filter)
 	#[default]
@@ -183,7 +183,7 @@ pub enum PlayerPool {
 /// Gender
 ///
 /// Used on [`Ballplayer`](crate::person::Ballplayer)
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Default)]
 pub enum Gender {
 	#[serde(rename = "M")]
 	Male,
@@ -197,7 +197,7 @@ pub enum Gender {
 /// Handedness
 ///
 /// Either for batting or pitching
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 #[serde(try_from = "__HandednessStruct")]
 pub enum Handedness {
 	Left,
@@ -279,7 +279,7 @@ where
 ///     "away": { "name": "Boston Red Sox", "id": ... }
 /// }
 /// ```
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub struct HomeAwaySplit<T> {
 	pub home: T,
 	pub away: T,
@@ -335,10 +335,8 @@ pub struct Location {
 	pub elevation: Option<u32>,
 }
 
-impl Eq for Location {}
-
 /// Various information regarding a field.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldInfo {
 	pub capacity: u32,
@@ -354,7 +352,7 @@ pub struct FieldInfo {
 }
 
 /// Different types of turf.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Display)]
 pub enum TurfType {
 	#[serde(rename = "Artificial Turf")]
 	#[display("Artificial Turf")]
@@ -366,7 +364,7 @@ pub enum TurfType {
 }
 
 /// Different types of roof setups.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Display)]
 pub enum RoofType {
 	#[serde(rename = "Retractable")]
 	#[display("Retractable")]
@@ -382,7 +380,7 @@ pub enum RoofType {
 }
 
 /// Data regarding a timezone, uses [`chrono_tz`].
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TimeZoneData {
 	#[serde(rename = "id")]
@@ -392,7 +390,7 @@ pub struct TimeZoneData {
 }
 
 /// More generalized than social media, includes retrosheet, fangraphs, (+ some socials), etc.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct ExternalReference {
 	#[serde(rename = "xrefId")]
 	pub id: String,
@@ -402,7 +400,7 @@ pub struct ExternalReference {
 }
 
 /// Tracking equipment, Hawk-Eye, PitchFx, etc.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TrackingSystem {
 	pub id: TrackingSystemVendorId,
@@ -418,7 +416,7 @@ pub struct TrackingSystem {
 id!(TrackingSystemVendorId { id: u32 });
 
 /// A vendor for specific tracking concepts, such as Hawk-Eye for skeletal data.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct TrackingSystemVendor {
 	pub id: TrackingSystemVendorId,
 	pub description: String,
@@ -457,8 +455,6 @@ impl PartialEq for IntegerOrFloatStat {
 		}
 	}
 }
-
-impl Eq for IntegerOrFloatStat {}
 
 impl<'de> Deserialize<'de> for IntegerOrFloatStat {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -520,7 +516,7 @@ pub struct MLBError {
 impl std::error::Error for MLBError {}
 
 /// `rgba({red}, {green}, {blue})` into a type
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Default)]
 #[serde(try_from = "&str")]
 pub struct RGBAColor {
 	pub red: u8,
@@ -581,7 +577,7 @@ impl FromStr for RGBAColor {
 }
 
 /// Used in [`HittingHotColdZones`](crate::stats::raw::HittingHotColdZones) and [`PitchingHotColdZones`](crate::stats::raw::PitchingHotColdZones).
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, FromStr)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display, FromStr)]
 #[serde(try_from = "&str")]
 pub enum HeatmapTemperature {
 	Hot,
@@ -617,7 +613,7 @@ pub(crate) fn write_nth(n: usize, f: &mut Formatter<'_>) -> std::fmt::Result {
 }
 
 /// AM/PM
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, FromStr)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display, FromStr)]
 #[serde(try_from = "&str")]
 pub enum DayHalf {
 	AM,
@@ -644,7 +640,7 @@ impl<'a> TryFrom<&'a str> for DayHalf {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ResourceUsage {
 	used: u32,

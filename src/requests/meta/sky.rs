@@ -24,7 +24,7 @@ tiered_request_entry_cache_impl!(SkyDescription.id: SkyDescriptionId);
 test_impl!(SkyDescription);
 
 /// Whether the sky shows daytime or nighttime
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub enum DayNight {
 	/// Day Game.
 	#[serde(rename = "day")]

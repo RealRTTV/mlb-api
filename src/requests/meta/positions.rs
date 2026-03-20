@@ -15,7 +15,7 @@ id!(#[doc = "A [`String`] representing a position on the field, such as Pitcher,
 ///     abbreviation: "1B".into(),
 /// }
 /// ```
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPosition {
 	pub code: PositionCode,

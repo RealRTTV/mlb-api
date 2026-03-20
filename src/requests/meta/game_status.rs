@@ -3,7 +3,7 @@ use serde::Deserialize;
 id!(#[doc = "A [`String`] representing the [`GameStatus`]"] GameStatusId { detailedState: String });
 
 /// Detailed game status (use [`AbstractGameCode`] for simpler responses)
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub enum CodedGameState {
 	/// Game has not begun, but is scheduled to occur
 	#[serde(rename = "S")]
@@ -55,7 +55,7 @@ pub enum CodedGameState {
 }
 
 /// Basic game status code, describes whether the game is in the past (finished), present (underway), or future (scheduled).
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub enum AbstractGameCode {
 	/// Game has not begun
 	#[serde(rename = "P")]

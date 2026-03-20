@@ -3,7 +3,7 @@ use crate::stats::SingletonSplitStat;
 use crate::team::NamedTeam;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldedMatchup {
 	pub pitcher: NamedPerson,

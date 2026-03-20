@@ -4,7 +4,7 @@ use serde::Deserialize;
 /// Filters searching through situation codes to filter with multiple situation codes.
 ///
 /// Note that with 0 [`SituationCode`](SituationCodeId)s [`SituationCodeFilter::Any`] returns `false` and [`SituationCodeFilter::All`] returns `true`.
-#[derive(Copy, Clone, Default, PartialEq, Eq)]
+#[derive(Copy, Clone, Default, PartialEq)]
 pub enum SituationCodeFilter {
 	/// Display results that match <u>all</u> the [`SituationCode`]s selected.
 	All,
@@ -14,7 +14,7 @@ pub enum SituationCodeFilter {
 	Any,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display)]
 pub enum SituationCodeCategory {
 	/// The environment the game is played in, turf, grass, day, night, home, away.
 	#[serde(rename = "Game")]

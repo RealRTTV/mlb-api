@@ -43,8 +43,6 @@ impl From<__PitchUsageStruct> for PitchUsage {
     }
 }
 
-impl Eq for PitchUsage {}
-
 impl SingletonSplitStat for PitchUsage {}
 
 impl PitchUsage {

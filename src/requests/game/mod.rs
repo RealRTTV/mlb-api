@@ -52,6 +52,7 @@ id!(#[doc = "A [`u32`] representing a baseball game. [Sport](crate::sport)-indep
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[doc(hidden)]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 struct __GameDateTimeStruct {
 	#[serde(rename = "dateTime", deserialize_with = "crate::deserialize_datetime")]
 	datetime: NaiveDateTime,
@@ -64,7 +65,7 @@ struct __GameDateTimeStruct {
 }
 
 /// Date & Time of the game. Note that the time is typically rounded to the hour and the :07, :05 on the hour is for the first pitch, which is a different timestamp.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "__GameDateTimeStruct")]
 pub struct GameDateTime {
 	datetime: NaiveDateTime,
@@ -96,11 +97,10 @@ pub struct WeatherConditions {
 	pub wind_direction: WindDirectionId,
 }
 
-impl Eq for WeatherConditions {}
-
 #[serde_as]
 #[derive(Deserialize)]
 #[doc(hidden)]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 struct __WeatherConditionsStruct {
 	condition: String,
 	#[serde_as(as = "DisplayFromStr")]
@@ -124,8 +124,9 @@ impl TryFrom<__WeatherConditionsStruct> for WeatherConditions {
 }
 
 /// Misc
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct GameInfo {
 	pub attendance: u32,
 	#[serde(deserialize_with = "crate::deserialize_datetime")]
@@ -136,8 +137,9 @@ pub struct GameInfo {
 }
 
 /// Review usage for each team and if the game supports challenges.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct ReviewData {
 	pub has_challenges: bool,
 	#[serde(flatten)]
@@ -146,8 +148,9 @@ pub struct ReviewData {
 
 /// Tags about a game, such as a perfect game in progress, no-hitter, etc.
 #[allow(clippy::struct_excessive_bools, reason = "")]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct GameTags {
 	no_hitter: bool,
 	perfect_game: bool,
@@ -160,7 +163,7 @@ pub struct GameTags {
 }
 
 /// Double-header information.
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub enum DoubleHeaderKind {
 	#[serde(rename = "N")]
 	/// Not a doubleheader
@@ -182,7 +185,7 @@ impl DoubleHeaderKind {
 	}
 }
 
-#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Eq, Deref, DerefMut, From)]
+#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Deref, DerefMut, From)]
 pub struct Inning(usize);
 
 impl Display for Inning {
@@ -192,7 +195,7 @@ impl Display for Inning {
 }
 
 /// Half of the inning.
-#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Eq, Not)]
+#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Not)]
 pub enum InningHalf {
 	#[serde(rename = "Top")]
 	Top,
@@ -221,7 +224,7 @@ impl InningHalf {
 }
 
 /// The balls and strikes in a given at bat. Along with the number of outs (this technically can change during the AB due to pickoffs etc)
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub struct AtBatCount {
 	pub balls: u8,
 	pub strikes: u8,
@@ -229,8 +232,9 @@ pub struct AtBatCount {
 }
 
 /// The classic "R | H | E" and LOB in a scoreboard.
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct RHE {
 	/// Sometimes not present if the inning half isn't played. But weirdly hits and errors are present fields? Gonna make this default to 0
 	#[serde(default)]
@@ -250,14 +254,16 @@ pub struct RHE {
 /// | First pitch   | 8:10 PM.  |
 /// | Weather       | 68 degrees, Roof Closed |
 /// | Att           | 44,713.   |
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LabelledValue {
 	pub label: String,
 	#[serde(default)]
 	pub value: String,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct SectionedLabelledValues {
 	#[serde(rename = "title")]
 	pub section: String,
@@ -267,8 +273,9 @@ pub struct SectionedLabelledValues {
 
 /// Various flags about the player in the current game
 #[allow(clippy::struct_excessive_bools, reason = "not what's happening here")]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct PlayerGameStatusFlags {
 	pub is_current_batter: bool,
 	pub is_current_pitcher: bool,
@@ -276,14 +283,15 @@ pub struct PlayerGameStatusFlags {
 	pub is_substitute: bool,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct Official {
 	pub official: NamedPerson,
 	pub official_type: OfficialType,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub enum OfficialType {
 	#[serde(rename = "Home Plate")]
 	HomePlate,
@@ -310,7 +318,7 @@ pub enum OfficialType {
 /// Charlie pinch runs and takes over from then on (major = 1, minor = 2)
 ///
 /// Note: These minors are [`Display`]ed incremented one more than is done internally, so (major = 1, minor = 1) displays as `1st (2)`.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct BattingOrderIndex {
 	pub major: usize,
 	pub minor: usize,
@@ -337,6 +345,15 @@ impl Display for BattingOrderIndex {
 		}
 		Ok(())
 	}
+}
+
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
+pub struct Decisions {
+	pub winner: Option<NamedPerson>,
+	pub loser: Option<NamedPerson>,
+	pub save: Option<NamedPerson>,
 }
 
 pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserializer<'de>>(deserializer: D) -> Result<FxHashMap<PersonId, T>, D::Error> {

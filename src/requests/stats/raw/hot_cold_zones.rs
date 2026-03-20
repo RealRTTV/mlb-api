@@ -9,7 +9,7 @@ use thiserror::Error;
 use crate::stats::Stat;
 use crate::{RGBAColor, HeatmapTemperature};
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, TryFrom)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, TryFrom)]
 #[serde(try_from = "u8")]
 #[try_from(repr)]
 #[repr(u8)]
@@ -75,9 +75,7 @@ impl Default for HotColdZone {
 	}
 }
 
-impl Eq for HotColdZone {}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Default)]
 #[serde(try_from = "__HotColdZonesStruct")]
 pub struct HotColdZones {
 	pub z01: HotColdZone,
@@ -164,7 +162,7 @@ impl TryFrom<__HotColdZonesStruct> for HotColdZones {
 }
 
 #[allow(non_snake_case, reason = "stats names")]
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct HittingHotColdZones {
 	pub OPS: HotColdZones,
 	pub AVG: HotColdZones,
@@ -227,7 +225,7 @@ impl Stat for HittingHotColdZones {
 }
 
 #[allow(non_snake_case, reason = "stats names")]
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct PitchingHotColdZones {
 	pub AVG: HotColdZones,
 	pub OBP: HotColdZones,

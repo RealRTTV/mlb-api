@@ -30,7 +30,7 @@ pub use umpire::*;
 /// - [`JobsDatacastersRequest`]
 /// - [`JobsOfficialScorersRequest`]
 /// - [`JobsUmpiresRequest`]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct JobsResponse {
     pub copyright: Copyright,
     #[serde(default)]
@@ -40,7 +40,7 @@ pub struct JobsResponse {
 /// Person with a job
 ///
 /// Wrapper of [`NamedPerson`] used in the [`JobsRequest`] endpoints that contains extra fields about their job.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EmployedPerson {
     #[serde(default = "NamedPerson::unknown_person")]

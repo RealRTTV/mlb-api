@@ -166,7 +166,7 @@ impl<H: TeamHydrations> From<__TeamRaw<H>> for Team<H> {
 ///     id: 141.into(),
 /// }
 /// ```
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedTeam {
 	#[serde(alias = "name")]
@@ -204,8 +204,6 @@ impl<H: TeamHydrations> PartialEq for Team<H> {
 		self.id == other.id
 	}
 }
-
-impl<H: TeamHydrations> Eq for Team<H> {}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -257,7 +255,7 @@ struct __TeamNameRaw {
 /// | Los Angeles Dodgers   | `lan`       | `la`        | `LAD`          | Dodgers   | Dodgers      | Los Angeles    | LA Dodgers    |
 /// | Washington Nationals  | `was`       | `was`       | `WSH`          | Nationals | Nationals    | Washington     | Washington    |
 /// | New York Mets         | `nyn`       | `nym`       | `NYM`          | Mets      | Mets         | New York       | NY Mets       |
-#[derive(Debug, PartialEq, Eq, Deref, DerefMut, Clone)]
+#[derive(Debug, PartialEq, Deref, DerefMut, Clone)]
 pub struct TeamName {
 	/// Typically 3 characters and all lowercase.
 	pub team_code: String,
@@ -314,7 +312,7 @@ pub struct NamedOrganization {
 id!(#[doc = "ID of a parent organization -- still don't know what this is."] OrganizationId { id: u32 });
 
 /// Honestly, no clue. Would love to know.
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Default)]
 pub enum AllStarStatus {
 	/// 'tis an All-Star team (?)
 	#[serde(rename = "Y")]
@@ -332,7 +330,7 @@ pub enum AllStarStatus {
 }
 
 /// A [`Vec`] of [`Team`]s
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: TeamHydrations")]
 pub struct TeamsResponse<H: TeamHydrations> {
 	pub copyright: Copyright,
@@ -341,19 +339,19 @@ pub struct TeamsResponse<H: TeamHydrations> {
 
 pub trait TeamHydrations: Hydrations<RequestData=()> {
 	/// By default [`SportId`]; with [`sport`] hydration: [`Sport`](crate::sport::Sport)
-	type Sport: Debug + DeserializeOwned + Eq + Clone;
+	type Sport: Debug + DeserializeOwned + PartialEq + Clone;
 
 	/// By default [`NamedVenue`]; with [`venue`] hydration: [`Venue`](crate::venue::Venue)
-	type Venue: Debug + DeserializeOwned + Eq + Clone;
+	type Venue: Debug + DeserializeOwned + PartialEq + Clone;
 
 	/// By default [`VenueId`]; with [`spring_venue`] hydration: [`Venue`](crate::venue::Venue)
-	type SpringVenue: Debug + DeserializeOwned + Eq + Clone;
+	type SpringVenue: Debug + DeserializeOwned + PartialEq + Clone;
 
 	/// By default [`NamedLeague`]; with [`league`] hydration: [`League`](crate::league::League)
-	type League: Debug + DeserializeOwned + Eq + Clone;
+	type League: Debug + DeserializeOwned + PartialEq + Clone;
 
 	/// By default [`NamedDivision`]; with [`division`] hydration: [`Division`](crate::division::Division)
-	type Division: Debug + DeserializeOwned + Eq + Clone;
+	type Division: Debug + DeserializeOwned + PartialEq + Clone;
 
 	fn unknown_venue() -> Self::Venue;
 
@@ -568,7 +566,7 @@ macro_rules! team_hydrations {
 		$(division $division_comma:tt)?
 		$(external_references $external_references_comma:tt)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		$vis struct $name {
 			$(#[serde(rename = "previousGameSchedule")] previous_schedule: $crate::schedule::ScheduleResponse<$previous_schedule>,)?
 			$(#[serde(rename = "nextGameSchedule")] next_schedule: $crate::schedule::ScheduleResponse<$next_schedule>,)?

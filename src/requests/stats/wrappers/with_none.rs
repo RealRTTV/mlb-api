@@ -2,7 +2,7 @@ use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use crate::stats::{RawStat, SingletonSplitStat};
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 #[serde(from = "__WithNoneRaw<T>", bound = "T: RawStat")]
 pub struct WithNone<T: RawStat> {
     pub stats: T,

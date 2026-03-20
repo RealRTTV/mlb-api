@@ -12,7 +12,7 @@ use crate::meta::BaseballStatId;
 use crate::meta::GameType;
 use crate::request::RequestURL;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamStatLeadersResponse {
 	pub copyright: Copyright,

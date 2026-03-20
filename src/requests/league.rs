@@ -15,7 +15,7 @@ use crate::season::{Season, SeasonId, SeasonState};
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 /// Returns a [`Vec`] of [`League`]s.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LeagueResponse {
 	pub copyright: String,
@@ -23,7 +23,7 @@ pub struct LeagueResponse {
 }
 
 /// A league with a name
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedLeague {
 	pub name: String,

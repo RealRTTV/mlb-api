@@ -12,7 +12,7 @@ use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 use crate::hydrations::Hydrations;
 
 /// A [`Vec`] of [`Sport`]s.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: SportsHydrations")]
 pub struct SportsResponse<H: SportsHydrations> {
 	pub copyright: Copyright,
@@ -87,7 +87,6 @@ impl<H: SportsHydrations> PartialEq for Sport<H> {
 		self.id == other.id
 	}
 }
-impl<H: SportsHydrations> Eq for Sport<H> {}
 
 pub trait SportsHydrations: Hydrations<RequestData=()> {}
 
@@ -126,7 +125,7 @@ macro_rules! sports_hydrations {
 	(@ actual $vis:vis struct $name:ident {
 		$(season $season_comma:tt)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
 			$(pub season_date_info: $crate::season::Season $season_comma)?

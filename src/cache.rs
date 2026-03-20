@@ -48,7 +48,7 @@ use crate::sport::SportId;
 /// [`Position`]: crate::meta::Position
 /// [`Award`]: crate::awards::Award
 /// [`Team`]: crate::team::Team
-pub trait Requestable: 'static + Send + Sync + DeserializeOwned + Debug + Clone + Eq {
+pub trait Requestable: 'static + Send + Sync + DeserializeOwned + Debug + Clone + PartialEq {
     type Identifier: Clone + Eq + Hash + Display + Sync + Debug;
     type URL: RequestURL;
 

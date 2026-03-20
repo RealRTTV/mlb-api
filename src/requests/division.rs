@@ -21,7 +21,7 @@ use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 /// Response to a [`DivisionsRequest`]
 ///
 /// Example: <http://statsapi.mlb.com/api/v1/divisions>
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DivisionsResponse {
 	pub copyright: Copyright,
@@ -31,7 +31,7 @@ pub struct DivisionsResponse {
 id!(#[doc = "A [`u32`] representing the ID of the division"] DivisionId { id: u32 });
 
 /// A division with a name.
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedDivision {
 	pub name: String,

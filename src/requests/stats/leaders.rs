@@ -19,7 +19,7 @@ use crate::meta::StatType;
 use crate::team::NamedTeam;
 
 /// Returns a [`Vec`] of [`StatLeaders`]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StatLeadersResponse {
 	pub copyright: Copyright,
@@ -27,7 +27,7 @@ pub struct StatLeadersResponse {
 }
 
 /// A [`Vec`] of [`StatLeader`]s for a specific stat.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(try_from = "__StatLeadersStruct")]
 pub struct StatLeaders {
 	pub category: BaseballStatId,
@@ -63,7 +63,7 @@ impl TryFrom<__StatLeadersStruct> for StatLeaders {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StatLeader {
 	pub rank: u32,

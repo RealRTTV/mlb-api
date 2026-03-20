@@ -10,7 +10,7 @@ use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 /// The greater struct defining device properties, see [the module docs](self)
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceProperties {
 	#[serde(rename = "teamNameDisplay")]
@@ -34,7 +34,7 @@ pub struct DeviceProperties {
 id!(AssetId { id: u32 });
 
 /// An asset (?)
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum Asset {
 	ShortContent {
@@ -53,7 +53,7 @@ pub enum Asset {
 	},
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageData {
 	pub title: Option<String>,
@@ -71,7 +71,7 @@ impl Asset {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Style {
 

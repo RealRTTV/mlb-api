@@ -20,7 +20,7 @@
 // use std::fmt::{Display, Formatter};
 // use std::marker::PhantomData;
 //
-// #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+// #[derive(Debug, Deserialize, PartialEq, Clone)]
 // #[serde(bound = "S: Stats")]
 // pub struct TeamsStatsResponse<S: Stats> {
 // 	pub copyright: Copyright,

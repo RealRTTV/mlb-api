@@ -19,8 +19,9 @@ use crate::team::NamedTeam;
 /// TOR | 0 | 0 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 || 4 | 14| 0 |
 /// ````
 /// You're used to seeing.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct Linescore {
     #[serde(default)]
     pub copyright: Copyright,
@@ -37,8 +38,9 @@ pub struct Linescore {
 }
 
 /// A record of [`RHE`] from both teams in a single inning.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LinescoreInningRecord {
     #[serde(rename = "num")]
     pub inning: Inning,
@@ -47,8 +49,9 @@ pub struct LinescoreInningRecord {
 }
 
 /// Current offense in the linescore
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LinescoreOffense {
     pub batter: NamedPerson,
     pub on_deck: NamedPerson,
@@ -61,7 +64,8 @@ pub struct LinescoreOffense {
 }
 
 /// Current defense in the linescore, note that it also contains their offense too.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LinescoreDefense {
     pub pitcher: NamedPerson,
     pub catcher: NamedPerson,

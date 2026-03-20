@@ -16,7 +16,7 @@ use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 /// A [`Vec`] of [`TeamUniformAssets`]s
 ///
 /// Split by Team
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct UniformsResponse {
     pub copyright: Copyright,
     #[serde(rename = "uniforms")] pub teams: Vec<TeamUniformAssets>,
@@ -26,7 +26,7 @@ id!(UniformAssetId { uniformAssetId: u32 });
 id!(UniformAssetCategoryId { uniformAssetTypeId: u32 });
 
 /// A [`Vec`] of a team's [`UniformAsset`]s
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamUniformAssets {
     pub team_id: TeamId,

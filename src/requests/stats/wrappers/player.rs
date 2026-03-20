@@ -6,7 +6,7 @@ use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::stats::wrappers::SeasonPiece;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct WithPlayer<T: RawStat> {

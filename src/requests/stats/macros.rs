@@ -3,7 +3,7 @@
 macro_rules! __stats__stat_type_definition {
     ($parent_name:ident => $vis:vis struct $name:ident { $stat_type:ident => [$($stat_group:ident),+] }) => {
 		::pastey::paste! {
-			#[derive(Debug, PartialEq, Eq, Clone)]
+			#[derive(Debug, PartialEq, Clone)]
 			$vis struct $name {
 				$($vis [< $stat_group:snake >]: ::std::boxed::Box<<$crate::stats::stat_types::[<__ $stat_type StatTypeStats>] as $crate::stats::StatTypeStats>::$stat_group>),+
 			}
@@ -408,7 +408,7 @@ macro_rules! __stats0 {
 		[$($stat_type:ident),+ $(,)?] = $stat_groups:tt
 	}) => {
 		::pastey::paste! {
-			#[derive(Debug, PartialEq, Eq, Clone)]
+			#[derive(Debug, PartialEq, Clone)]
         	$vis struct $name {
 				$($vis [<$stat_type:snake>]: [<$name $stat_type Split>],)*
 			}

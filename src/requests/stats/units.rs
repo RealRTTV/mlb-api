@@ -91,8 +91,6 @@ impl Debug for ThreeDecimalPlaceRateStat {
 #[derive(Deref, DerefMut, From, Add, PartialEq, Copy, Clone)]
 pub struct PercentageStat(f64);
 
-impl Eq for PercentageStat {}
-
 impl PercentageStat {
 	pub const NIL: Self = Self(f64::NAN);
 
@@ -252,7 +250,7 @@ impl Default for TwoDecimalPlaceRateStat {
 	}
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct InningsPitched {
 	major: u32,
 	minor: u8,
@@ -391,10 +389,6 @@ impl<const N: usize> AddAssign for FloatCountingStat<N> {
 	fn add_assign(&mut self, rhs: Self) {
 		self.0 += rhs.0;
 	}
-}
-
-impl<const N: usize> Eq for FloatCountingStat<N> {
-
 }
 
 impl<const N: usize> FloatCountingStat<N> {

@@ -48,7 +48,7 @@ use crate::team::NamedTeam;
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 /// Response containing a list of people
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
 pub struct PeopleResponse<H: PersonHydrations> {
@@ -60,7 +60,7 @@ pub struct PeopleResponse<H: PersonHydrations> {
 /// A baseball player.
 ///
 /// [`Deref`]s to [`RegularPerson`]
-#[derive(Debug, Deref, DerefMut, Deserialize, Eq, Clone)]
+#[derive(Debug, Deref, DerefMut, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
 pub struct Ballplayer<H: PersonHydrations> {
@@ -91,7 +91,7 @@ pub struct Ballplayer<H: PersonHydrations> {
 /// A regular person; detailed-name stuff.
 ///
 /// [`Deref`]s to [`NamedPerson`]
-#[derive(Debug, Deserialize, Deref, DerefMut, Eq, Clone)]
+#[derive(Debug, Deserialize, Deref, DerefMut, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "H: PersonHydrations")]
 pub struct RegularPerson<H: PersonHydrations> {
@@ -162,7 +162,7 @@ impl<H: PersonHydrations> RegularPerson<H> {
 /// A person with a name.
 ///
 /// [`Deref`]s to [`PersonId`]
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedPerson {
 	pub full_name: String,
@@ -195,7 +195,7 @@ impl NamedPerson {
 id!(#[doc = "A [`u32`] that represents a person."] PersonId { id: u32 });
 
 /// A complete person response for a hydrated request. Ballplayers have more fields.
-#[derive(Debug, Deserialize, Clone, Eq, From)]
+#[derive(Debug, Deserialize, Clone, From)]
 #[serde(untagged)]
 #[serde(bound = "H: PersonHydrations")]
 pub enum Person<H: PersonHydrations = ()> {
@@ -311,7 +311,7 @@ impl<H: PersonHydrations> RequestURL for PersonRequest<H> {
 
 /// The number on the back of a jersey, useful for radix sorts maybe??
 #[repr(transparent)]
-#[derive(Debug, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
+#[derive(Debug, Deref, Display, PartialEq, Copy, Clone, Hash, From)]
 pub struct JerseyNumber(u8);
 
 impl<'de> Deserialize<'de> for JerseyNumber {
@@ -324,7 +324,7 @@ impl<'de> Deserialize<'de> for JerseyNumber {
 }
 
 /// Data regarding birthplace.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BirthData {
 	pub birth_date: NaiveDate,
@@ -342,7 +342,7 @@ impl BirthData {
 }
 
 /// Height and weight
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BodyMeasurements {
 	pub height: HeightMeasurement,
@@ -357,10 +357,8 @@ pub struct StrikeZoneMeasurements {
 	pub strike_zone_bottom: f64,
 }
 
-impl Eq for StrikeZoneMeasurements {}
-
 /// Data regarding preferred team, likely for showcasing the player with a certain look regardless of the time.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PreferredTeamData {
 	pub jersey_number: JerseyNumber,
@@ -369,7 +367,7 @@ pub struct PreferredTeamData {
 }
 
 /// Relative to the ballplayer, father, son, etc.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Relative {
 	pub has_stats: bool,
@@ -379,7 +377,7 @@ pub struct Relative {
 }
 
 /// Schools the ballplayer went to.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Default)]
 pub struct Education {
 	#[serde(default)]
 	pub highschools: Vec<School>,
@@ -511,7 +509,7 @@ macro_rules! person_hydrations {
 		}
     ) => {
 		::pastey::paste! {
-			#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+			#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 			#[serde(rename_all = "camelCase")]
 			$vis struct $name {
 				$(#[serde(default)] pub awards: ::std::vec::Vec<$crate::awards::Award> $awards_comma)?

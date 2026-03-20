@@ -138,7 +138,7 @@ impl From<SeasonRaw> for Season {
 /// Stores multiple date ranges for different parts of the season (spring training, postseason, etc)
 ///
 /// These fields are arranged in a chronological order but the specification makes no guarantees that this order remain consistent.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "SeasonRaw")]
 pub struct Season {
 	pub id: SeasonId,
@@ -179,10 +179,8 @@ pub struct QualificationMultipliers {
 	pub outs_pitched_per_game: f64,
 }
 
-impl Eq for QualificationMultipliers {}
-
 /// Current state of the season
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub enum SeasonState {
 	#[serde(rename = "spring training")]
 	SpringTraining,
@@ -195,7 +193,7 @@ pub enum SeasonState {
 }
 
 /// Returns a [`Vec`] of [`Season`]s.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SeasonsResponse {
 	pub copyright: Copyright,

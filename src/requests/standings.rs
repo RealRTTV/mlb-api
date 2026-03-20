@@ -25,7 +25,7 @@ use crate::types::MLB_API_DATE_FORMAT;
 /// A [`Vec`] of [`DivisionalStandings`]
 ///
 /// The request divides the league into its divisions and then the divisions into their teams.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: StandingsHydrations")]
 pub struct StandingsResponse<H: StandingsHydrations> {
     pub copyright: Copyright,
@@ -34,7 +34,7 @@ pub struct StandingsResponse<H: StandingsHydrations> {
 }
 
 /// [`TeamRecord`]s per division. `last_updated` field might be useful for caching
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: StandingsHydrations")]
 pub struct DivisionalStandings<H: StandingsHydrations> {
     pub standings_type: StandingsType,
@@ -50,7 +50,7 @@ pub struct DivisionalStandings<H: StandingsHydrations> {
 }
 
 /// Main bulk of the response; the team's record and standings information. Lots of stuff here.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase", bound = "H: StandingsHydrations")]
 pub struct TeamRecord<H: StandingsHydrations> {
     pub team: H::Team,
@@ -136,7 +136,7 @@ impl<H: StandingsHydrations> TeamRecord<H> {
 }
 
 /// Different record splits depending on the Division, League, [`RecordSplitKind`], etc.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct RecordSplits {
     #[serde(rename = "splitRecords", default)]
     pub record_splits: Vec<RecordSplit>,
@@ -331,7 +331,7 @@ impl FromStr for GamesBack {
     }
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Add, AddAssign)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Add, AddAssign)]
 pub struct Record {
     wins: usize,
     losses: usize,
@@ -352,7 +352,7 @@ impl Record {
 }
 
 // A repetition of a kind of game outcome; ex: W5 (last 5 games were wins), L1 (last 1 game was a loss).
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 pub struct Streak {
     #[serde(rename = "streakNumber")]
     pub quantity: usize,
@@ -368,7 +368,7 @@ impl Display for Streak {
 
 // todo: hook into [`GameOutcome`]?
 /// A game outcome for streak purposes
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display)]
 pub enum StreakKind {
     /// A game that ended in a win for this team.
     #[serde(rename = "wins")]
@@ -381,7 +381,7 @@ pub enum StreakKind {
 }
 
 /// A team's record, filtered by the [`RecordSplitKind`].
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Deref, DerefMut)]
 pub struct RecordSplit {
     #[deref]
     #[deref_mut]
@@ -391,7 +391,7 @@ pub struct RecordSplit {
     pub kind: RecordSplitKind,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 pub struct DivisionalRecordSplit {
     #[deref]
     #[deref_mut]
@@ -400,7 +400,7 @@ pub struct DivisionalRecordSplit {
     pub division: NamedDivision,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 pub struct LeagueRecordSplit {
     #[deref]
     #[deref_mut]
@@ -409,7 +409,7 @@ pub struct LeagueRecordSplit {
     pub league: NamedLeague,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum RecordSplitKind {
     /// Games as the home team
@@ -470,10 +470,10 @@ pub enum RecordSplitKind {
 }
 
 pub trait StandingsHydrations: Hydrations<RequestData=()> {
-    type Team: Debug + DeserializeOwned + Eq + Clone;
-    type League: Debug + DeserializeOwned + Eq + Clone;
-    type Division: Debug + DeserializeOwned + Eq + Clone;
-    type Sport: Debug + DeserializeOwned + Eq + Clone;
+    type Team: Debug + DeserializeOwned + PartialEq + Clone;
+    type League: Debug + DeserializeOwned + PartialEq + Clone;
+    type Division: Debug + DeserializeOwned + PartialEq + Clone;
+    type Sport: Debug + DeserializeOwned + PartialEq + Clone;
 }
 
 impl StandingsHydrations for () {

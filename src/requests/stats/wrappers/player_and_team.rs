@@ -7,7 +7,7 @@ use crate::stats::{RawStat, SingletonSplitStat};
 use crate::stats::wrappers::{GameTypePiece, PlayerPiece, SeasonPiece, TeamPiece};
 use crate::team::NamedTeam;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct WithPlayerAndTeam<T: RawStat> {

@@ -52,7 +52,7 @@ mod tests;
 
 // pub use derived::*;
 
-pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
+pub trait Stat: Debug + Clone + PartialEq + Default {
 	type Split: DeserializeOwned;
 
 	type TryFromSplitError;
@@ -63,13 +63,13 @@ pub trait Stat: Debug + Clone + PartialEq + Eq + Default {
 }
 
 /// Represents the types defined in [`raw`], not the wrapped final types. In the serialized format, this represents the `stat` field.
-pub trait RawStat: Debug + DeserializeOwned + Clone + Eq + Default {}
+pub trait RawStat: Debug + DeserializeOwned + Clone + PartialEq + Default {}
 
 impl RawStat for () {}
 impl SingletonSplitStat for () {}
 
 /// Represents types that are made from a single 'split' in the serialized format (able to be deserialized)
-pub trait SingletonSplitStat: Debug + DeserializeOwned + Clone + PartialEq + Eq + Default {
+pub trait SingletonSplitStat: Debug + DeserializeOwned + Clone + PartialEq + Default {
 
 }
 
@@ -97,7 +97,7 @@ pub(crate) trait StatTypeStats {
 	type Catching: Stat;
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Default)]
 pub struct PlayStat {
 	// pub play: Play,
 }

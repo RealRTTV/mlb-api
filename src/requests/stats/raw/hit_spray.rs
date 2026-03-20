@@ -3,7 +3,7 @@ use crate::stats::RawStat;
 use crate::stats::units::PercentageStat;
 
 #[allow(clippy::struct_field_names, reason = "is a piece")]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename = "camelCase")]
 pub struct HitSpray {
 	left_field: PercentageStat,

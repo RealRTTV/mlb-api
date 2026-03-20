@@ -156,8 +156,6 @@ macro_rules! group_and_type {
                 }
             }
 
-            impl ::std::cmp::Eq for [<__ $name StatsData>] {}
-
             impl ::std::ops::Add for [<__ $name StatsData>]
             where
                 $(
@@ -218,7 +216,7 @@ pub use hot_cold_zones::*;
 pub use pitch_usage::*;
 
 /// For old data, some stats are just omitted, like pitch count and stuff. So every field is now possibly omittable. Gotta `?` everything now. (this api is legendary)
-#[derive(Debug, Error, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Error, PartialEq, Copy, Clone)]
 #[error("This stat was omitted.")]
 pub struct OmittedStatError;
 

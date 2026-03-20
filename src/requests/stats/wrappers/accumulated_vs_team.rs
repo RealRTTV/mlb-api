@@ -6,7 +6,7 @@ use crate::team::NamedTeam;
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 pub struct AccumulatedVsTeamTotalMatchup<T: RawStat> {

@@ -17,7 +17,7 @@ use crate::cache::Requestable;
 use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 
 /// Returns a [`Vec`] of [`Conference`]s
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConferencesResponse {
 	pub copyright: Copyright,
@@ -43,7 +43,7 @@ pub struct Conference {
 }
 
 /// Conference with a name
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedConference {
 	pub name: String,

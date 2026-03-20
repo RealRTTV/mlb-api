@@ -3,7 +3,7 @@ use thiserror::Error;
 use crate::stats::{RawStat, Stat};
 use crate::stats::wrappers::season::WithSeason;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(bound = "T: RawStat")]
 #[doc(hidden)]
@@ -13,7 +13,7 @@ pub struct __HomeOrAwayStruct<T: RawStat> {
 	is_home: bool,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct WithHomeAndAway<T: RawStat> {
 	pub home: WithSeason<T>,
 	pub away: WithSeason<T>,

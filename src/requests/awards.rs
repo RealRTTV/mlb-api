@@ -19,7 +19,7 @@ use crate::{rwlock_const_new, RwLock, cache::CacheTable};
 /// Returns a [`Vec`] of [`Award`]s
 ///
 /// Example: <http://statsapi.mlb.com/api/v1/awards>
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct AwardsResponse {
 	pub copyright: Copyright,
 	pub awards: Vec<Award>,

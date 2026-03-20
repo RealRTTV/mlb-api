@@ -7,7 +7,7 @@ use std::fmt::Debug;
 use serde::de::DeserializeOwned;
 
 #[doc(hidden)]
-pub trait Hydrations: 'static + Debug + DeserializeOwned + Eq + Clone {
+pub trait Hydrations: 'static + Debug + DeserializeOwned + PartialEq + Clone {
 	type RequestData;
 
 	fn hydration_text(data: &Self::RequestData) -> Cow<'static, str>;

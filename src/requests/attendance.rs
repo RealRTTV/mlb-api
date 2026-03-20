@@ -32,7 +32,7 @@ use crate::request::RequestURL;
 /// Returns a [`Vec`] of [`AttendanceRecord`].
 ///
 /// Example: <http://statsapi.mlb.com/api/v1/attendance?teamId=141>
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "AttendanceResponseStruct")]
 pub struct AttendanceResponse {
 	pub copyright: Copyright,
@@ -66,7 +66,7 @@ impl From<AttendanceResponseStruct> for AttendanceResponse {
 /// Does not represent a single opening, those opening-by-opening requests require a little more MacGyver-ing with the date.
 ///
 /// Represents a full season of attendance data (segmented by [`GameType`]).
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "AnnualRecordStruct")]
 pub struct AttendanceRecord {
 	pub total_openings: HomeAwaySplit<u32>,
@@ -221,7 +221,7 @@ impl Display for SeasonWithMinorId {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 struct AnnualRecordStruct {
 	// openings_total: u32,

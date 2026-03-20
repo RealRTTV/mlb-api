@@ -3,7 +3,7 @@ use crate::person::NamedPerson;
 use crate::stats::RawStat;
 use crate::stats::raw::HitSpray;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename = "camelCase")]
 pub struct SprayChart {
 	#[serde(rename = "stat")]

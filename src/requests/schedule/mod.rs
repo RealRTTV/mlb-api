@@ -30,7 +30,7 @@ use uuid::Uuid;
 pub mod postseason;
 pub mod tied;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
 pub struct ScheduleResponse<H: ScheduleHydrations> {
 	#[serde(default)] // Schedules in Team Hydrations don't have the copyright.
@@ -38,7 +38,7 @@ pub struct ScheduleResponse<H: ScheduleHydrations> {
 	pub dates: Vec<ScheduleDate<H>>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
 pub struct ScheduleDate<H: ScheduleHydrations> {
 	pub date: NaiveDate,
@@ -46,7 +46,7 @@ pub struct ScheduleDate<H: ScheduleHydrations> {
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "false positive")]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "__ScheduleGameStruct<H>", bound = "H: ScheduleHydrations")]
 pub struct ScheduleGame<H: ScheduleHydrations> {
 	pub game_id: GameId,
@@ -171,7 +171,7 @@ impl<H: ScheduleHydrations> From<__ScheduleGameStruct<H>> for ScheduleGame<H> {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SeriesData {
 	pub games_in_series: u32,
@@ -179,7 +179,7 @@ pub struct SeriesData {
 	pub game_in_series_ordinal: u32,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: ScheduleHydrations")]
 pub struct TeamWithStandings<H: ScheduleHydrations> {
 	pub team: H::Team,
@@ -197,7 +197,7 @@ pub struct TeamWithStandings<H: ScheduleHydrations> {
 	pub series_ordinal: Option<u32>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamWithStandingsGameScore {
 	#[serde(rename = "score")]
@@ -205,7 +205,7 @@ pub struct TeamWithStandingsGameScore {
 	pub is_winner: bool,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Standings {
 	pub wins: u32,
@@ -225,9 +225,9 @@ impl Standings {
 }
 
 pub trait ScheduleHydrations: Hydrations<RequestData = ()> {
-	type Team: Debug + DeserializeOwned + Clone + Eq;
+	type Team: Debug + DeserializeOwned + Clone + PartialEq;
 
-	type Venue: Debug + DeserializeOwned + Clone + Eq;
+	type Venue: Debug + DeserializeOwned + Clone + PartialEq;
 }
 
 impl ScheduleHydrations for () {
@@ -358,7 +358,7 @@ macro_rules! schedule_hydrations {
 		$(team: $team:ty ,)?
 		$(venue: $venue:ty)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
 

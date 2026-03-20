@@ -33,8 +33,6 @@ macro_rules! id_only_eq_impl {
 				self.$id_field == other.$id_field
 			}
 		}
-
-		impl ::core::cmp::Eq for $name {}
 	};
 }
 

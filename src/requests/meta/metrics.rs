@@ -25,8 +25,6 @@ macro_rules! units {
 			}
 		}
 
-        impl Eq for Unit {}
-
         #[derive(::serde::Deserialize)]
         struct __UnitStruct(String);
 
@@ -60,7 +58,7 @@ units! {
 }
 
 /// A [`Metric`] with a name
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedMetric {
 	pub name: String,

@@ -4,7 +4,7 @@ use derive_more::Display;
 use serde::Deserialize;
 
 /// Different types of standings
-#[derive(Deserialize, Default,PartialEq, Eq, Copy, Clone, Display, Hash)]
+#[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__StandingsTypeStruct")]
 pub enum StandingsType {
 	///	Regular Season Standings

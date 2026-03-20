@@ -16,7 +16,7 @@ use crate::meta::RosterType;
 use crate::team::NamedTeam;
 
 /// Returns a [`Vec`] of [`RosterPlayer`]s for a team.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: RosterHydrations")]
 pub struct RosterResponse<H: RosterHydrations = ()> {
     pub copyright: Copyright,
@@ -27,7 +27,7 @@ pub struct RosterResponse<H: RosterHydrations = ()> {
 }
 
 // A [`NamedPerson`] on a roster, has an assigned position.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RosterPlayer<H: RosterHydrations = ()> {
     pub person: H::Person,
@@ -38,7 +38,7 @@ pub struct RosterPlayer<H: RosterHydrations = ()> {
 }
 
 /// Status on the roster
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
 #[serde(try_from = "__RosterStatusStruct")]
 pub enum RosterStatus {
     Active,
@@ -138,7 +138,7 @@ impl<H: RosterHydrations> RequestURL for RosterRequest<H> {
 }
 
 /// A [`Person`](crate::person::Person)s entry on a roster.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RosterEntry {
     pub position: NamedPosition,
@@ -154,7 +154,7 @@ pub struct RosterEntry {
 /// A type that is made with [`roster_hydrations!`](crate::roster_hydrations)
 pub trait RosterHydrations: Hydrations {
     /// [`NamedPerson`] when no hydrations are present and [`Person`](crate::person::Person) when they are.
-    type Person: Debug + DeserializeOwned + Eq + Clone;
+    type Person: Debug + DeserializeOwned + PartialEq + Clone;
 }
 
 impl RosterHydrations for () {
@@ -259,7 +259,7 @@ macro_rules! roster_hydrations {
         $(person: $person:ty ,)?
     }) => {
         ::pastey::paste! {
-            #[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::clone::Clone)]
+            #[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
             #[serde(rename_all = "camelCase")]
             $vis struct $name {}
 
