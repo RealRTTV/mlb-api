@@ -134,6 +134,9 @@ pub struct GameInfo {
 	/// Measured in minutes,
 	#[serde(rename = "gameDurationMinutes")]
 	pub game_duration: u32,
+	/// Durationg of the game delay; measured in minutes.
+	#[serde(rename = "delayDurationMinutes")]
+	pub delay_duration: Option<u32>,
 }
 
 /// Review usage for each team and if the game supports challenges.

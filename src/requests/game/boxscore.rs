@@ -8,10 +8,10 @@ use std::fmt::Display;
 
 use bon::Builder;
 use fxhash::FxHashMap;
-use serde::Deserialize;
+use serde::{Deserialize, de::IgnoredAny};
 use serde_with::{serde_as, DefaultOnError};
 
-use crate::{Copyright, HomeAwaySplit, game::{BattingOrderIndex, GameId, LabelledValue, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
+use crate::{Copyright, HomeAwaySplit, game::{BattingOrderIndex, GameId, LabelledValue, Official, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
 
 /// See [`self`]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -25,6 +25,7 @@ pub struct Boxscore {
     pub top_performers: Option<[TopPerformer; 3]>,
     pub pitching_notes: Vec<String>,
     pub teams: HomeAwaySplit<TeamWithGameData>,
+    pub officials: Vec<Official>,
 }
 
 /// One of three "top performers" of the game, measured by game score.
@@ -34,10 +35,17 @@ pub struct Boxscore {
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct TopPerformer {
-    player: PlayerWithGameData,
-    game_score: usize,
+    pub player: PlayerWithGameData,
+    pub game_score: usize,
     #[serde(rename = "type")]
-    player_kind: String,
+    pub player_kind: String,
+
+    #[doc(hidden)]
+    #[serde(rename = "pitchingGameScore", default)]
+    pub __pitching_game_score: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "hittingGameScore", default)]
+    pub __hitting_game_score: IgnoredAny,
 }
 
 /// A person with some potentially useful information regarding their performance in the current game.
@@ -56,6 +64,10 @@ pub struct PlayerWithGameData {
 	#[serde(default)]
 	pub all_positions: Vec<NamedPosition>,
 	pub batting_order: Option<BattingOrderIndex>,
+
+    #[doc(hidden)]
+    #[serde(rename = "parentTeamId", default)]
+	pub __parent_team_id: IgnoredAny,
 }
 
 /// A team with some potentially useful information regarding their performance in the current game.

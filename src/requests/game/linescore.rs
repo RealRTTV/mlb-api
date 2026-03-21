@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
+use serde::de::IgnoredAny;
 
 use crate::request::RequestURL;
 use crate::{Copyright, HomeAwaySplit};
@@ -35,6 +36,17 @@ pub struct Linescore {
     pub defense: LinescoreDefense,
     #[serde(flatten)]
     pub count: AtBatCount,
+    pub note: Option<String>,
+
+    #[doc(hidden)]
+    #[serde(rename = "currentInningOrdinal", default)]
+    pub __current_inning_ordinal: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "inningState", default)]
+    pub __inning_state: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "isTopInning", default)]
+    pub __is_top_inning: IgnoredAny,
 }
 
 /// A record of [`RHE`] from both teams in a single inning.
@@ -46,6 +58,10 @@ pub struct LinescoreInningRecord {
     pub inning: Inning,
     #[serde(flatten)]
     pub inning_record: HomeAwaySplit<RHE>,
+
+    #[doc(hidden)]
+    #[serde(rename = "ordinalNum", default)]
+    pub __ordinal_num: IgnoredAny,
 }
 
 /// Current offense in the linescore
@@ -61,6 +77,34 @@ pub struct LinescoreOffense {
     /// Index of the current player in the batting order
     #[serde(rename = "battingOrder")]
     pub batting_order_index: usize,
+
+    #[doc(hidden)]
+    #[serde(rename = "pitcher", default)]
+    pub __pitcher: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "catcher", default)]
+    pub __catcher: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "first", default)]
+    pub __first_baseman: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "second", default)]
+    pub __second_baseman: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "third", default)]
+    pub __third_baseman: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "shortstop", default)]
+    pub __shortstop: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "left", default)]
+    pub __leftfielder: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "center", default)]
+    pub __centerfielder: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "right", default)]
+    pub __rightfielder: IgnoredAny,
 }
 
 /// Current defense in the linescore, note that it also contains their offense too.

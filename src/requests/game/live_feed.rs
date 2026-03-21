@@ -33,8 +33,8 @@ pub struct LiveFeedResponse {
 	pub live: LiveFeedLiveData,
 
 	#[doc(hidden)]
-	#[serde(rename = "link")]
-	__link: IgnoredAny,
+	#[serde(rename = "link", default)]
+	pub __link: IgnoredAny,
 }
 
 /// Metadata about the game, often not useful.
@@ -42,13 +42,14 @@ pub struct LiveFeedResponse {
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LiveFeedMetadata {
+	/// Recommended duration to send new requests (in seconds). Often 10.
 	pub wait: u32,
 	pub game_events: Vec<String>, // todo: what is this type
 	pub logical_events: Vec<LogicalEventId>,
 
     #[doc(hidden)]
-    #[serde(rename = "timeStamp")]
-	__timestamp: IgnoredAny,
+    #[serde(rename = "timeStamp", default)]
+	pub __timestamp: IgnoredAny,
 }
 
 /// General information about the game
@@ -79,8 +80,8 @@ pub struct LiveFeedData {
 	pub mound_visits: HomeAwaySplit<ResourceUsage>,
 
     #[doc(hidden)]
-    #[serde(rename = "alerts")]
-	__alerts: IgnoredAny,
+    #[serde(rename = "alerts", default)]
+	pub __alerts: IgnoredAny,
 }
 
 /// More specific information about the "game", child of [`LiveFeedData`]
@@ -104,20 +105,29 @@ pub struct LiveFeedDataMeta {
 	pub displayed_season: SeasonId,
 
 	#[doc(hidden)]
-	#[serde(rename = "id")]
-	__id: IgnoredAny,
+	#[serde(rename = "id", default)]
+	pub __id: IgnoredAny,
+	#[doc(hidden)]
+	#[serde(rename = "calendarEventID", default)]
+	pub __calender_event_id: IgnoredAny,
 }
 
 /// Live data about the game -- i.e. stuff that changes as the game goes on.
 /// 
 /// Includes a lot of sub-requests within it, such as the [`super::PlayByPlay`] and [`super::Linescore`].
 #[derive(Debug, Deserialize, PartialEq, Clone)]
+#[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LiveFeedLiveData {
-	// pub plays: ...,
 	pub linescore: Linescore,
 	pub boxscore: Boxscore,
 	pub decisions: Decisions,
-	// pub leaders: ...,
+	
+	#[doc(hidden)]
+	#[serde(rename = "plays", default)]
+	pub __plays: IgnoredAny,
+	#[doc(hidden)]
+	#[serde(rename = "leaders", default)]
+	pub __leaders: IgnoredAny,
 }
 
 /// Returns a [`LiveFeedResponse`]
