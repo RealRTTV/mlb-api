@@ -29,15 +29,17 @@ pub enum HitTrajectory {
 
 #[derive(Deserialize)]
 #[doc(hidden)]
-struct __HitTrajectoryStruct {
-	code: String,
+#[serde(untagged)]
+enum __HitTrajectoryStruct {
+	Wrapped { code: String },
+	Inline(String),
 }
 
 impl TryFrom<__HitTrajectoryStruct> for HitTrajectory {
 	type Error = &'static str;
 
-	fn try_from(value: __HitTrajectoryStruct) -> Result<Self, Self::Error> {
-		Ok(match &*value.code {
+	fn try_from((__HitTrajectoryStruct::Wrapped { code } | __HitTrajectoryStruct::Inline(code)): __HitTrajectoryStruct) -> Result<Self, Self::Error> {
+		Ok(match &*code {
 			"bunt_grounder" => Self::BuntGrounder,
 			"bunt_popup" => Self::BuntPopup,
 			"bunt_line_drive" => Self::BuntLineDrive,

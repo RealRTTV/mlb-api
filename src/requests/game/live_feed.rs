@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
 use serde::Deserialize;
 use serde::de::IgnoredAny;
-use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameTags, ResourceUsage, ReviewData, WeatherConditions};
+use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameStatLeaders, GameTags, ResourceUsage, ReviewData, WeatherConditions};
 use crate::game::linescore::Linescore;
 use crate::meta::{GameStatus, GameType};
 use crate::meta::LogicalEventId;
@@ -121,13 +121,11 @@ pub struct LiveFeedLiveData {
 	pub linescore: Linescore,
 	pub boxscore: Boxscore,
 	pub decisions: Decisions,
+	pub leaders: GameStatLeaders,
 	
 	#[doc(hidden)]
 	#[serde(rename = "plays", default)]
 	pub __plays: IgnoredAny,
-	#[doc(hidden)]
-	#[serde(rename = "leaders", default)]
-	pub __leaders: IgnoredAny,
 }
 
 /// Returns a [`LiveFeedResponse`]

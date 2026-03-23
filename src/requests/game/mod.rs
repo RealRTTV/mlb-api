@@ -7,10 +7,10 @@
 use std::fmt::{Display, Formatter};
 use std::marker::PhantomData;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use derive_more::{Deref, DerefMut, From, Not};
+use derive_more::{Deref, DerefMut, Display, From, Not};
 use fxhash::FxHashMap;
 use serde::{Deserialize, Deserializer};
-use serde::de::{DeserializeOwned, Error, MapAccess};
+use serde::de::{DeserializeOwned, Error, IgnoredAny, MapAccess};
 use serde_with::{serde_as, DisplayFromStr};
 use crate::person::{Ballplayer, JerseyNumber, NamedPerson, PersonId};
 use crate::meta::{DayNight, NamedPosition};
@@ -200,9 +200,9 @@ impl Display for Inning {
 /// Half of the inning.
 #[derive(Debug, Deserialize, Copy, Clone, PartialEq, Not)]
 pub enum InningHalf {
-	#[serde(rename = "Top")]
+	#[serde(rename = "Top", alias = "top")]
 	Top,
-	#[serde(rename = "Bottom")]
+	#[serde(rename = "Bottom", alias = "bottom")]
 	Bottom,
 }
 
@@ -350,6 +350,7 @@ impl Display for BattingOrderIndex {
 	}
 }
 
+/// Decisions of winner & loser (and potentially the save)
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
@@ -357,6 +358,46 @@ pub struct Decisions {
 	pub winner: Option<NamedPerson>,
 	pub loser: Option<NamedPerson>,
 	pub save: Option<NamedPerson>,
+}
+
+/// Game records in stats like exit velocity, hit distance, etc.
+///
+/// Currently unable to actually get data for these though
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
+pub struct GameStatLeaders {
+	#[doc(hidden)]
+	#[serde(rename = "hitDistance", default)]
+	pub __distance: IgnoredAny,
+	#[doc(hidden)]
+	#[serde(rename = "hitSpeed", default)]
+	pub __exit_velocity: IgnoredAny,
+	#[doc(hidden)]
+	#[serde(rename = "pitchSpeed", default)]
+	pub __velocity: IgnoredAny,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+pub enum Base {
+	#[serde(rename = "1B")]
+	First,
+	#[serde(rename = "2B")]
+	Second,
+	#[serde(rename = "3B")]
+	Third,
+	#[serde(rename = "score")]
+	Home,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub enum ContactHardness {
+	#[serde(rename = "soft")]
+	Soft,
+	#[serde(rename = "medium")]
+	Medium,
+	#[serde(rename = "hard")]
+	Hard,
 }
 
 pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserializer<'de>>(deserializer: D) -> Result<FxHashMap<PersonId, T>, D::Error> {
