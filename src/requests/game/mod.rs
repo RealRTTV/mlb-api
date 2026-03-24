@@ -10,7 +10,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use derive_more::{Deref, DerefMut, Display, From, Not};
 use fxhash::FxHashMap;
 use serde::{Deserialize, Deserializer};
-use serde::de::{DeserializeOwned, Error, IgnoredAny, MapAccess};
+use serde::de::{DeserializeOwned, Error, IgnoredAny, MapAccess, Visitor};
 use serde_with::{serde_as, DisplayFromStr};
 use crate::person::{Ballplayer, JerseyNumber, NamedPerson, PersonId};
 use crate::meta::{DayNight, NamedPosition};
@@ -378,16 +378,61 @@ pub struct GameStatLeaders {
 	pub __velocity: IgnoredAny,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Display)]
 pub enum Base {
-	#[serde(rename = "1B")]
+	#[display("1B")]
 	First,
-	#[serde(rename = "2B")]
+	#[display("2B")]
 	Second,
-	#[serde(rename = "3B")]
+	#[display("3B")]
 	Third,
-	#[serde(rename = "score")]
+	#[display("HP")]
 	Home,
+}
+
+impl<'de> Deserialize<'de> for Base {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		struct BaseVisitor;
+
+		impl Visitor<'_> for BaseVisitor {
+			type Value = Base;
+
+			fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+				write!(f, "a string or integer representing the base")
+			}
+
+			fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				Ok(match v {
+					"1B" | "1" => Base::First,
+					"2B" | "2" => Base::Second,
+					"3B" | "3" => Base::Third,
+					"score" | "HP" | "4B" | "4" => Base::Home,
+					_ => return Err(E::unknown_variant(v, &["1B", "1", "2B" , "2", "3B", "3", "score", "HP", "4B", "4"]))
+				})
+			}
+
+			fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+			where
+				E: Error,
+			{
+				Ok(match v {
+					1 => Base::First,
+					2 => Base::Second,
+					3 => Base::Third,
+					4 => Base::Home,
+					_ => return Err(E::unknown_variant("[a number]", &["1", "2", "3", "4"]))
+				})
+			}
+		}
+
+		deserializer.deserialize_any(BaseVisitor)
+	}
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]

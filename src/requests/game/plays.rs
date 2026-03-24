@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::{Deref, DerefMut}};
+use std::{fmt::Display, num::NonZeroUsize, ops::{Deref, DerefMut}};
 
 use bon::Builder;
 use chrono::NaiveDateTime;
@@ -7,7 +7,7 @@ use serde::{Deserialize, de::IgnoredAny};
 use serde_with::{DisplayFromStr, serde_as};
 use uuid::Uuid;
 
-use crate::{Copyright, Handedness, HomeAwaySplit, game::{AtBatCount, Base, ContactHardness, GameId, Inning, InningHalf}, meta::{HitTrajectory, NamedPosition, PitchCodeId, PitchType}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}};
+use crate::{Copyright, Handedness, HomeAwaySplit, game::{AtBatCount, Base, BattingOrderIndex, ContactHardness, GameId, Inning, InningHalf}, meta::{HitTrajectory, NamedPosition, PitchCodeId, PitchType, ReviewReasonId}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}, team::TeamId};
 
 /// A collection of plays, often a whole game's worth.
 #[allow(clippy::struct_field_names, clippy::unsafe_derive_deserialize, reason = "not relevant here")]
@@ -141,6 +141,8 @@ pub struct Play {
     /// See [`PlayEvent`].
     pub play_events: Vec<PlayEvent>,
     pub runners: Vec<RunnerData>,
+    #[serde(rename = "reviewDetails")]
+    pub review_data: Option<ReviewData>,
     
     /// Timestamp at which the [`Play`] is called complete.
     #[serde(rename = "playEndTime", deserialize_with = "crate::deserialize_datetime")]
@@ -191,37 +193,101 @@ pub struct PlayDetails {
 
 /// The `kind` of play, a strikeout, a home run, etc.
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
+#[serde(rename_all = "snake_case")]
 pub enum PlayKind {
+    // ---------- Misc ----------
+    #[display("Batter Timeout")]
+    BatterTimeout,
+
+    #[display("Mound Visit")]
+    MoundVisit,
+    
     /// Game Status Changes
     #[display("Game Advisory")]
-    #[serde(rename = "game_advisory")]
     GameAdvisory,
 
-    #[display("Batter Timeout")]
-    #[serde(rename = "batter_timeout")]
-    BatterTimeout,
+    #[display("Wild Pitch")]
+    WildPitch,
+
+    #[display("Pitching Substitution")]
+    PitchingSubstitution,
+
+    #[display("Defensive Switch")]
+    DefensiveSwitch,
+
+    #[display("Defensive Substitution")]
+    DefensiveSubstitution,
+
+    #[display("Offensive Substitution")]
+    OffensiveSubstitution,
+    // ---------- ---- ----------
+
+
+    // ---------- Outs ----------
+    #[display("Field Out")]
+    FieldOut,
+
+    #[display("Force Out")]
+    ForceOut,
     
     /// Not necessarily an out.
     #[display("Strikeout")]
-    #[serde(rename = "strikeout")]
     Strikeout,
 
+    #[display("Strikeout Double Play")]
+    StrikeoutDoublePlay,
+
+    #[display("Sacrifice Bunt")]
+    #[serde(rename = "sac_bunt")]
+    SacrificeBunt,
+
+    #[display("Sacrifice Fly")]
+    #[serde(rename = "sac_fly")]
+    SacrificeFly,
+
+    #[display("Grounded Into Double Play")]
+    GroundedIntoDoublePlay,
+
+    #[display("Grounded Into Triple Play")]
+    GroundedIntoTriplePlay,
+    // ---------- ---- ----------
+
+
+    // --------- On Base --------
+    #[display("Walk")]
+    Walk,
+
+    #[display("Intentional Walk")]
+    #[serde(rename = "intent_walk")]
+    IntentionalWalk,
+
+    #[display("Hit By Pitch")]
+    HitByPitch,
+     
     #[display("Single")]
-    #[serde(rename = "single")]
     Single,
 
     #[display("Double")]
-    #[serde(rename = "double")]
     Double,
 
     #[display("Triple")]
-    #[serde(rename = "triple")]
     Triple,
 
     #[display("Home Run")]
-    #[serde(rename = "home_run")]
     HomeRun,
 
+    #[serde(rename = "stolen_base_2b")]
+    #[display("Stolen Base (2B)")]
+    StolenBase2B,
+
+    #[serde(rename = "stolen_base_3b")]
+    #[display("Stolen Base (3B)")]
+    StolenBase3B,
+
+    #[serde(rename = "stolen_base_home")]
+    #[display("Stolen Base (HP)")]
+    StolenBaseHome,
+    // --------- -- ---- ---------
 }
 
 /// Miscallaneous data regarding a play
@@ -391,23 +457,51 @@ pub struct RunnerDetails {
 }
 
 /// Reasons for baserunner movement
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
 pub enum MovementReason {
     //// Unforced base advancement, such as going first to third on a single.
+    #[display("Unforced Base Advancement")]
     #[serde(rename = "r_adv_play")]
     AdvancementUnforced,
     
     /// Forced base advancement, such as moving up one base on a single.
-    #[serde(rename = "r_adv_forced")]
+    #[display("Forced Base Advancement")]
+    #[serde(rename = "r_adv_force")]
     AdancementForced,
 
     /// Runner fails to tag up and is forced out.
+    #[display("Doubled Off")]
     #[serde(rename = "r_doubled_off")]
     DoubledOff,
     
     /// Standard force-out.
+    #[display("Forced Out")]
     #[serde(rename = "r_force_out")]
     ForceOut,
+
+    #[display("Stolen Base (2B)")]
+    #[serde(rename = "r_stolen_base_2b")]
+    StolenBase2B,
+
+    #[display("Stolen Base (3B)")]
+    #[serde(rename = "r_stolen_base_3b")]
+    StolenBase3B,
+
+    #[display("Stolen Base (HP)")]
+    #[serde(rename = "r_stolen_base_home")]
+    StolenBaseHome,
+
+    #[display("Caught Stealing (2B)")]
+    #[serde(rename = "r_caught_stealing_2b")]
+    CaughtStealing2B,
+
+    #[display("Caught Stealing (3B)")]
+    #[serde(rename = "r_caught_stealing_3b")]
+    CaughtStealing3B,
+
+    #[display("Caught Stealing (HP)")]
+    #[serde(rename = "r_caught_stealing_home")]
+    CaughtStealingHome,
 }
 
 /// Fielder credits to outs
@@ -434,6 +528,21 @@ pub enum CreditKind {
     FieldedBall,
     #[serde(rename = "f_fielding_error")]
     Error,
+    #[serde(rename = "f_deflection")]
+    Deflection,
+}
+
+/// Data regarding replay reviews; present on [`Play`], not [`PlayEvent`].
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
+pub struct ReviewData {
+    pub is_overturned: bool,
+    #[serde(rename = "inProgress")]
+    pub is_in_progress: bool,
+    pub review_type: ReviewReasonId,
+    #[serde(rename = "challengeTeamId")]
+    pub challenging_team: TeamId,
 }
 
 /// An "indivisible" play, such as pickoff, pitch, stolen base, etc.
@@ -445,6 +554,7 @@ pub enum PlayEvent {
     #[serde(rename = "action")]
     Action {
         details: ActionPlayDetails,
+        action_play_id: Option<Uuid>,
         
         #[serde(flatten)]
         common: PlayEventCommon,
@@ -457,8 +567,26 @@ pub enum PlayEvent {
         /// Starts at 1
         #[serde(rename = "pitchNumber")]
         pitch_ordinal: usize,
-
         play_id: Uuid,
+
+        #[serde(flatten)]
+        common: PlayEventCommon,
+    },
+    #[serde(rename = "stepoff")]
+    Stepoff {
+        details: StepoffPlayDetails,
+        play_id: Uuid,
+        
+        #[serde(flatten)]
+        common: PlayEventCommon,
+    },
+    #[serde(rename = "no_pitch")]
+    NoPitch {
+        details: NoPitchPlayDetails,
+        play_id: Uuid,
+        /// Starts at 1
+        #[serde(rename = "pitchNumber")]
+        pitch_ordinal: usize,
 
         #[serde(flatten)]
         common: PlayEventCommon,
@@ -469,14 +597,14 @@ impl Deref for PlayEvent {
     type Target = PlayEventCommon;
 
     fn deref(&self) -> &Self::Target {
-        let (Self::Action { common, .. } | Self::Pitch { common, .. }) = self;
+        let (Self::Action { common, .. } | Self::Pitch { common, .. } | Self::Stepoff { common, .. } | Self::NoPitch { common, .. }) = self;
         common
     }
 }
 
 impl DerefMut for PlayEvent {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        let (Self::Action { common, .. } | Self::Pitch { common, .. }) = self;
+        let (Self::Action { common, .. } | Self::Pitch { common, .. } | Self::Stepoff { common, .. } | Self::NoPitch { common, .. }) = self;
         common
     }
 }
@@ -489,16 +617,27 @@ pub struct PlayEventCommon {
     pub start_timestamp: NaiveDateTime,
     #[serde(rename = "endTime", deserialize_with = "crate::deserialize_datetime")]
     pub end_timestamp: NaiveDateTime,
-    /// Likely always false
     pub is_pitch: bool,
+    #[serde(rename = "isBaseRunningPlay", default)]
+    pub is_baserunning_play: bool,
+    /// Pitching Subsitution, Defensive Switches, Pinch Hitting, etc.
+    #[serde(default)]
+    pub is_substitution: bool,
 
+    /// A player involved in the play.
+    pub player: Option<PersonId>,
+    /// Position (typically a complement of ``player``)
+    pub position: Option<NamedPosition>,
+    /// Also not always present, check by the [`PlayKind`]; [`PitchingSubsitution`](PlayKind::PitchingSubstitution)s don't have it.
+    pub replaced_player: Option<PersonId>,
+    /// Batting Order Index, typically supplied with a [`DefensiveSwitch`](PlayKind::DefensiveSwitch) or [`OffensiveSubstitution`](PlayKind::OffensiveSubstitution)
+    #[serde(rename = "battingOrder")]
+    pub batting_order_index: Option<BattingOrderIndex>,
+    pub base: Option<Base>,
+    
     #[doc(hidden)]
     #[serde(rename = "index", default)]
     pub __index: IgnoredAny,
-
-    #[doc(hidden)]
-    #[serde(rename = "player", default)]
-    pub __player: IgnoredAny,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -539,11 +678,14 @@ pub struct PitchPlayDetails {
     pub is_ball: bool,
     pub is_out: bool,
     pub has_review: bool,
+    #[serde(default)]
+    pub runner_going: bool,
+    #[serde(rename = "disengagementNum", default)]
+    pub disengagement_number: Option<NonZeroUsize>,
 
     #[serde(rename = "type")]
     pub pitch_type: PitchType,
     
-    #[serde(rename = "code")]
     pub call: PitchCodeId,
 
     #[doc(hidden)]
@@ -559,8 +701,48 @@ pub struct PitchPlayDetails {
     pub __description: IgnoredAny,
 
     #[doc(hidden)]
-    #[serde(rename = "call", default)]
-    pub __call: IgnoredAny,
+    #[serde(rename = "code", default)]
+    pub __code: IgnoredAny,
+}
+
+#[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
+pub struct StepoffPlayDetails {
+    pub description: String,
+    /// Typically "PSO" - "Pitcher Step Off"
+    pub code: PitchCodeId,
+    pub is_out: bool,
+    pub has_review: bool,
+    /// Catcher-based mound disengagement.
+    pub from_catcher: bool,
+    #[serde(rename = "disengagementNum")]
+    pub disengagement_number: NonZeroUsize,
+}
+
+#[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
+pub struct NoPitchPlayDetails {
+    pub is_in_play: bool,
+    pub is_strike: bool,
+    pub is_ball: bool,
+    pub is_out: bool,
+    pub has_review: bool,
+    #[serde(default)]
+    pub runner_going: bool,
+
+    pub call: PitchCodeId,
+    
+    #[doc(hidden)]
+    #[serde(rename = "description", default)]
+    pub __description: IgnoredAny,
+
+    #[doc(hidden)]
+    #[serde(rename = "code", default)]
+    pub __code: IgnoredAny,
 }
 
 /// Statistical data regarding a pitch.
@@ -861,11 +1043,33 @@ impl<'de> Deserialize<'de> for PitchData {
     }
 }
 
+/// Data regarding batted-balls
 #[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct HitData {
+    #[serde(rename = "trajectory")]
+    pub hit_trajectory: HitTrajectory,
+    #[serde(rename = "hardness")]
+    pub contact_hardness: ContactHardness,
+    #[serde_as(deserialize_as = "DisplayFromStr")]
+    #[serde(rename = "location")]
+    pub zone: StrikeZoneSection,
+
+    #[serde(flatten, default)]
+    pub statcast: Option<StatcastHitData>,
+
+    #[doc(hidden)]
+    #[serde(rename = "coordinates")]
+    pub __coordinates: IgnoredAny,
+}
+
+/// Statcast data regarding batted balls, only sometimes present.
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
+pub struct StatcastHitData {
     /// Speed of the ball as it leaves the bat
     ///
     /// Measured in mph
@@ -886,18 +1090,6 @@ pub struct HitData {
     /// Measured in feet
     #[serde(rename = "totalDistance")]
     pub distance: f64,
-
-    #[serde(rename = "trajectory")]
-    pub hit_trajectory: HitTrajectory,
-    #[serde(rename = "hardness")]
-    pub contact_hardness: ContactHardness,
-    #[serde_as(deserialize_as = "DisplayFromStr")]
-    #[serde(rename = "location")]
-    pub zone: StrikeZoneSection,
-
-    #[doc(hidden)]
-    #[serde(rename = "coordinates")]
-    pub __coordinates: IgnoredAny,
 }
 
 #[derive(Builder)]
