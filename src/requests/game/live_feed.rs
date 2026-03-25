@@ -43,7 +43,8 @@ pub struct LiveFeedResponse {
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct LiveFeedMetadata {
 	/// Recommended duration to send new requests (in seconds). Often 10.
-	pub wait: u32,
+	#[serde(rename = "wait")]
+	pub recommended_poll_rate: u32,
 	pub game_events: Vec<String>, // todo: what is this type
 	pub logical_events: Vec<LogicalEventId>,
 

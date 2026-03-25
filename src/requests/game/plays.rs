@@ -3,8 +3,7 @@ use std::{fmt::Display, num::NonZeroUsize, ops::{Deref, DerefMut}};
 use bon::Builder;
 use chrono::NaiveDateTime;
 use derive_more::{Deref, DerefMut, Display};
-use serde::{Deserialize, de::IgnoredAny};
-use serde_with::{DisplayFromStr, serde_as};
+use serde::{Deserialize, Deserializer, de::IgnoredAny};
 use uuid::Uuid;
 
 use crate::{Copyright, Handedness, HomeAwaySplit, game::{AtBatCount, Base, BattingOrderIndex, ContactHardness, GameId, Inning, InningHalf}, meta::{HitTrajectory, NamedPosition, PitchCodeId, PitchType, ReviewReasonId}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}, team::TeamId};
@@ -141,8 +140,8 @@ pub struct Play {
     /// See [`PlayEvent`].
     pub play_events: Vec<PlayEvent>,
     pub runners: Vec<RunnerData>,
-    #[serde(rename = "reviewDetails")]
-    pub review_data: Option<ReviewData>,
+    #[serde(rename = "reviewDetails", default, deserialize_with = "deserialize_review_data")]
+    pub review_data: Vec<ReviewData>,
     
     /// Timestamp at which the [`Play`] is called complete.
     #[serde(rename = "playEndTime", deserialize_with = "crate::deserialize_datetime")]
@@ -206,6 +205,9 @@ pub enum PlayKind {
     #[display("Game Advisory")]
     GameAdvisory,
 
+    #[display("Passed Ball")]
+    PassedBall,
+
     #[display("Wild Pitch")]
     WildPitch,
 
@@ -220,6 +222,9 @@ pub enum PlayKind {
 
     #[display("Offensive Substitution")]
     OffensiveSubstitution,
+
+    #[display("Forced Balk")]
+    ForcedBalk,
     // ---------- ---- ----------
 
 
@@ -229,6 +234,13 @@ pub enum PlayKind {
 
     #[display("Force Out")]
     ForceOut,
+
+    #[display("Fielder's Choice")]
+    FieldersChoice,
+
+    #[display("Fielder's Choice (Field Out)")]
+    #[serde(rename = "fielders_choice_out")]
+    FieldersChoiceFieldOut,
     
     /// Not necessarily an out.
     #[display("Strikeout")]
@@ -250,6 +262,75 @@ pub enum PlayKind {
 
     #[display("Grounded Into Triple Play")]
     GroundedIntoTriplePlay,
+
+    /// Unique double plays that aren't groundout + groundout
+    #[display("Double Play")]
+    DoublePlay,
+
+    /// Unique triple plays that aren't groundout + groundout + groundout
+    #[display("Triple Play")]
+    TriplePlay,
+
+    #[display("Other Out")]
+    OtherOut,
+
+    #[display("Field Error")]
+    FieldError,
+
+    /// Misc Error
+    #[display("Error")]
+    Error,
+
+    #[display("Caught Stealing (2B)")]
+    #[serde(rename = "caught_stealing_2b")]
+    CaughtStealing2B,
+
+    #[display("Caught Stealing (3B)")]
+    #[serde(rename = "caught_stealing_3b")]
+    CaughtStealing3B,
+
+    #[display("Caught Stealing (HP)")]
+    #[serde(rename = "caught_stealing_home")]
+    CaughtStealingHome,
+
+    /// Successful pickoff
+    #[display("Pickoff (1B)")]
+    #[serde(rename = "pickoff_1b")]
+    Pickoff1B,
+
+    /// Successful pickoff
+    #[display("Pickoff (2B)")]
+    #[serde(rename = "pickoff_2b")]
+    Pickoff2B,
+
+    /// Successful pickoff
+    #[display("Pickoff (3B)")]
+    #[serde(rename = "pickoff_3b")]
+    Pickoff3B,
+    
+    #[display("Pickoff (Error) (1B)")]
+    #[serde(rename = "pickoff_error_1b")]
+    PickoffError1B,
+    
+    #[display("Pickoff (Error) (2B)")]
+    #[serde(rename = "pickoff_error_2b")]
+    PickoffError2B,
+    
+    #[display("Pickoff (Error) (3B)")]
+    #[serde(rename = "pickoff_error_3b")]
+    PickoffError3B,
+    
+    #[display("Pickoff (Caught Stealing) (2B)")]
+    #[serde(rename = "pickoff_caught_stealing_2b")]
+    PickoffCaughtStealing2B,
+    
+    #[display("Pickoff (Caught Stealing) (3B)")]
+    #[serde(rename = "pickoff_caught_stealing_3b")]
+    PickoffCaughtStealing3B,
+    
+    #[display("Pickoff (Caught Stealing) (HP)")]
+    #[serde(rename = "pickoff_caught_stealing_home")]
+    PickoffCaughtStealingHome,
     // ---------- ---- ----------
 
 
@@ -287,6 +368,11 @@ pub enum PlayKind {
     #[serde(rename = "stolen_base_home")]
     #[display("Stolen Base (HP)")]
     StolenBaseHome,
+
+    /// A stolen base but unchallenged by the defense; not counted as a SB.
+    #[display("Defensive Indifference")]
+    #[serde(rename = "defensive_indiff")]
+    DefensiveIndifference,
     // --------- -- ---- ---------
 }
 
@@ -469,15 +555,47 @@ pub enum MovementReason {
     #[serde(rename = "r_adv_force")]
     AdancementForced,
 
+    /// Advancement from a choice in throwing, such as throwing home and allowing this runner to move up a base instead.
+    #[display("Advancement from Throw")]
+    #[serde(rename = "r_adv_throw")]
+    AdvancementThrow,
+
     /// Runner fails to tag up and is forced out.
     #[display("Doubled Off")]
     #[serde(rename = "r_doubled_off")]
     DoubledOff,
-    
+
+    #[display("Thrown Out")]
+    #[serde(rename = "r_thrown_out")]
+    ThrownOut,
+
+    #[display("Called Out Returning")]
+    #[serde(rename = "r_out_returning")]
+    CalledOutReturning,
+        
     /// Standard force-out.
     #[display("Forced Out")]
     #[serde(rename = "r_force_out")]
     ForceOut,
+
+    /// Deviation from the basepath, etc.
+    #[display("Runner Called Out")]
+    #[serde(rename = "r_runner_out")]
+    RunnerCalledOut,
+
+    /// A Stolen Base with no throw.
+    #[display("Defensive Indifference")]
+    #[serde(rename = "r_defensive_indiff")]
+    DefensiveIndifference,
+
+    #[display("Rundown")]
+    #[serde(rename = "r_rundown")]
+    Rundown,
+
+    /// Stretching a single into a double.
+    #[display("Out Stretching")]
+    #[serde(rename = "r_out_stretching")]
+    OutStretching,
 
     #[display("Stolen Base (2B)")]
     #[serde(rename = "r_stolen_base_2b")]
@@ -502,6 +620,65 @@ pub enum MovementReason {
     #[display("Caught Stealing (HP)")]
     #[serde(rename = "r_caught_stealing_home")]
     CaughtStealingHome,
+    
+    /// Successful pickoff
+    #[display("Pickoff (1B)")]
+    #[serde(rename = "r_pickoff_1b")]
+    Pickoff1B,
+    
+    /// Successful pickoff
+    #[display("Pickoff (2B)")]
+    #[serde(rename = "r_pickoff_2b")]
+    Pickoff2B,
+    
+    /// Successful pickoff
+    #[display("Pickoff (3B)")]
+    #[serde(rename = "r_pickoff_3b")]
+    Pickoff3B,
+    
+    #[display("Pickoff (Error) (1B)")]
+    #[serde(rename = "r_pickoff_error_1b")]
+    PickoffError1B,
+    
+    #[display("Pickoff (Error) (2B)")]
+    #[serde(rename = "r_pickoff_error_2b")]
+    PickoffError2B,
+    
+    #[display("Pickoff (Error) (3B)")]
+    #[serde(rename = "r_pickoff_error_3b")]
+    PickoffError3B,
+
+    #[display("Pickoff (Caught Stealing) (2B)")]
+    #[serde(rename = "r_pickoff_caught_stealing_2b")]
+    PickoffCaughtStealing2B,
+    
+    #[display("Pickoff (Caught Stealing) (3B)")]
+    #[serde(rename = "r_pickoff_caught_stealing_3b")]
+    PickoffCaughtStealing3B,
+    
+    #[display("Pickoff (Caught Stealing) (HP)")]
+    #[serde(rename = "r_pickoff_caught_stealing_home")]
+    PickoffCaughtStealingHome,
+}
+
+impl MovementReason {
+    /// If the movement reason is a pickoff
+    #[must_use]
+    pub const fn is_pickoff(self) -> bool {
+        matches!(self, Self::Pickoff1B | Self::Pickoff2B | Self::Pickoff3B | Self::PickoffError1B | Self::PickoffError2B | Self::PickoffError3B | Self::PickoffCaughtStealing2B | Self::PickoffCaughtStealing3B | Self::PickoffCaughtStealingHome)
+    }
+
+    /// If the movement reason is a stolen base attempt
+    #[must_use]
+    pub const fn is_stolen_base_attempt(self) -> bool {
+        matches!(self, Self::StolenBase2B | Self::StolenBase3B | Self::StolenBaseHome | Self::CaughtStealing2B | Self::CaughtStealing3B | Self::CaughtStealingHome | Self::PickoffCaughtStealing2B | Self::PickoffCaughtStealing3B | Self::PickoffCaughtStealingHome)
+    }
+
+    /// If the movement reason is a stolen base
+    #[must_use]
+    pub const fn is_stolen_base(self) -> bool {
+        matches!(self, Self::StolenBase2B | Self::StolenBase3B | Self::StolenBaseHome)
+    }
 }
 
 /// Fielder credits to outs
@@ -515,25 +692,67 @@ pub struct RunnerCredit {
 }
 
 /// Statistical credits to fielders; putouts, assists, etc.
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
 pub enum CreditKind {
+    #[display("Putout")]
     #[serde(rename = "f_putout")]
     Putout,
+    
+    #[display("Assist")]
     #[serde(rename = "f_assist")]
     Assist,
+    
+    #[display("Outfield Assist")]
     #[serde(rename = "f_assist_of")]
     OutfieldAssist,
+    
     /// The fielder just, fielded the ball, no outs or anything.
+    #[display("Fielded Ball")]
     #[serde(rename = "f_fielded_ball")]
     FieldedBall,
+    
+    #[display("Fielding Error")]
     #[serde(rename = "f_fielding_error")]
-    Error,
+    FieldingError,
+    
+    #[display("Throwing Error")]
+    #[serde(rename = "f_throwing_error")]
+    ThrowingError,
+    
+    #[display("Deflection")]
     #[serde(rename = "f_deflection")]
     Deflection,
+
+    /// They literally touched it, no deflection, just a tap.
+    #[display("Touch")]
+    #[serde(rename = "f_touch")]
+    Touch,
+
+    #[display("Dropped Ball Error")]
+    #[serde(rename = "f_error_dropped_ball")]
+    DroppedBallError,
+}
+
+/// # Errors
+/// See D::Error, likely [`serde_json::Error`]
+pub fn deserialize_review_data<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<ReviewData>, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    #[cfg_attr(test, serde(deny_unknown_fields))]
+    struct RawReviewData {
+        #[serde(flatten)]
+        base: ReviewData,
+        #[serde(default)]
+        additional_reviews: Vec<ReviewData>,
+    }
+
+    let RawReviewData { base, mut additional_reviews } = RawReviewData::deserialize(deserializer)?;
+    additional_reviews.insert(0, base);
+    Ok(additional_reviews)
 }
 
 /// Data regarding replay reviews; present on [`Play`], not [`PlayEvent`].
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct ReviewData {
@@ -541,8 +760,9 @@ pub struct ReviewData {
     #[serde(rename = "inProgress")]
     pub is_in_progress: bool,
     pub review_type: ReviewReasonId,
+    /// If `None`, then a crew-chief review.
     #[serde(rename = "challengeTeamId")]
-    pub challenging_team: TeamId,
+    pub challenging_team: Option<TeamId>,
 }
 
 /// An "indivisible" play, such as pickoff, pitch, stolen base, etc.
@@ -554,7 +774,8 @@ pub enum PlayEvent {
     #[serde(rename = "action")]
     Action {
         details: ActionPlayDetails,
-        action_play_id: Option<Uuid>,
+        #[serde(rename = "actionPlayId")]
+        play_id: Option<Uuid>,
         
         #[serde(flatten)]
         common: PlayEventCommon,
@@ -590,6 +811,15 @@ pub enum PlayEvent {
 
         #[serde(flatten)]
         common: PlayEventCommon,
+    },
+    #[serde(rename = "pickoff")]
+    Pickoff {
+        details: PickoffPlayDetails,
+        #[serde(alias = "actionPlayId")]
+        play_id: Uuid,
+
+        #[serde(flatten)]
+        common: PlayEventCommon,
     }
 }
 
@@ -597,14 +827,14 @@ impl Deref for PlayEvent {
     type Target = PlayEventCommon;
 
     fn deref(&self) -> &Self::Target {
-        let (Self::Action { common, .. } | Self::Pitch { common, .. } | Self::Stepoff { common, .. } | Self::NoPitch { common, .. }) = self;
+        let (Self::Action { common, .. } | Self::Pitch { common, .. } | Self::Stepoff { common, .. } | Self::NoPitch { common, .. } | Self::Pickoff { common, .. }) = self;
         common
     }
 }
 
 impl DerefMut for PlayEvent {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        let (Self::Action { common, .. } | Self::Pitch { common, .. } | Self::Stepoff { common, .. } | Self::NoPitch { common, .. }) = self;
+        let (Self::Action { common, .. } | Self::Pitch { common, .. } | Self::Stepoff { common, .. } | Self::NoPitch { common, .. } | Self::Pickoff { common, .. }) = self;
         common
     }
 }
@@ -612,6 +842,7 @@ impl DerefMut for PlayEvent {
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayEventCommon {
+    /// At the end of the play event
     pub count: AtBatCount,
     #[serde(rename = "startTime", deserialize_with = "crate::deserialize_datetime")]
     pub start_timestamp: NaiveDateTime,
@@ -634,10 +865,16 @@ pub struct PlayEventCommon {
     #[serde(rename = "battingOrder")]
     pub batting_order_index: Option<BattingOrderIndex>,
     pub base: Option<Base>,
+    #[serde(rename = "reviewDetails", default, deserialize_with = "deserialize_review_data")]
+    pub review_data: Vec<ReviewData>,
     
     #[doc(hidden)]
     #[serde(rename = "index", default)]
     pub __index: IgnoredAny,
+
+    #[doc(hidden)]
+    #[serde(rename = "violation", default)]
+    pub __violation: IgnoredAny,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -658,6 +895,9 @@ pub struct ActionPlayDetails {
     pub is_out: bool,
     pub is_scoring_play: bool,
     pub has_review: bool,
+
+    #[serde(rename = "disengagementNum", default)]
+    pub pitcher_disengagement_count: Option<NonZeroUsize>,
     
     #[doc(hidden)]
     #[serde(rename = "event", default)]
@@ -681,7 +921,7 @@ pub struct PitchPlayDetails {
     #[serde(default)]
     pub runner_going: bool,
     #[serde(rename = "disengagementNum", default)]
-    pub disengagement_number: Option<NonZeroUsize>,
+    pub pitcher_disengagement_count: Option<NonZeroUsize>,
 
     #[serde(rename = "type")]
     pub pitch_type: PitchType,
@@ -706,7 +946,7 @@ pub struct PitchPlayDetails {
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct StepoffPlayDetails {
@@ -715,10 +955,10 @@ pub struct StepoffPlayDetails {
     pub code: PitchCodeId,
     pub is_out: bool,
     pub has_review: bool,
-    /// Catcher-based mound disengagement.
+    /// Catcher-called mound disengagement.
     pub from_catcher: bool,
-    #[serde(rename = "disengagementNum")]
-    pub disengagement_number: NonZeroUsize,
+    #[serde(rename = "disengagementNum", default)]
+    pub pitcher_disengagement_count: Option<NonZeroUsize>,
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
@@ -726,8 +966,11 @@ pub struct StepoffPlayDetails {
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct NoPitchPlayDetails {
+    #[serde(default)]
     pub is_in_play: bool,
+    #[serde(default)]
     pub is_strike: bool,
+    #[serde(default)]
     pub is_ball: bool,
     pub is_out: bool,
     pub has_review: bool,
@@ -735,6 +978,9 @@ pub struct NoPitchPlayDetails {
     pub runner_going: bool,
 
     pub call: PitchCodeId,
+
+    #[serde(rename = "disengagementNum", default)]
+    pub pitcher_disengagement_count: Option<NonZeroUsize>,
     
     #[doc(hidden)]
     #[serde(rename = "description", default)]
@@ -743,6 +989,28 @@ pub struct NoPitchPlayDetails {
     #[doc(hidden)]
     #[serde(rename = "code", default)]
     pub __code: IgnoredAny,
+
+    // redundant
+    #[doc(hidden)]
+    #[serde(rename = "violation", default)]
+    pub __violation: IgnoredAny,
+}
+
+#[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, serde(deny_unknown_fields))]
+pub struct PickoffPlayDetails {
+    pub description: String,
+    /// Typically "1" - "Pickoff Attempt 1B", "2" - "Pickoff Attempt 2B", "3" - "Pickoff Attempt 3B"
+    pub code: PitchCodeId,
+    pub is_out: bool,
+    pub has_review: bool,
+    /// Catcher-called pickoff.
+    pub from_catcher: bool,
+
+    #[serde(rename = "disengagementNum", default)]
+    pub pitcher_disengagement_count: Option<NonZeroUsize>,
 }
 
 /// Statistical data regarding a pitch.
@@ -961,7 +1229,9 @@ impl<'de> Deserialize<'de> for PitchData {
             break_vertical: f64,
             break_vertical_induced: f64,
             break_horizontal: f64,
+            #[serde(default)]
             spin_rate: f64,
+            #[serde(default)]
             spin_direction: f64,
         }
 
@@ -1044,7 +1314,6 @@ impl<'de> Deserialize<'de> for PitchData {
 }
 
 /// Data regarding batted-balls
-#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
@@ -1053,12 +1322,13 @@ pub struct HitData {
     pub hit_trajectory: HitTrajectory,
     #[serde(rename = "hardness")]
     pub contact_hardness: ContactHardness,
-    #[serde_as(deserialize_as = "DisplayFromStr")]
-    #[serde(rename = "location")]
-    pub zone: StrikeZoneSection,
 
     #[serde(flatten, default)]
     pub statcast: Option<StatcastHitData>,
+
+    #[doc(hidden)]
+    #[serde(rename = "location", default)]
+    pub __location: IgnoredAny,
 
     #[doc(hidden)]
     #[serde(rename = "coordinates")]
@@ -1117,9 +1387,28 @@ impl RequestURL for PlayByPlayRequest {
 mod tests {
     use crate::game::PlayByPlayRequest;
     use crate::request::RequestURLBuilderExt;
+    use crate::schedule::ScheduleRequest;
+    use crate::season::{Season, SeasonsRequest};
+    use crate::sport::SportId;
 
     #[tokio::test]
     async fn ws_gm7_2025_pbp() {
         let _ = PlayByPlayRequest::builder().id(813_024).build_and_get().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn postseason_2025_pbp() {
+        let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
+		let postseason = season.postseason.expect("Expected the MLB to have a postseason");
+		let games = ScheduleRequest::<()>::builder().date_range(postseason).sport_id(SportId::MLB).build_and_get().await.unwrap();
+		let games = games.dates.into_iter().flat_map(|date| date.games).filter(|game| game.game_type.is_postseason()).map(|game| game.game_id).collect::<Vec<_>>();
+		let mut has_errors = false;
+		for game in games {
+			if let Err(e) = PlayByPlayRequest::builder().id(game).build_and_get().await {
+			    dbg!(e);
+			    has_errors = true;
+			}
+		}
+		assert!(!has_errors, "Has errors.");
     }
 }
