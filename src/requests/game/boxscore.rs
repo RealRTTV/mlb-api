@@ -130,6 +130,7 @@ impl RequestURL for BoxscoreRequest {
 #[cfg(test)]
 mod tests {
     use crate::game::BoxscoreRequest;
+    use crate::meta::GameType;
     use crate::request::RequestURLBuilderExt;
     use crate::schedule::ScheduleRequest;
     use crate::season::{Season, SeasonsRequest};
@@ -155,4 +156,20 @@ mod tests {
 		}
 		assert!(!has_errors, "Has errors.");
 	}
+	
+    #[tokio::test]
+    async fn regular_season_2025_boxscore() {
+        let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
+        let regular_season = season.regular_season;
+        let games = ScheduleRequest::<()>::builder().date_range(regular_season).sport_id(SportId::MLB).build_and_get().await.unwrap();
+        let games = games.dates.into_iter().flat_map(|date| date.games).filter(|game| game.game_type == GameType::RegularSeason).collect::<Vec<_>>();
+        let mut has_errors = false;
+        for game in games {
+            if let Err(e) = BoxscoreRequest::builder().id(game.game_id).build_and_get().await {
+                dbg!(e);
+                has_errors = true;
+            }
+        }
+        assert!(!has_errors, "Has errors.");
+    }
 }

@@ -236,15 +236,42 @@ pub struct AtBatCount {
 
 /// The classic "R | H | E" and LOB in a scoreboard.
 #[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(from = "__RHEStruct")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct RHE {
-	/// Sometimes not present if the inning half isn't played. But weirdly hits and errors are present fields? Gonna make this default to 0
-	#[serde(default)]
-    pub runs: usize,
+	pub runs: usize,
+	pub hits: usize,
+	pub errors: usize,
+	pub left_on_base: usize,
+	/// Ex: Home team wins and doesn't need to play Bot 9.
+	pub was_inning_half_played: bool,
+}
+
+#[doc(hidden)]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct __RHEStruct {
+	pub runs: Option<usize>,
     pub hits: usize,
     pub errors: usize,
     pub left_on_base: usize,
+
+    // only sometimes present, regardless of whether a game is won
+    #[doc(hidden)]
+    #[serde(rename = "isWinner", default)]
+    pub __is_winner: IgnoredAny,
+}
+
+impl From<__RHEStruct> for RHE {
+	fn from(__RHEStruct { runs, hits, errors, left_on_base, .. }: __RHEStruct) -> Self {
+		Self {
+			runs: runs.unwrap_or(0),
+			hits,
+			errors,
+			left_on_base,
+			was_inning_half_played: runs.is_some(),
+		}
+	}
 }
 
 /// Unparsed miscellaneous data.
