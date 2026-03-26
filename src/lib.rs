@@ -62,6 +62,7 @@ macro_rules! id {
 }
 
 // todo: add macro to lookup one stat type under one stat group for a player and return the type directly.
+// todo: change cfg(test) to cfg(_debug)
 
 pub mod hydrations;
 pub mod request;

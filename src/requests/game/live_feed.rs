@@ -95,7 +95,7 @@ pub struct LiveFeedDataMeta {
 	#[serde(rename = "type")]
 	pub game_type: GameType,
 	pub double_header: DoubleHeaderKind,
-	/// Will state `P` for [`GameType::Playoffs`] games rather than what playoff series it is.
+	/// Will state `P` for [`GameType::Playoffs`] games rather than what playoff series it is, amongst other things
 	pub gameday_type: GameType,
 	#[serde(deserialize_with = "crate::from_yes_no")]
 	pub tiebreaker: bool,

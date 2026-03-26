@@ -49,11 +49,14 @@ pub struct TopPerformer {
 }
 
 /// A person with some potentially useful information regarding their performance in the current game.
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct PlayerWithGameData {
 	pub person: NamedPerson,
+	#[serde(default)]
+	#[serde_as(deserialize_as = "DefaultOnError")]
 	pub jersey_number: Option<JerseyNumber>,
 	pub position: NamedPosition,
 	pub status: RosterStatus,
