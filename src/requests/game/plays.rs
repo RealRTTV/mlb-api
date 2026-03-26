@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut, Display};
 use serde::{Deserialize, Deserializer, de::IgnoredAny};
 use uuid::Uuid;
 
-use crate::{Copyright, Handedness, HomeAwaySplit, game::{AtBatCount, Base, BattingOrderIndex, ContactHardness, GameId, Inning, InningHalf}, meta::{HitTrajectory, NamedPosition, PitchCodeId, PitchType, ReviewReasonId}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}, team::TeamId};
+use crate::{Copyright, Handedness, HomeAwaySplit, game::{AtBatCount, Base, BattingOrderIndex, ContactHardness, GameId, Inning, InningHalf}, meta::{EventType, HitTrajectory, NamedPosition, PitchCodeId, PitchType, ReviewReasonId}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}, team::TeamId};
 
 /// A collection of plays, often a whole game's worth.
 #[allow(clippy::struct_field_names, clippy::unsafe_derive_deserialize, reason = "not relevant here")]
@@ -167,7 +167,7 @@ pub struct Play {
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct PlayDetails {
     #[serde(rename = "eventType")]
-    pub event: PlayKind,
+    pub event: EventType,
     /// Shohei Ohtani strikes out swinging.
     pub description: String,
 
@@ -188,192 +188,6 @@ pub struct PlayDetails {
     #[doc(hidden)]
     #[serde(rename = "type", default)]
     pub __type: IgnoredAny,
-}
-
-/// The `kind` of play, a strikeout, a home run, etc.
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
-#[serde(rename_all = "snake_case")]
-pub enum PlayKind {
-    // ---------- Misc ----------
-    #[display("Batter Timeout")]
-    BatterTimeout,
-
-    #[display("Mound Visit")]
-    MoundVisit,
-    
-    /// Game Status Changes
-    #[display("Game Advisory")]
-    GameAdvisory,
-
-    #[display("Passed Ball")]
-    PassedBall,
-
-    #[display("Wild Pitch")]
-    WildPitch,
-
-    #[display("Pitching Substitution")]
-    PitchingSubstitution,
-
-    #[display("Defensive Switch")]
-    DefensiveSwitch,
-
-    #[display("Defensive Substitution")]
-    DefensiveSubstitution,
-
-    #[display("Offensive Substitution")]
-    OffensiveSubstitution,
-
-    #[display("Forced Balk")]
-    ForcedBalk,
-    // ---------- ---- ----------
-
-
-    // ---------- Outs ----------
-    #[display("Field Out")]
-    FieldOut,
-
-    #[display("Force Out")]
-    ForceOut,
-
-    #[display("Fielder's Choice")]
-    FieldersChoice,
-
-    #[display("Fielder's Choice (Field Out)")]
-    #[serde(rename = "fielders_choice_out")]
-    FieldersChoiceFieldOut,
-    
-    /// Not necessarily an out.
-    #[display("Strikeout")]
-    Strikeout,
-
-    #[display("Strikeout Double Play")]
-    StrikeoutDoublePlay,
-
-    #[display("Sacrifice Bunt")]
-    #[serde(rename = "sac_bunt")]
-    SacrificeBunt,
-
-    #[display("Sacrifice Fly")]
-    #[serde(rename = "sac_fly")]
-    SacrificeFly,
-
-    #[display("Grounded Into Double Play")]
-    GroundedIntoDoublePlay,
-
-    #[display("Grounded Into Triple Play")]
-    GroundedIntoTriplePlay,
-
-    /// Unique double plays that aren't groundout + groundout
-    #[display("Double Play")]
-    DoublePlay,
-
-    /// Unique triple plays that aren't groundout + groundout + groundout
-    #[display("Triple Play")]
-    TriplePlay,
-
-    #[display("Other Out")]
-    OtherOut,
-
-    #[display("Field Error")]
-    FieldError,
-
-    /// Misc Error
-    #[display("Error")]
-    Error,
-
-    #[display("Caught Stealing (2B)")]
-    #[serde(rename = "caught_stealing_2b")]
-    CaughtStealing2B,
-
-    #[display("Caught Stealing (3B)")]
-    #[serde(rename = "caught_stealing_3b")]
-    CaughtStealing3B,
-
-    #[display("Caught Stealing (HP)")]
-    #[serde(rename = "caught_stealing_home")]
-    CaughtStealingHome,
-
-    /// Successful pickoff
-    #[display("Pickoff (1B)")]
-    #[serde(rename = "pickoff_1b")]
-    Pickoff1B,
-
-    /// Successful pickoff
-    #[display("Pickoff (2B)")]
-    #[serde(rename = "pickoff_2b")]
-    Pickoff2B,
-
-    /// Successful pickoff
-    #[display("Pickoff (3B)")]
-    #[serde(rename = "pickoff_3b")]
-    Pickoff3B,
-    
-    #[display("Pickoff (Error) (1B)")]
-    #[serde(rename = "pickoff_error_1b")]
-    PickoffError1B,
-    
-    #[display("Pickoff (Error) (2B)")]
-    #[serde(rename = "pickoff_error_2b")]
-    PickoffError2B,
-    
-    #[display("Pickoff (Error) (3B)")]
-    #[serde(rename = "pickoff_error_3b")]
-    PickoffError3B,
-    
-    #[display("Pickoff (Caught Stealing) (2B)")]
-    #[serde(rename = "pickoff_caught_stealing_2b")]
-    PickoffCaughtStealing2B,
-    
-    #[display("Pickoff (Caught Stealing) (3B)")]
-    #[serde(rename = "pickoff_caught_stealing_3b")]
-    PickoffCaughtStealing3B,
-    
-    #[display("Pickoff (Caught Stealing) (HP)")]
-    #[serde(rename = "pickoff_caught_stealing_home")]
-    PickoffCaughtStealingHome,
-    // ---------- ---- ----------
-
-
-    // --------- On Base --------
-    #[display("Walk")]
-    Walk,
-
-    #[display("Intentional Walk")]
-    #[serde(rename = "intent_walk")]
-    IntentionalWalk,
-
-    #[display("Hit By Pitch")]
-    HitByPitch,
-     
-    #[display("Single")]
-    Single,
-
-    #[display("Double")]
-    Double,
-
-    #[display("Triple")]
-    Triple,
-
-    #[display("Home Run")]
-    HomeRun,
-
-    #[serde(rename = "stolen_base_2b")]
-    #[display("Stolen Base (2B)")]
-    StolenBase2B,
-
-    #[serde(rename = "stolen_base_3b")]
-    #[display("Stolen Base (3B)")]
-    StolenBase3B,
-
-    #[serde(rename = "stolen_base_home")]
-    #[display("Stolen Base (HP)")]
-    StolenBaseHome,
-
-    /// A stolen base but unchallenged by the defense; not counted as a SB.
-    #[display("Defensive Indifference")]
-    #[serde(rename = "defensive_indiff")]
-    DefensiveIndifference,
-    // --------- -- ---- ---------
 }
 
 /// Miscallaneous data regarding a play
@@ -453,6 +267,12 @@ pub struct PlayMatchup {
     #[doc(hidden)]
     #[serde(rename = "pitcherHotColdZones", default)]
     pub __pitcher_hot_cold_zones: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "batterHotColdZoneStats", default)]
+    pub __batter_hot_cold_zone_stats: IgnoredAny,
+    #[doc(hidden)]
+    #[serde(rename = "pitcherHotColdZoneStats", default)]
+    pub __pitcher_hot_cold_zone_stats: IgnoredAny,
     
     // pub batter_hot_cold_zones: HittingHotColdZones,
     // pub pitcher_hot_cold_zones: PitchingHotColdZones,
@@ -806,7 +626,7 @@ pub enum PlayEvent {
         details: NoPitchPlayDetails,
         play_id: Uuid,
         /// Starts at 1
-        #[serde(rename = "pitchNumber")]
+        #[serde(rename = "pitchNumber", default)]
         pitch_ordinal: usize,
 
         #[serde(flatten)]
@@ -859,9 +679,9 @@ pub struct PlayEventCommon {
     pub player: Option<PersonId>,
     /// Position (typically a complement of ``player``)
     pub position: Option<NamedPosition>,
-    /// Also not always present, check by the [`PlayKind`]; [`PitchingSubsitution`](PlayKind::PitchingSubstitution)s don't have it.
+    /// Also not always present, check by the [`EventType`]; [`PitchingSubsitution`](EventType::PitchingSubstitution)s don't have it.
     pub replaced_player: Option<PersonId>,
-    /// Batting Order Index, typically supplied with a [`DefensiveSwitch`](PlayKind::DefensiveSwitch) or [`OffensiveSubstitution`](PlayKind::OffensiveSubstitution)
+    /// Batting Order Index, typically supplied with a [`DefensiveSwitch`](EventType::DefensiveSwitch) or [`OffensiveSubstitution`](EventType::OffensiveSubstitution)
     #[serde(rename = "battingOrder")]
     pub batting_order_index: Option<BattingOrderIndex>,
     pub base: Option<Base>,
@@ -871,10 +691,6 @@ pub struct PlayEventCommon {
     #[doc(hidden)]
     #[serde(rename = "index", default)]
     pub __index: IgnoredAny,
-
-    #[doc(hidden)]
-    #[serde(rename = "violation", default)]
-    pub __violation: IgnoredAny,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -882,7 +698,7 @@ pub struct PlayEventCommon {
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct ActionPlayDetails {
     #[serde(rename = "eventType")]
-    pub event: PlayKind,
+    pub event: EventType,
     /// Shohei Ohtani strikes out swinging.
     pub description: String,
 
@@ -906,6 +722,11 @@ pub struct ActionPlayDetails {
     #[doc(hidden)]
     #[serde(rename = "type", default)]
     pub __type: IgnoredAny,
+
+    // redundant
+    #[doc(hidden)]
+    #[serde(rename = "violation", default)]
+    pub __violation: IgnoredAny,
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
@@ -925,7 +746,7 @@ pub struct PitchPlayDetails {
 
     #[serde(rename = "type")]
     pub pitch_type: PitchType,
-    
+
     pub call: PitchCodeId,
 
     #[doc(hidden)]
@@ -943,10 +764,15 @@ pub struct PitchPlayDetails {
     #[doc(hidden)]
     #[serde(rename = "code", default)]
     pub __code: IgnoredAny,
+
+    // redundant
+    #[doc(hidden)]
+    #[serde(rename = "violation", default)]
+    pub __violation: IgnoredAny,
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct StepoffPlayDetails {
@@ -959,6 +785,11 @@ pub struct StepoffPlayDetails {
     pub from_catcher: bool,
     #[serde(rename = "disengagementNum", default)]
     pub pitcher_disengagement_count: Option<NonZeroUsize>,
+
+    // redundant
+    #[doc(hidden)]
+    #[serde(rename = "violation", default)]
+    pub __violation: IgnoredAny,
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
@@ -977,6 +808,7 @@ pub struct NoPitchPlayDetails {
     #[serde(default)]
     pub runner_going: bool,
 
+    #[serde(default = "crate::meta::unknown_pitch_code")]
     pub call: PitchCodeId,
 
     #[serde(rename = "disengagementNum", default)]
@@ -997,7 +829,7 @@ pub struct NoPitchPlayDetails {
 }
 
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
 pub struct PickoffPlayDetails {
@@ -1011,6 +843,11 @@ pub struct PickoffPlayDetails {
 
     #[serde(rename = "disengagementNum", default)]
     pub pitcher_disengagement_count: Option<NonZeroUsize>,
+
+    // redundant
+    #[doc(hidden)]
+    #[serde(rename = "violation", default)]
+    pub __violation: IgnoredAny,
 }
 
 /// Statistical data regarding a pitch.

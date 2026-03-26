@@ -2,6 +2,11 @@ use serde::Deserialize;
 
 id!(#[doc = "A [`String`] representing a pitch, such as \"F\" for Foul, \"S\" for Swinging Strike, etc."] PitchCodeId { code: String });
 
+#[must_use]
+pub(crate) fn unknown_pitch_code() -> PitchCodeId {
+	PitchCodeId::new("N")
+}
+
 /// A detailed `struct` representing everything logic-related that happened with a pitch.
 ///
 /// ## Examples
