@@ -4,6 +4,7 @@ use bon::Builder;
 use chrono::NaiveDateTime;
 use derive_more::{Deref, DerefMut, Display};
 use serde::{Deserialize, Deserializer, de::IgnoredAny};
+use serde_with::{serde_as, DefaultOnNull, DefaultOnError};
 use uuid::Uuid;
 
 use crate::{Copyright, Handedness, HomeAwaySplit, game::{AtBatCount, Base, BattingOrderIndex, ContactHardness, GameId, Inning, InningHalf}, meta::{EventType, HitTrajectory, NamedPosition, PitchCodeId, PitchType, ReviewReasonId}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}, team::TeamId};
@@ -228,6 +229,7 @@ pub struct PlayAbout {
     pub is_scoring_play: bool,
 
     /// Whether the play has a replay review occur. Note that At-Bats can have multiple challenges occur.
+    #[serde(default)]
     pub has_review: bool,
 
     /// Whether the play has counted towards an out so far.
@@ -297,10 +299,12 @@ pub struct ApplicablePlayMatchupSplits {
 pub struct RunnerData {
     pub movement: RunnerMovement,
     pub details: RunnerDetails,
+    #[serde(default)]
     pub credits: Vec<RunnerCredit>,
 }
 
 /// Data regarding the basepath of a runner
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
@@ -320,6 +324,8 @@ pub struct RunnerMovement {
     pub out_base: Option<Base>,
 
     /// Identical to `out_base.is_some()`
+    #[serde_as(deserialize_as = "DefaultOnNull")]
+    #[serde(default)]
     pub is_out: bool,
     
     /// Ordinal of out in the game. `None` if the runner was not called out. Otherwise 1, 2, or 3.
@@ -479,6 +485,15 @@ pub enum MovementReason {
     #[display("Pickoff (Caught Stealing) (HP)")]
     #[serde(rename = "r_pickoff_caught_stealing_home")]
     PickoffCaughtStealingHome,
+
+    /// General interference
+    #[display("Interference")]
+    #[serde(rename = "r_interference")]
+    Interference,
+
+    #[display("Hit By Ball")]
+    #[serde(rename = "r_hbr")]
+    HitByBall,
 }
 
 impl MovementReason {
@@ -551,6 +566,18 @@ pub enum CreditKind {
     #[display("Dropped Ball Error")]
     #[serde(rename = "f_error_dropped_ball")]
     DroppedBallError,
+
+    #[display("Defensive Shift Violation")]
+    #[serde(rename = "f_defensive_shift_violation_error")]
+    DefensiveShiftViolation,
+
+    #[display("Interference")]
+    #[serde(rename = "f_interference")]
+    Interference,
+
+    #[display("Catcher's Interference")]
+    #[serde(rename = "c_catcher_interf")]
+    CatchersInterference,
 }
 
 /// # Errors
@@ -635,8 +662,8 @@ pub enum PlayEvent {
     #[serde(rename = "pickoff")]
     Pickoff {
         details: PickoffPlayDetails,
-        #[serde(alias = "actionPlayId")]
-        play_id: Uuid,
+        #[serde(alias = "actionPlayId", default)]
+        play_id: Option<Uuid>,
 
         #[serde(flatten)]
         common: PlayEventCommon,
@@ -677,6 +704,8 @@ pub struct PlayEventCommon {
 
     /// A player involved in the play.
     pub player: Option<PersonId>,
+    /// An umpire involved in the play, ex: Ejection
+    pub umpire: Option<PersonId>,
     /// Position (typically a complement of ``player``)
     pub position: Option<NamedPosition>,
     /// Also not always present, check by the [`EventType`]; [`PitchingSubsitution`](EventType::PitchingSubstitution)s don't have it.
@@ -684,9 +713,11 @@ pub struct PlayEventCommon {
     /// Batting Order Index, typically supplied with a [`DefensiveSwitch`](EventType::DefensiveSwitch) or [`OffensiveSubstitution`](EventType::OffensiveSubstitution)
     #[serde(rename = "battingOrder")]
     pub batting_order_index: Option<BattingOrderIndex>,
+    /// Base correlated with play, such as a stolen base
     pub base: Option<Base>,
     #[serde(rename = "reviewDetails", default, deserialize_with = "deserialize_review_data")]
     pub review_data: Vec<ReviewData>,
+    pub injury_type: Option<String>,
     
     #[doc(hidden)]
     #[serde(rename = "index", default)]
@@ -710,10 +741,11 @@ pub struct ActionPlayDetails {
     /// Whether the batter in the play is out
     pub is_out: bool,
     pub is_scoring_play: bool,
+    #[serde(default)]
     pub has_review: bool,
 
     #[serde(rename = "disengagementNum", default)]
-    pub pitcher_disengagement_count: Option<NonZeroUsize>,
+    pub disengagements: Option<NonZeroUsize>,
     
     #[doc(hidden)]
     #[serde(rename = "event", default)]
@@ -738,13 +770,14 @@ pub struct PitchPlayDetails {
     pub is_strike: bool,
     pub is_ball: bool,
     pub is_out: bool,
+    #[serde(default)]
     pub has_review: bool,
     #[serde(default)]
     pub runner_going: bool,
     #[serde(rename = "disengagementNum", default)]
-    pub pitcher_disengagement_count: Option<NonZeroUsize>,
-
-    #[serde(rename = "type")]
+    pub disengagements: Option<NonZeroUsize>,
+    
+    #[serde(rename = "type", deserialize_with = "crate::meta::fallback_pitch_type_deserializer", default = "crate::meta::unknown_pitch_type")]
     pub pitch_type: PitchType,
 
     pub call: PitchCodeId,
@@ -780,11 +813,12 @@ pub struct StepoffPlayDetails {
     /// Typically "PSO" - "Pitcher Step Off"
     pub code: PitchCodeId,
     pub is_out: bool,
+    #[serde(default)]
     pub has_review: bool,
     /// Catcher-called mound disengagement.
     pub from_catcher: bool,
     #[serde(rename = "disengagementNum", default)]
-    pub pitcher_disengagement_count: Option<NonZeroUsize>,
+    pub disengagements: Option<NonZeroUsize>,
 
     // redundant
     #[doc(hidden)]
@@ -804,6 +838,7 @@ pub struct NoPitchPlayDetails {
     #[serde(default)]
     pub is_ball: bool,
     pub is_out: bool,
+    #[serde(default)]
     pub has_review: bool,
     #[serde(default)]
     pub runner_going: bool,
@@ -812,7 +847,7 @@ pub struct NoPitchPlayDetails {
     pub call: PitchCodeId,
 
     #[serde(rename = "disengagementNum", default)]
-    pub pitcher_disengagement_count: Option<NonZeroUsize>,
+    pub disengagements: Option<NonZeroUsize>,
     
     #[doc(hidden)]
     #[serde(rename = "description", default)]
@@ -837,12 +872,13 @@ pub struct PickoffPlayDetails {
     /// Typically "1" - "Pickoff Attempt 1B", "2" - "Pickoff Attempt 2B", "3" - "Pickoff Attempt 3B"
     pub code: PitchCodeId,
     pub is_out: bool,
+    #[serde(default)]
     pub has_review: bool,
     /// Catcher-called pickoff.
     pub from_catcher: bool,
 
     #[serde(rename = "disengagementNum", default)]
-    pub pitcher_disengagement_count: Option<NonZeroUsize>,
+    pub disengagements: Option<NonZeroUsize>,
 
     // redundant
     #[doc(hidden)]
@@ -889,7 +925,7 @@ pub struct PitchData {
     /// Measured in feet/s^2.
     pub aY: f64,
     /// Acceleration of the pitch near release, vertical movement axis,
-    /// catchers perspective (positive means carry)
+    /// catchers perspective (positive means literal carry)
     ///
     /// Measured in feet/s^2.
     pub aZ: f64,
@@ -1017,21 +1053,51 @@ impl<'de> Deserialize<'de> for PitchData {
     where
         D: serde::Deserializer<'de>
     {
+        #[must_use]
+        const fn default_strike_zone_width() -> f64 {
+            17.0
+        }
+
+        #[must_use]
+        const fn default_strike_zone_depth() -> f64 {
+            17.0
+        }
+
+        #[must_use]
+        const fn default_nan() -> f64 {
+            f64::NAN
+        }
+
+        #[must_use]
+        const fn default_strike_zone_section() -> StrikeZoneSection {
+            StrikeZoneSection::MiddleMiddle
+        }
+        
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         #[cfg_attr(test, serde(deny_unknown_fields))]
         struct Raw {
+            #[serde(default = "default_nan")]
             start_speed: f64,
+            #[serde(default = "default_nan")]
             end_speed: f64,
+            #[serde(default = "default_nan")]
             strike_zone_top: f64,
+            #[serde(default = "default_nan")]
             strike_zone_bottom: f64,
+            #[serde(default = "default_strike_zone_width")]
             strike_zone_width: f64,
+            #[serde(default = "default_strike_zone_depth")]
             strike_zone_depth: f64,
             coordinates: RawCoordinates,
             breaks: RawBreaks,
+            #[serde(default = "default_strike_zone_section")]
             zone: StrikeZoneSection,
+            #[serde(default = "default_nan")]
             type_confidence: f64,
+            #[serde(default = "default_nan")]
             plate_time: f64,
+            #[serde(default = "default_nan")]
             extension: f64,
         }
 
@@ -1039,20 +1105,35 @@ impl<'de> Deserialize<'de> for PitchData {
         #[derive(Deserialize)]
         #[cfg_attr(test, serde(deny_unknown_fields))]
         struct RawCoordinates {
+            #[serde(default = "default_nan")]
             aX: f64,
+            #[serde(default = "default_nan")]
             aY: f64,
+            #[serde(default = "default_nan")]
             aZ: f64,
+            #[serde(default = "default_nan")]
             pfxX: f64,
+            #[serde(default = "default_nan")]
             pfxZ: f64,
+            #[serde(default = "default_nan")]
             pX: f64,
+            #[serde(default = "default_nan")]
             pZ: f64,
+            #[serde(default = "default_nan")]
             vX0: f64,
+            #[serde(default = "default_nan")]
             vY0: f64,
+            #[serde(default = "default_nan")]
             vZ0: f64,
+            #[serde(default = "default_nan")]
             x: f64,
+            #[serde(default = "default_nan")]
             y: f64,
+            #[serde(default = "default_nan")]
             x0: f64,
+            #[serde(default = "default_nan")]
             y0: f64,
+            #[serde(default = "default_nan")]
             z0: f64,
         }
 
@@ -1060,15 +1141,21 @@ impl<'de> Deserialize<'de> for PitchData {
         #[serde(rename_all = "camelCase")]
         #[cfg_attr(test, serde(deny_unknown_fields))]
         struct RawBreaks {
+            #[serde(default = "default_nan")]
             break_angle: f64,
+            #[serde(default = "default_nan")]
             break_length: f64,
+            #[serde(default = "default_nan")]
             break_y: f64,
+            #[serde(default = "default_nan")]
             break_vertical: f64,
+            #[serde(default = "default_nan")]
             break_vertical_induced: f64,
+            #[serde(default = "default_nan")]
             break_horizontal: f64,
-            #[serde(default)]
+            #[serde(default = "default_nan")]
             spin_rate: f64,
-            #[serde(default)]
+            #[serde(default = "default_nan")]
             spin_direction: f64,
         }
 
@@ -1080,11 +1167,11 @@ impl<'de> Deserialize<'de> for PitchData {
             strike_zone_width,
             strike_zone_depth,
             coordinates: RawCoordinates {
+                pfxX,
+                pfxZ,
                 aX,
                 aY,
                 aZ,
-                pfxX,
-                pfxZ,
                 pX,
                 pZ,
                 vX0,
@@ -1152,11 +1239,22 @@ impl<'de> Deserialize<'de> for PitchData {
 
 /// Data regarding batted-balls
 #[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(from = "__HitDataStruct")]
+pub struct HitData {
+    pub hit_trajectory: HitTrajectory,
+    pub contact_hardness: ContactHardness,
+    pub statcast: Option<StatcastHitData>,
+}
+
+#[serde_as]
+#[doc(hidden)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(test, serde(deny_unknown_fields))]
-pub struct HitData {
+pub struct __HitDataStruct {
+    #[serde_as(deserialize_as = "DefaultOnError")]
     #[serde(rename = "trajectory")]
-    pub hit_trajectory: HitTrajectory,
+    pub hit_trajectory: Option<HitTrajectory>,
     #[serde(rename = "hardness")]
     pub contact_hardness: ContactHardness,
 
@@ -1172,6 +1270,16 @@ pub struct HitData {
     pub __coordinates: IgnoredAny,
 }
 
+impl From<__HitDataStruct> for HitData {
+    fn from(__HitDataStruct { hit_trajectory, contact_hardness, statcast, .. }: __HitDataStruct) -> Self {
+        Self {
+            hit_trajectory: hit_trajectory.or(statcast.as_ref().map(|statcast| statcast.launch_angle).map(HitTrajectory::from_launch_angle)).unwrap_or(HitTrajectory::FlyBall),
+            contact_hardness,
+            statcast,
+        }
+    }
+}
+
 /// Statcast data regarding batted balls, only sometimes present.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -1183,11 +1291,6 @@ pub struct StatcastHitData {
     #[serde(rename = "launchSpeed")]
     pub exit_velocity: f64,
     /// Vertical Angle in degrees at which the ball leaves the bat.
-    ///
-    /// 0 is a line drive that likely won't leave the infield without a bounce
-    /// 90 is a popup
-    /// Negative is a groundball
-    /// ~15-25 is a line drive
     ///
     /// Measured in degrees
     pub launch_angle: f64,
@@ -1250,6 +1353,7 @@ mod tests {
 		assert!(!has_errors, "Has errors.");
     }
 
+    #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     #[tokio::test]
     async fn regular_season_2025_pbp() {
         let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();

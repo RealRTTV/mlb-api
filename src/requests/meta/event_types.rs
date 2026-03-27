@@ -267,7 +267,7 @@ pub enum EventType {
     #[display("Wild Pitch")]
     WildPitch,
 
-    #[serde(rename = "catchers_interf")]
+    #[serde(rename = "catcher_interf")]
     #[display("Catcher's Interference")]
     CatchersInterference,
     

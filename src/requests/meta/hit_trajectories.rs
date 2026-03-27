@@ -27,6 +27,19 @@ pub enum HitTrajectory {
 	Popup,
 }
 
+impl HitTrajectory {
+	/// Uses launch angle data to derive a hit trajectory.
+	#[must_use]
+	pub const fn from_launch_angle(launch_angle: f64) -> Self {
+		match launch_angle {
+			..10.0 => Self::GroundBall,
+			10.0..25.0 => Self::LineDrive,
+			25.0..50.0 => Self::FlyBall,
+			_ => Self::Popup,
+		}
+	}
+}
+
 #[derive(Deserialize)]
 #[doc(hidden)]
 #[serde(untagged)]

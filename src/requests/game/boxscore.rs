@@ -159,7 +159,8 @@ mod tests {
 		}
 		assert!(!has_errors, "Has errors.");
 	}
-	
+
+	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     #[tokio::test]
     async fn regular_season_2025_boxscore() {
         let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
