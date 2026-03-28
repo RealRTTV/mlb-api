@@ -662,7 +662,7 @@ mod tests {
     use crate::TEST_YEAR;
 
     #[tokio::test]
-    async fn all_mlb_leagues_2025() {
+    async fn all_mlb_leagues() {
         for league_id in [LeagueId::new(103), LeagueId::new(104)] {
             let _ = StandingsRequest::<()>::builder().season(TEST_YEAR).league_id(league_id).build_and_get().await.unwrap();
             let _ = StandingsRequest::<()>::builder().season(TEST_YEAR).date(NaiveDate::from_ymd_opt(TEST_YEAR as _, 09, 26).unwrap()).league_id(league_id).build_and_get().await.unwrap();

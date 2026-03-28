@@ -7,13 +7,13 @@ use serde::{Deserialize, Deserializer, de::IgnoredAny};
 use serde_with::{serde_as, DefaultOnNull, DefaultOnError};
 use uuid::Uuid;
 
-use crate::{Copyright, Handedness, HomeAwaySplit, game::{AtBatCount, Base, BattingOrderIndex, ContactHardness, GameId, Inning, InningHalf}, meta::{EventType, HitTrajectory, NamedPosition, PitchCodeId, PitchType, ReviewReasonId}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}, team::TeamId};
+use crate::{Copyright, Handedness, HomeAway, game::{AtBatCount, Base, BattingOrderIndex, ContactHardness, GameId, Inning, InningHalf}, meta::{EventType, HitTrajectory, NamedPosition, PitchCodeId, PitchType, ReviewReasonId}, person::{NamedPerson, PersonId}, request::RequestURL, stats::raw::{HittingHotColdZones, PitchingHotColdZones, StrikeZoneSection}, team::TeamId};
 
 /// A collection of plays, often a whole game's worth.
 #[allow(clippy::struct_field_names, clippy::unsafe_derive_deserialize, reason = "not relevant here")]
 #[derive(Debug, Deserialize, PartialEq, Clone, Deref)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct Plays {
     #[serde(default)]
     pub copyright: Copyright,
@@ -108,7 +108,7 @@ impl Plays {
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub(super) struct InningPlaysIndices {
     #[serde(rename = "startIndex")]
     pub(super) start: usize,
@@ -128,7 +128,7 @@ pub(super) struct InningPlaysIndices {
 /// For individual "plays" and actions, look to [`PlayEvent`]s
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct Play {
     /// See [`PlayDetails`].
     pub result: PlayDetails,
@@ -165,7 +165,7 @@ pub struct Play {
 /// The result of a play, such as a Strikeout, Home Run, etc.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayDetails {
     #[serde(rename = "eventType")]
     pub event: EventType,
@@ -195,7 +195,7 @@ pub struct PlayDetails {
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayAbout {
     /// Ordinal at bat of the game (starts at 0)
     #[serde(rename = "atBatIndex")]
@@ -251,7 +251,7 @@ pub struct PlayAbout {
 /// Hitter & Pitcher matchup information
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayMatchup {
     pub batter: NamedPerson,
     pub pitcher: NamedPerson,
@@ -285,7 +285,7 @@ pub struct PlayMatchup {
 /// Batter, Pitcher, and Men-On-Base splits; unknown type.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct ApplicablePlayMatchupSplits {
     pub batter: String,
     pub pitcher: String,
@@ -295,7 +295,7 @@ pub struct ApplicablePlayMatchupSplits {
 /// Data regarding a baserunner.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct RunnerData {
     pub movement: RunnerMovement,
     pub details: RunnerDetails,
@@ -307,7 +307,7 @@ pub struct RunnerData {
 #[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct RunnerMovement {
     /// The base the runner begins the play at. `None` if they do not start on-base at the beginning of the play.
     pub origin_base: Option<Base>,
@@ -335,7 +335,7 @@ pub struct RunnerMovement {
 /// Details about the runner's movement
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct RunnerDetails {
     /// `None` represents completely unforced movement, such as hitting a single with no-one on.
     pub movement_reason: Option<MovementReason>,
@@ -519,7 +519,7 @@ impl MovementReason {
 /// Fielder credits to outs
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct RunnerCredit {
     pub player: PersonId,
     pub position: NamedPosition,
@@ -585,7 +585,7 @@ pub enum CreditKind {
 pub fn deserialize_review_data<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<ReviewData>, D::Error> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
-    #[cfg_attr(test, serde(deny_unknown_fields))]
+    #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
     struct RawReviewData {
         #[serde(flatten)]
         base: ReviewData,
@@ -601,7 +601,7 @@ pub fn deserialize_review_data<'de, D: Deserializer<'de>>(deserializer: D) -> Re
 /// Data regarding replay reviews; present on [`Play`], not [`PlayEvent`].
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct ReviewData {
     pub is_overturned: bool,
     #[serde(rename = "inProgress")]
@@ -616,7 +616,7 @@ pub struct ReviewData {
 #[allow(clippy::large_enum_variant, reason = "not a problemo dw")]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all_fields = "camelCase", tag = "type")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub enum PlayEvent {
     #[serde(rename = "action")]
     Action {
@@ -726,7 +726,7 @@ pub struct PlayEventCommon {
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct ActionPlayDetails {
     #[serde(rename = "eventType")]
     pub event: EventType,
@@ -764,7 +764,7 @@ pub struct ActionPlayDetails {
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PitchPlayDetails {
     pub is_in_play: bool,
     pub is_strike: bool,
@@ -807,7 +807,7 @@ pub struct PitchPlayDetails {
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct StepoffPlayDetails {
     pub description: String,
     /// Typically "PSO" - "Pitcher Step Off"
@@ -829,7 +829,7 @@ pub struct StepoffPlayDetails {
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct NoPitchPlayDetails {
     #[serde(default)]
     pub is_in_play: bool,
@@ -866,7 +866,7 @@ pub struct NoPitchPlayDetails {
 #[allow(clippy::struct_excessive_bools, reason = "inapplicable")]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PickoffPlayDetails {
     pub description: String,
     /// Typically "1" - "Pickoff Attempt 1B", "2" - "Pickoff Attempt 2B", "3" - "Pickoff Attempt 3B"
@@ -1075,7 +1075,7 @@ impl<'de> Deserialize<'de> for PitchData {
         
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
-        #[cfg_attr(test, serde(deny_unknown_fields))]
+        #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
         struct Raw {
             #[serde(default = "default_nan")]
             start_speed: f64,
@@ -1103,7 +1103,7 @@ impl<'de> Deserialize<'de> for PitchData {
 
         #[allow(non_snake_case, reason = "spec")]
         #[derive(Deserialize)]
-        #[cfg_attr(test, serde(deny_unknown_fields))]
+        #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
         struct RawCoordinates {
             #[serde(default = "default_nan")]
             aX: f64,
@@ -1139,7 +1139,7 @@ impl<'de> Deserialize<'de> for PitchData {
 
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
-        #[cfg_attr(test, serde(deny_unknown_fields))]
+        #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
         struct RawBreaks {
             #[serde(default = "default_nan")]
             break_angle: f64,
@@ -1250,7 +1250,7 @@ pub struct HitData {
 #[doc(hidden)]
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct __HitDataStruct {
     #[serde_as(deserialize_as = "DefaultOnError")]
     #[serde(rename = "trajectory")]
@@ -1283,7 +1283,7 @@ impl From<__HitDataStruct> for HitData {
 /// Statcast data regarding batted balls, only sometimes present.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct StatcastHitData {
     /// Speed of the ball as it leaves the bat
     ///

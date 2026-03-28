@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 
 /// # Errors
 /// See variants of [`Error`]
-#[cfg(not(all(test, debug_assertions)))]
+#[cfg(not(feature = "_debug"))]
 pub fn get<T: DeserializeOwned>(url: impl ToString) -> Result<T> {
 	let bytes = ureq::get(url.to_string()).call()?.into_body().read_to_vec()?;
 	let e = match serde_json::from_slice::<'_, T>(&bytes) {
@@ -16,7 +16,7 @@ pub fn get<T: DeserializeOwned>(url: impl ToString) -> Result<T> {
 
 /// # Errors
 /// See variants of [`Error`]
-#[cfg(all(test, debug_assertions))]
+#[cfg(feature = "_debug")]
 pub fn get<T: DeserializeOwned>(url: impl ToString) -> Result<T> {
 	let bytes = ureq::get(url.to_string()).call()?.into_body().read_to_vec()?;
 	let mut de = serde_json::Deserializer::from_slice(&bytes);

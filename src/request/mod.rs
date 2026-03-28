@@ -29,11 +29,11 @@ pub enum Error {
 	#[error(transparent)]
 	Network(#[from] ::reqwest::Error),
 	/// Error from [`serde`], likely deserialization error.
-	#[cfg(not(all(test, debug_assertions)))]
+	#[cfg(not(feature = "_debug"))]
 	#[error(transparent)]
 	Serde(#[from] serde_json::Error),
 	/// Error from [`serde`], likely deserialization error.
-	#[cfg(all(test, debug_assertions))]
+	#[cfg(feature = "_debug")]
 	#[error(transparent)]
 	Serde(#[from] serde_path_to_error::Error<serde_json::Error>),
 	/// Error from MLB, likely bad payload.
@@ -78,7 +78,7 @@ pub trait RequestURLBuilderExt where Self: Sized {
 	fn build_and_get(self) -> Result<<Self::Built as RequestURL>::Response> {
 		let built = Self::Built::from(self);
 		let url = built.to_string();
-		if cfg!(test) {
+		if cfg!(feature = "_debug") {
 			println!("url = {url}");
 		}
 		get::<<Self::Built as RequestURL>::Response>(url)
@@ -89,7 +89,7 @@ pub trait RequestURLBuilderExt where Self: Sized {
 		async {
 			let built = Self::Built::from(self);
 			let url = built.to_string();
-			if cfg!(test) {
+			if cfg!(feature = "_debug") {
 				println!("url = {url}");
 			}
 			get::<<Self::Built as RequestURL>::Response>(url).await

@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use thiserror::Error;
+use crate::{HomeAway, TeamSide};
 use crate::stats::{RawStat, Stat};
 use crate::stats::wrappers::season::WithSeason;
 
@@ -10,14 +11,11 @@ use crate::stats::wrappers::season::WithSeason;
 pub struct __HomeOrAwayStruct<T: RawStat> {
 	#[serde(flatten)]
 	stats: WithSeason<T>,
-	is_home: bool,
+	#[serde(rename = "isHome", deserialize_with = "crate::deserialize_team_side_from_is_home")]
+	team_side: TeamSide,
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
-pub struct WithHomeAndAway<T: RawStat> {
-	pub home: WithSeason<T>,
-	pub away: WithSeason<T>,
-}
+pub type WithHomeAndAway<T> = HomeAway<WithSeason<T>>;
 
 #[derive(Debug, Error)]
 pub enum HomeAndAwayFromSplitWrappedVariantError {
@@ -40,20 +38,19 @@ impl<T: RawStat> Stat for WithHomeAndAway<T> {
 		use HomeAndAwayFromSplitWrappedVariantError as Error;
 
 		let [a, b] = <Vec<Self::Split> as TryInto<[Self::Split; 2]>>::try_into(splits.collect()).map_err(|_| Error::NotLen2)?;
-		if a.is_home == b.is_home {
-			return Err(if a.is_home { Error::DuplicateHome } else { Error::DuplicateAway })
+		if a.team_side == b.team_side {
+			return Err(if a.team_side.is_home() { Error::DuplicateHome } else { Error::DuplicateAway })
 		}
 
-		if a.is_home {
-			Ok(Self {
-				home: a.stats,
-				away: b.stats,
-			})
-		} else {
-			Ok(Self {
-				home: b.stats,
-				away: a.stats,
-			})
+		let mut split = Self {
+			home: a.stats,
+			away: b.stats,
+		};
+
+		if a.team_side.is_away() {
+			split = split.swap();
 		}
+
+		Ok(split)
 	}
 }

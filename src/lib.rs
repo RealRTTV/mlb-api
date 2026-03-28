@@ -62,7 +62,9 @@ macro_rules! id {
 }
 
 // todo: add macro to lookup one stat type under one stat group for a player and return the type directly.
-// todo: change cfg(test) to cfg(_debug)
+// todo: add table for all requests on lib.rs mod docs
+// todo: add `request` fn to all requests rather than using the request type directly
+// todo: add deny_unknown_fields to everything
 
 pub mod hydrations;
 pub mod request;

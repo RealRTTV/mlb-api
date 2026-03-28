@@ -14,7 +14,7 @@ use crate::sport::SportId;
 use crate::team::NamedTeam;
 use crate::team::TeamId;
 use crate::venue::{NamedVenue, VenueId};
-use crate::{Copyright, HomeAwaySplit, MLB_API_DATE_FORMAT, NaiveDateRange};
+use crate::{Copyright, HomeAway, MLB_API_DATE_FORMAT, NaiveDateRange};
 use bon::Builder;
 use chrono::{NaiveDate, NaiveDateTime, Utc};
 use either::Either;
@@ -57,7 +57,7 @@ pub struct ScheduleGame<H: ScheduleHydrations> {
 	/// Different from `game_date.date()` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
 	pub official_date: NaiveDate,
 	pub status: GameStatus,
-	pub teams: HomeAwaySplit<TeamWithStandings<H>>,
+	pub teams: HomeAway<TeamWithStandings<H>>,
 	pub venue: NamedVenue,
 	pub is_tie: bool,
 
@@ -93,7 +93,7 @@ struct __ScheduleGameStruct<H: ScheduleHydrations> {
 	game_date: NaiveDateTime,
 	official_date: NaiveDate,
 	status: GameStatus,
-	teams: HomeAwaySplit<TeamWithStandings<H>>,
+	teams: HomeAway<TeamWithStandings<H>>,
 	#[serde_as(deserialize_as = "DefaultOnError")]
 	venue: Option<NamedVenue>,
 	is_tie: Option<bool>,

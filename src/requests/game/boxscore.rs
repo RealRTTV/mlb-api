@@ -11,12 +11,12 @@ use fxhash::FxHashMap;
 use serde::{Deserialize, de::IgnoredAny};
 use serde_with::{serde_as, DefaultOnError};
 
-use crate::{Copyright, HomeAwaySplit, game::{BattingOrderIndex, GameId, LabelledValue, Official, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
+use crate::{Copyright, HomeAway, game::{BattingOrderIndex, GameId, LabelledValue, Official, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
 
 /// See [`self`]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct Boxscore {
     #[serde(default)]
     pub copyright: Copyright,
@@ -24,7 +24,7 @@ pub struct Boxscore {
     pub misc: Vec<LabelledValue>,
     pub top_performers: Option<[TopPerformer; 3]>,
     pub pitching_notes: Vec<String>,
-    pub teams: HomeAwaySplit<TeamWithGameData>,
+    pub teams: HomeAway<TeamWithGameData>,
     pub officials: Vec<Official>,
 }
 
@@ -33,7 +33,7 @@ pub struct Boxscore {
 /// Originally an enum but the amount of two-way-players that exist make it pointlessly annoying and easy to break.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct TopPerformer {
     pub player: PlayerWithGameData,
     pub game_score: usize,
@@ -52,7 +52,7 @@ pub struct TopPerformer {
 #[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayerWithGameData {
 	pub person: NamedPerson,
 	#[serde(default)]
@@ -76,7 +76,7 @@ pub struct PlayerWithGameData {
 /// A team with some potentially useful information regarding their performance in the current game.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct TeamWithGameData {
     pub team: NamedTeam,
     pub team_stats: BoxscoreStatCollection,
@@ -98,7 +98,7 @@ pub struct TeamWithGameData {
 #[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct BoxscoreStatCollection {
     #[serde(rename = "batting")]
     #[serde_as(deserialize_as = "DefaultOnError")]

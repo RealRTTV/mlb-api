@@ -1,8 +1,10 @@
 use derive_more::Display;
 use serde::Deserialize;
+use serde::de::Error;
+use thiserror::Error;
+use std::str::FromStr;
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, Hash)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Display, Hash)]
 pub enum EventType {
     // ---------- Misc ----------
     #[display("Batter Timeout")]
@@ -31,15 +33,12 @@ pub enum EventType {
     UmpireSubstitution,
     
     #[display("Pickoff (Error) (1B)")]
-    #[serde(rename = "pickoff_error_1b")]
     PickoffError1B,
     
     #[display("Pickoff (Error) (2B)")]
-    #[serde(rename = "pickoff_error_2b")]
     PickoffError2B,
     
     #[display("Pickoff (Error) (3B)")]
-    #[serde(rename = "pickoff_error_3b")]
     PickoffError3B,
 
     #[display("Pitcher Step Off")]
@@ -50,11 +49,9 @@ pub enum EventType {
 
     /// Switches sides of the plate
     #[display("Batter Handedness Switch")]
-    #[serde(rename = "batter_turn")]
     BatterHandednessSwitch,
 
     #[display("Pitcher Handedness Switch")]
-    #[serde(rename = "pitcher_switch")]
     PitcherHandednessSwitch,
 
     #[display("Ejection")]
@@ -63,7 +60,6 @@ pub enum EventType {
     #[display("No Pitch")]
     NoPitch,
 
-    #[serde(rename = "forced_balk")]
     #[display("Disengagement Violation")]
     DisengagementViolation,
     // ---------- ---- ----------
@@ -80,7 +76,6 @@ pub enum EventType {
     FieldersChoice,
 
     #[display("Fielder's Choice (Field Out)")]
-    #[serde(rename = "fielders_choice_out")]
     FieldersChoiceFieldOut,
     
     /// Not necessarily an out.
@@ -94,11 +89,9 @@ pub enum EventType {
     StrikeoutTriplePlay,
 
     #[display("Sacrifice Bunt")]
-    #[serde(rename = "sac_bunt")]
     SacrificeBunt,
 
     #[display("Sacrifice Fly")]
-    #[serde(rename = "sac_fly")]
     SacrificeFly,
 
     #[display("Grounded Into Double Play")]
@@ -126,86 +119,66 @@ pub enum EventType {
     Error,
 
     #[display("Caught Stealing")]
-    #[serde(rename = "caught_stealing")]
     CaughtStealing,
 
     #[display("Caught Stealing (2B)")]
-    #[serde(rename = "caught_stealing_2b")]
     CaughtStealing2B,
 
     #[display("Caught Stealing (3B)")]
-    #[serde(rename = "caught_stealing_3b")]
     CaughtStealing3B,
 
     #[display("Caught Stealing (HP)")]
-    #[serde(rename = "caught_stealing_home")]
     CaughtStealingHome,
 
     #[display("Caught Stealing Double Play")]
-    #[serde(rename = "cs_double_play")]
     CaughtStealingDoublePlay,
     
     #[display("Sacrifice Fly Double Play")]
-    #[serde(rename = "sac_fly_double_play")]
     SacrificeFlyDoublePlay,
     
     #[display("Sacrifice Bunt Double Play")]
-    #[serde(rename = "sac_bunt_double_play")]
     SacrificeBuntDoublePlay,
     
     #[display("Injury")]
-    #[serde(rename = "injury")]
     Injury,
     
     #[display("Official Scorer Ruling Pending (Prior Play)")]
-    #[serde(rename = "os_ruling_pending_prior")]
     PriorRulingPending,
     
     #[display("Official Scorer Ruling Pending (Current Play)")]
-    #[serde(rename = "os_ruling_pending_primary")]
     RulingPending,
 
     /// Seemingly unused
     #[display("At Bat Start")]
-    #[serde(rename = "at_bat_start")]
     AtBatStart,
 
     /// Successful pickoff
     #[display("Pickoff (1B)")]
-    #[serde(rename = "pickoff_1b")]
     Pickoff1B,
 
     /// Successful pickoff
     #[display("Pickoff (2B)")]
-    #[serde(rename = "pickoff_2b")]
     Pickoff2B,
 
     /// Successful pickoff
     #[display("Pickoff (3B)")]
-    #[serde(rename = "pickoff_3b")]
     Pickoff3B,    
     
     #[display("Pickoff (Caught Stealing) (2B)")]
-    #[serde(rename = "pickoff_caught_stealing_2b")]
     PickoffCaughtStealing2B,
     
     #[display("Pickoff (Caught Stealing) (3B)")]
-    #[serde(rename = "pickoff_caught_stealing_3b")]
     PickoffCaughtStealing3B,
     
     #[display("Pickoff (Caught Stealing) (HP)")]
-    #[serde(rename = "pickoff_caught_stealing_home")]
     PickoffCaughtStealingHome,
 
-    #[serde(rename = "batter_interference")]
     #[display("Batter's Interference")]
     BattersInterference,
 
-    #[serde(rename = "runner_interference")]
     #[display("Runner's Interference")]
     RunnersInterference,
     
-    #[serde(rename = "runner_double_play")]
     #[display("Runner's Interference Double Play")]
     RunnersInterferenceDoublePlay,
 
@@ -222,7 +195,6 @@ pub enum EventType {
     Walk,
 
     #[display("Intentional Walk")]
-    #[serde(rename = "intent_walk")]
     IntentionalWalk,
 
     #[display("Hit By Pitch")]
@@ -241,24 +213,19 @@ pub enum EventType {
     HomeRun,
     
 	#[display("Stolen Base")]
-	#[serde(rename = "stolen_base")]
     StolenBase,
 
     #[display("Stolen Base (2B)")]
-    #[serde(rename = "stolen_base_2b")]
     StolenBase2B,
 
     #[display("Stolen Base (3B)")]
-    #[serde(rename = "stolen_base_3b")]
     StolenBase3B,
 
     #[display("Stolen Base (HP)")]
-    #[serde(rename = "stolen_base_home")]
     StolenBaseHome,
 
     /// A stolen base but unchallenged by the defense; not counted as a SB.
     #[display("Defensive Indifference")]
-    #[serde(rename = "defensive_indiff")]
     DefensiveIndifference,
 
     #[display("Passed Ball")]
@@ -267,15 +234,12 @@ pub enum EventType {
     #[display("Wild Pitch")]
     WildPitch,
 
-    #[serde(rename = "catcher_interf")]
     #[display("Catcher's Interference")]
     CatchersInterference,
     
-    #[serde(rename = "fielder_interference")]
     #[display("Fielder's Interference")]
     FieldersInterference,
 
-    #[serde(rename = "other_advance")]
     #[display("Base Advancement (Other)")]
     OtherAdvancement,
     // --------- -- ---- ---------
@@ -309,6 +273,8 @@ pub enum EventType {
 // 			Self::GroundedIntoDoublePlay => false,
 // 			Self::GroundedIntoTriplePlay => false,
 // 			Self::Strikeout => false,
+//          Self::StrikeoutDoublePlay => false,
+//          Self::StrikeoutTriplePlay => false,
 // 			Self::TriplePlay => false,
 // 			Self::SacrificeFly => false,
 // 			Self::CatchersInterference => false,
@@ -386,6 +352,8 @@ pub enum EventType {
 // 			Self::GroundedIntoDoublePlay => false,
 // 			Self::GroundedIntoTriplePlay => false,
 // 			Self::Strikeout => false,
+//          Self::StrikeoutDoublePlay => false,
+//          Self::StrikeoutTriplePlay => false,
 // 			Self::TriplePlay => false,
 // 			Self::SacrificeFly => false,
 // 			Self::CatchersInterference => false,
@@ -463,6 +431,8 @@ pub enum EventType {
 // 			Self::GroundedIntoDoublePlay => false,
 // 			Self::GroundedIntoTriplePlay => false,
 // 			Self::Strikeout => false,
+//          Self::StrikeoutDoublePlay => false,
+//          Self::StrikeoutTriplePlay => false,
 // 			Self::TriplePlay => false,
 // 			Self::SacrificeFly => false,
 // 			Self::CatchersInterference => false,
@@ -513,6 +483,114 @@ pub enum EventType {
 // 		}
 // 	}
 //}
+
+#[derive(Debug, Error)]
+pub enum EventTypeFromStrError {
+    #[error("Invalid event type: {0}")]
+    Invalid(String),
+}
+
+impl FromStr for EventType {
+    type Err = EventTypeFromStrError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+			"pickoff_1b" => Self::Pickoff1B,
+			"pickoff_2b" => Self::Pickoff2B,
+			"pickoff_3b" => Self::Pickoff3B,
+			"pitcher_step_off" => Self::PitcherStepOff,
+			"pickoff_error_1b" => Self::PickoffError1B,
+			"pickoff_error_2b" => Self::PickoffError2B,
+			"pickoff_error_3b" => Self::PickoffError3B,
+			"batter_timeout" => Self::BatterTimeout,
+			"mound_visit" => Self::MoundVisit,
+			"no_pitch" => Self::NoPitch,
+			"single" => Self::Single,
+			"double" => Self::Double,
+			"triple" => Self::Triple,
+			"home_run" => Self::HomeRun,
+			"double_play" => Self::DoublePlay,
+			"field_error" => Self::FieldError,
+			"error" => Self::Error,
+			"field_out" => Self::FieldOut,
+			"fielders_choice" => Self::FieldersChoice,
+			"fielders_choice_out" => Self::FieldersChoiceFieldOut,
+			"force_out" => Self::ForceOut,
+			"grounded_into_double_play" => Self::GroundedIntoDoublePlay,
+			"grounded_into_triple_play" => Self::GroundedIntoTriplePlay,
+			"strikeout" | "strike_out" => Self::Strikeout,
+            "strikeout_double_play" => Self::StrikeoutDoublePlay,
+            "strikeout_triple_play" => Self::StrikeoutTriplePlay,
+			"triple_play" => Self::TriplePlay,
+			"sac_fly" => Self::SacrificeFly,
+			"catcher_interf" => Self::CatchersInterference,
+			"batter_interference" => Self::BattersInterference,
+			"fielder_interference" => Self::FieldersInterference,
+			"runner_interference" => Self::RunnersInterference,
+			"fan_interference" => Self::FanInterference,
+			"batter_turn" => Self::BatterHandednessSwitch,
+			"ejection" => Self::Ejection,
+			"cs_double_play" => Self::CaughtStealingDoublePlay,
+			"defensive_indiff" => Self::DefensiveIndifference,
+			"sac_fly_double_play" => Self::SacrificeFlyDoublePlay,
+			"sac_bunt" => Self::SacrificeBunt,
+			"sac_bunt_double_play" => Self::SacrificeBuntDoublePlay,
+			"walk" => Self::Walk,
+			"intent_walk" => Self::IntentionalWalk,
+			"hit_by_pitch" => Self::HitByPitch,
+			"injury" => Self::Injury,
+			"os_ruling_pending_prior" => Self::PriorRulingPending,
+			"os_ruling_pending_primary" => Self::RulingPending,
+			"at_bat_start" => Self::AtBatStart,
+			"passed_ball" => Self::PassedBall,
+			"other_advance" => Self::OtherAdvancement,
+			"runner_double_play" => Self::RunnersInterferenceDoublePlay,
+			"runner_placed" => Self::RunnerPlaced,
+			"pitching_substitution" => Self::PitchingSubstitution,
+			"offensive_substitution" => Self::OffensiveSubstitution,
+			"defensive_switch" => Self::DefensiveSwitch,
+			"umpire_substitution" => Self::UmpireSubstitution,
+			"pitcher_switch" => Self::PitcherHandednessSwitch,
+ 			"game_advisory" => Self::GameAdvisory,
+			"stolen_base" => Self::StolenBase,
+			"stolen_base_2b" => Self::StolenBase2B,
+			"stolen_base_3b" => Self::StolenBase3B,
+			"stolen_base_home" => Self::StolenBaseHome,
+			"caught_stealing" => Self::CaughtStealing,
+			"caught_stealing_2b" => Self::CaughtStealing2B,
+			"caught_stealing_3b" => Self::CaughtStealing3B,
+			"caught_stealing_home" => Self::CaughtStealingHome,
+			"defensive_substitution" => Self::DefensiveSubstitution,
+			"pickoff_caught_stealing_2b" => Self::PickoffCaughtStealing2B,
+			"pickoff_caught_stealing_3b" => Self::PickoffCaughtStealing3B,
+			"pickoff_caught_stealing_home" => Self::PickoffCaughtStealingHome,
+			"balk" => Self::Balk,
+			"forced_balk" => Self::DisengagementViolation,
+			"wild_pitch" => Self::WildPitch,
+			"other_out" => Self::OtherOut,
+			_ => return Err(EventTypeFromStrError::Invalid(s.to_owned()))
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for EventType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Repr {
+            Inline(String),
+            Wrapped {
+                code: String,
+            }
+        }
+
+        let (Repr::Inline(code) | Repr::Wrapped { code }) = Repr::deserialize(deserializer)?;
+        Self::from_str(&code).map_err(D::Error::custom)
+    }
+}
 
 meta_kind_impl!("eventTypes" => EventType);
 static_request_entry_cache_impl!(EventType);

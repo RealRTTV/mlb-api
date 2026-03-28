@@ -9,6 +9,7 @@ use chrono::NaiveDate;
 use serde::Deserialize;
 use std::fmt::{Debug, Display, Formatter};
 use serde::de::DeserializeOwned;
+use serde_with::{serde_as, DefaultOnError};
 use crate::hydrations::Hydrations;
 use crate::meta::NamedPosition;
 use crate::request::RequestURL;
@@ -27,11 +28,14 @@ pub struct RosterResponse<H: RosterHydrations = ()> {
 }
 
 // A [`NamedPerson`] on a roster, has an assigned position.
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RosterPlayer<H: RosterHydrations = ()> {
     pub person: H::Person,
-    pub jersey_number: JerseyNumber,
+	#[serde(default)]
+	#[serde_as(deserialize_as = "DefaultOnError")]
+    pub jersey_number: Option<JerseyNumber>,
     pub position: NamedPosition,
     pub status: RosterStatus,
     pub parent_team_id: Option<TeamId>,

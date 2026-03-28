@@ -38,6 +38,7 @@ use chrono::{Local, NaiveDate};
 use derive_more::{Deref, DerefMut, Display, From};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
+use serde_with::{serde_as, DefaultOnError};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
@@ -358,10 +359,13 @@ pub struct StrikeZoneMeasurements {
 }
 
 /// Data regarding preferred team, likely for showcasing the player with a certain look regardless of the time.
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PreferredTeamData {
-	pub jersey_number: JerseyNumber,
+	#[serde(default)]
+	#[serde_as(deserialize_as = "DefaultOnError")]
+	pub jersey_number: Option<JerseyNumber>,
 	pub position: NamedPosition,
 	pub team: NamedTeam,
 }
@@ -565,7 +569,7 @@ macro_rules! person_hydrations {
 			}
 
 			impl $name {
-				#[allow(unused)]
+				#[allow(unused, reason = "potentially unused if the builder is Default")]
 				pub fn builder() -> [<$name RequestDataBuilder>] {
 					[<$name RequestData>]::builder()
 				}
@@ -628,11 +632,10 @@ entrypoint!(for < H > Ballplayer < H > . id => Person < > where H: PersonHydrati
 
 #[cfg(test)]
 mod tests {
+	use crate::person::players::PlayersRequest;
 	use crate::request::RequestURLBuilderExt;
-	use crate::meta::RosterType;
+	use crate::sport::SportId;
 	use super::*;
-	use crate::team::roster::RosterRequest;
-	use crate::team::TeamsRequest;
 	use crate::TEST_YEAR;
 
 	#[tokio::test]
@@ -677,30 +680,18 @@ mod tests {
 			}
 		}
 
-		let toronto_blue_jays = TeamsRequest::mlb_teams()
+		let player = PlayersRequest::<()>::for_sport(SportId::MLB)
 			.season(TEST_YEAR)
 			.build_and_get()
 			.await
 			.unwrap()
-			.teams
+			.people
 			.into_iter()
-			.find(|team| team.name.full_name == "Toronto Blue Jays")
-			.unwrap();
-
-		let roster = RosterRequest::<()>::for_team(toronto_blue_jays.id)
-			.roster_type(RosterType::AllTime)
-			.build_and_get()
-			.await
-			.unwrap();
-
-		let player = roster
-			.roster
-			.into_iter()
-			.find(|player| player.person.full_name == "Kevin Gausman")
+			.find(|player| player.full_name == "Kevin Gausman")
 			.unwrap();
 
 		let request = PersonRequest::<StatOnlyHydrations>::builder()
-			.id(player.person.id)
+			.id(player.id)
 			.hydrations(StatOnlyHydrations::builder()
 				.stats(StatOnlyHydrationsInlineStats::builder()
 					.season(2023)

@@ -3,7 +3,7 @@
 #![allow(clippy::redundant_pub_crate, reason = "re-exported as pub lol")]
 
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
-use derive_more::{Display, FromStr};
+use derive_more::{Display, FromStr, Not};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
@@ -270,6 +270,32 @@ where
 		.map_err(|e| Error::custom(format!("{e:?}")))
 }
 
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Not, Default)]
+pub enum TeamSide {
+	#[default]
+	Home,
+	Away,
+}
+
+impl TeamSide {
+	#[must_use]
+	pub const fn is_home(self) -> bool {
+		matches!(self, Self::Home)
+	}
+
+	#[must_use]
+	pub const fn is_away(self) -> bool {
+		matches!(self, Self::Away)
+	}
+}
+
+pub fn deserialize_team_side_from_is_home<'de, D: Deserializer<'de>>(deserializer: D) -> Result<TeamSide, D::Error> {
+	Ok(match bool::deserialize(deserializer)? {
+		true => TeamSide::Home,
+		false => TeamSide::Away,
+	})
+}
+
 /// General type that represents two fields where one is home and one is away
 ///
 /// Examples:
@@ -279,29 +305,77 @@ where
 ///     "away": { "name": "Boston Red Sox", "id": ... }
 /// }
 /// ```
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
-pub struct HomeAwaySplit<T> {
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Default)]
+pub struct HomeAway<T> {
 	pub home: T,
 	pub away: T,
 }
 
-impl<T> HomeAwaySplit<T> {
+impl<T> HomeAway<T> {
 	/// Constructs a new [`HomeAwaySplit`]
 	#[must_use]
 	pub const fn new(home: T, away: T) -> Self {
 		Self { home, away }
 	}
-}
 
-impl<T: Add> HomeAwaySplit<T> {
+	/// Choose the value depending on the [`TeamSide`]
+	#[must_use]
+	pub fn choose(self, side: TeamSide) -> T {
+		match side {
+			TeamSide::Home => self.home,
+			TeamSide::Away => self.away,
+		}
+	}
+
+	#[must_use]
+	pub fn as_ref(&self) -> HomeAway<&T> {
+		HomeAway {
+			home: &self.home,
+			away: &self.away,
+		}
+	}
+
+	#[must_use]
+	pub fn as_mut(&mut self) -> HomeAway<&mut T> {
+		HomeAway {
+			home: &mut self.home,
+			away: &mut self.away,
+		}
+	}
+
+	#[must_use]
+	pub fn map<U, F: FnMut(T) -> U>(self, mut f: F) -> HomeAway<U> {
+		HomeAway {
+			home: f(self.home),
+			away: f(self.away),
+		}
+	}
+
+	/// Switches the home and away sides
+	#[must_use]
+	pub fn swap(self) -> Self {
+		Self {
+			home: self.away,
+			away: self.home,
+		}
+	}
+
+	#[must_use]
+	pub fn combine<U, V, F: FnMut(T, U) -> V>(self, other: HomeAway<U>, mut f: F) -> HomeAway<V> {
+		HomeAway {
+			home: f(self.home, other.home),
+			away: f(self.away, other.away),
+		}
+	}
+
 	/// Adds home and away values (typically used in stats)
 	#[must_use]
-	pub fn combined(self) -> <T as Add>::Output {
+	pub fn added(self) -> <T as Add>::Output where T: Add {
 		self.home + self.away
 	}
 }
 
-impl<T> From<(T, T)> for HomeAwaySplit<T> {
+impl<T> From<(T, T)> for HomeAway<T> {
 	fn from((home, away): (T, T)) -> Self {
 		Self {
 			home,
@@ -612,6 +686,19 @@ pub(crate) fn write_nth(n: usize, f: &mut Formatter<'_>) -> std::fmt::Result {
 	Ok(())
 }
 
+/// # Errors
+/// 1. if format is not `"{hours}:{minutes}:{seconds}"`
+pub fn deserialize_time_delta_from_hms<'de, D: Deserializer<'de>>(deserializer: D) -> Result<TimeDelta, D::Error> {
+	let string = String::deserialize(deserializer)?;
+	let (hour, rest) = string.split_once(':').ok_or_else(|| D::Error::custom("Unable to find `:`"))?;
+	let (minute, second) = rest.split_once(':').ok_or_else(|| D::Error::custom("Unable to find `:`"))?;
+	let hour = hour.parse::<u32>().map_err(D::Error::custom)?;
+	let minute = minute.parse::<u32>().map_err(D::Error::custom)?;
+	let second = second.parse::<u32>().map_err(D::Error::custom)?;
+
+	TimeDelta::new(((hour * 24 + minute) * 60 + second) as _, 0).ok_or_else(|| D::Error::custom("Invalid time quantity, overflow."))
+}
+
 /// AM/PM
 #[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display, FromStr)]
 #[serde(try_from = "&str")]
@@ -643,8 +730,8 @@ impl<'a> TryFrom<&'a str> for DayHalf {
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ResourceUsage {
-	used: u32,
-	remaining: u32,
+	pub used: u32,
+	pub remaining: u32,
 }
 
 #[cfg(test)]

@@ -6,7 +6,7 @@ use serde::Deserialize;
 use serde::de::IgnoredAny;
 
 use crate::request::RequestURL;
-use crate::{Copyright, HomeAwaySplit};
+use crate::{Copyright, HomeAway};
 use crate::game::{AtBatCount, GameId, Inning, InningHalf, RHE};
 use crate::person::NamedPerson;
 use crate::team::NamedTeam;
@@ -22,7 +22,7 @@ use crate::team::NamedTeam;
 /// You're used to seeing.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct Linescore {
     #[serde(default)]
     pub copyright: Copyright,
@@ -31,7 +31,7 @@ pub struct Linescore {
     pub scheduled_innings: usize,
     pub innings: Vec<LinescoreInningRecord>,
     #[serde(rename = "teams")]
-    pub rhe_totals: HomeAwaySplit<RHE>,
+    pub rhe_totals: HomeAway<RHE>,
     pub offense: LinescoreOffense,
     pub defense: LinescoreDefense,
     #[serde(flatten)]
@@ -52,12 +52,12 @@ pub struct Linescore {
 /// A record of [`RHE`] from both teams in a single inning.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LinescoreInningRecord {
     #[serde(rename = "num")]
     pub inning: Inning,
     #[serde(flatten)]
-    pub inning_record: HomeAwaySplit<RHE>,
+    pub inning_record: HomeAway<RHE>,
 
     #[doc(hidden)]
     #[serde(rename = "ordinalNum", default)]
@@ -67,7 +67,7 @@ pub struct LinescoreInningRecord {
 /// Current offense in the linescore
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LinescoreOffense {
     pub batter: NamedPerson,
     pub on_deck: NamedPerson,
@@ -109,7 +109,7 @@ pub struct LinescoreOffense {
 
 /// Current defense in the linescore, note that it also contains their offense too.
 #[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LinescoreDefense {
     pub pitcher: NamedPerson,
     pub catcher: NamedPerson,

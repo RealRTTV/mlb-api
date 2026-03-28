@@ -140,11 +140,10 @@ macro_rules! group_and_type {
             #[doc(hidden)]
             #[derive(Debug, ::serde::Deserialize, Clone)]
             #[allow(non_snake_case, reason = "some fields like FIP")]
-            // #[cfg_attr(test, serde(deny_unknown_fields))] // todo: find out how to fix this to discard some
             pub struct [<__ $name StatsData>] {
                 $(
                 #[serde(deserialize_with = "crate::stats::raw::deserialize_stat", rename = $serde)]
-                #[cfg_attr(not(test), serde(default = "crate::stats::raw::default_stat"))]
+                #[cfg_attr(not(feature = "_debug"), serde(default = "crate::stats::raw::default_stat"))]
                 $(#[$meta])*
                 pub $piece: Result<api_name_to_type![$piece], crate::stats::raw::OmittedStatError>,
                 )*

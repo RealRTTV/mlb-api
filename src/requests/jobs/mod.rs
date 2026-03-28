@@ -7,6 +7,7 @@ use crate::{Copyright, MLB_API_DATE_FORMAT};
 use bon::Builder;
 use chrono::NaiveDate;
 use serde::Deserialize;
+use serde_with::{serde_as, DefaultOnError};
 use std::fmt::{Display, Formatter};
 use crate::meta::JobTypeId;
 use crate::request::RequestURL;
@@ -40,12 +41,15 @@ pub struct JobsResponse {
 /// Person with a job
 ///
 /// Wrapper of [`NamedPerson`] used in the [`JobsRequest`] endpoints that contains extra fields about their job.
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EmployedPerson {
     #[serde(default = "NamedPerson::unknown_person")]
     pub person: NamedPerson,
-    pub jersey_number: JerseyNumber,
+	#[serde(default)]
+	#[serde_as(deserialize_as = "DefaultOnError")]
+    pub jersey_number: Option<JerseyNumber>,
     #[serde(rename = "job")] pub job_name: String,
     pub job_id: JobTypeId,
     #[serde(rename = "title")] pub job_title: String,

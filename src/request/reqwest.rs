@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 
 /// # Errors
 /// See variants of [`Error`]
-#[cfg(not(all(test, debug_assertions)))]
+#[cfg(not(feature = "_debug"))]
 pub async fn get<T: DeserializeOwned>(url: String) -> Result<T> {
 	let bytes = reqwest::Client::builder().build()?.get(url).send().await?.bytes().await?;
 	let e = match serde_json::from_slice::<'_, T>(&bytes) {
@@ -16,7 +16,7 @@ pub async fn get<T: DeserializeOwned>(url: String) -> Result<T> {
 
 /// # Errors
 /// See variants of [`Error`]
-#[cfg(all(test, debug_assertions))]
+#[cfg(feature = "_debug")]
 pub async fn get<T: DeserializeOwned>(url: String) -> Result<T> {
 	let bytes = reqwest::Client::builder().build()?.get(url).send().await?.bytes().await?;
 	let mut de = serde_json::Deserializer::from_slice(&bytes);

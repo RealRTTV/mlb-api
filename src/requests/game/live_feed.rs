@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
 use serde::Deserialize;
 use serde::de::IgnoredAny;
-use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameStatLeaders, GameTags, PlayAbout, Plays, ResourceUsage, ReviewData, WeatherConditions};
+use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameStatLeaders, GameTags, PlayAbout, Plays, ResourceUsage, ReviewData, SimplifiedTimestamp, WeatherConditions};
 use crate::game::linescore::Linescore;
 use crate::meta::{GameStatus, GameType};
 use crate::meta::LogicalEventId;
@@ -14,13 +14,13 @@ use crate::person::{Ballplayer, NamedPerson, PersonId};
 use crate::request::RequestURL;
 use crate::season::SeasonId;
 use crate::team::Team;
-use crate::{Copyright, HomeAwaySplit};
+use crate::{Copyright, HomeAway};
 use crate::venue::{Venue, VenueId};
 
 /// See [`self`]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LiveFeedResponse {
 	pub copyright: Copyright,
 	#[serde(rename = "gamePk")]
@@ -40,7 +40,7 @@ pub struct LiveFeedResponse {
 /// Metadata about the game, often not useful.
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LiveFeedMetadata {
 	/// Recommended duration to send new requests (in seconds). Often 10.
 	#[serde(rename = "wait")]
@@ -48,15 +48,14 @@ pub struct LiveFeedMetadata {
 	pub game_events: Vec<String>, // todo: what is this type
 	pub logical_events: Vec<LogicalEventId>,
 
-    #[doc(hidden)]
-    #[serde(rename = "timeStamp", default)]
-	pub __timestamp: IgnoredAny,
+    #[serde(rename = "timeStamp")]
+	pub timestamp: SimplifiedTimestamp,
 }
 
 /// General information about the game
 #[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LiveFeedData {
 	#[deref]
 	#[deref_mut]
@@ -64,7 +63,7 @@ pub struct LiveFeedData {
 	game: LiveFeedDataMeta,
 	pub datetime: GameDateTime,
 	pub status: GameStatus,
-	pub teams: HomeAwaySplit<Team<()>>,
+	pub teams: HomeAway<Team<()>>,
 	#[serde(deserialize_with = "super::deserialize_players_cache")]
 	pub players: FxHashMap<PersonId, Ballplayer<()>>,
 	pub venue: Venue,
@@ -75,10 +74,10 @@ pub struct LiveFeedData {
 	pub review: ReviewData,
 	#[serde(rename = "flags")]
 	pub live_tags: GameTags,
-	pub probable_pitchers: HomeAwaySplit<NamedPerson>,
+	pub probable_pitchers: HomeAway<NamedPerson>,
 	pub official_scorer: NamedPerson,
 	pub primary_datacaster: NamedPerson,
-	pub mound_visits: HomeAwaySplit<ResourceUsage>,
+	pub mound_visits: HomeAway<ResourceUsage>,
 
     #[doc(hidden)]
     #[serde(rename = "alerts", default)]
@@ -88,7 +87,7 @@ pub struct LiveFeedData {
 /// More specific information about the "game", child of [`LiveFeedData`]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LiveFeedDataMeta {
 	#[serde(rename = "pk")]
 	pub id: GameId,
@@ -117,7 +116,7 @@ pub struct LiveFeedDataMeta {
 /// 
 /// Includes a lot of sub-requests within it, such as the [`super::PlayByPlay`] and [`super::Linescore`].
 #[derive(Debug, Deserialize, PartialEq, Clone)]
-#[cfg_attr(test, serde(deny_unknown_fields))]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LiveFeedLiveData {
 	pub linescore: Linescore,
 	pub boxscore: Boxscore,
@@ -180,7 +179,8 @@ use crate::request::RequestURLBuilderExt;
 		}
 		assert!(!has_errors, "Has errors.");
 	}
-	
+
+	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     #[tokio::test]
     async fn regular_season_live_feed() {
         let [season]: [Season; 1] = SeasonsRequest::builder().season(TEST_YEAR).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();

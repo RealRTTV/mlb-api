@@ -1,6 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
+use crate::TeamSide;
 use crate::game::GameId;
 use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
@@ -13,7 +14,8 @@ use crate::team::NamedTeam;
 pub struct WithGame<T: RawStat> {
 	pub opponent: NamedTeam,
 	pub date: NaiveDate,
-	pub is_home: bool,
+	#[serde(rename = "isHome", deserialize_with = "crate::deserialize_team_side_from_is_home")]
+	pub team_side: TeamSide,
 	pub game: GameId,
 	pub season: SeasonId,
 
@@ -46,7 +48,7 @@ impl<T: RawStat> Default for WithGame<T> {
 		Self {
 			opponent: NamedTeam::unknown_team(),
 			date: Utc::now().date_naive(),
-			is_home: true,
+			team_side: TeamSide::Home,
 			game: GameId::new(0),
 			season: SeasonId::current_season(),
 			stats: T::default(),
