@@ -39,7 +39,7 @@ impl<H: ScheduleHydrations> Display for SchedulePostseasonRequest<H> {
 
 		write!(
 			f,
-			"http://statsapi.mlb.com/api/v1/schedule/games/tied{params}",
+			"http://statsapi.mlb.com/api/v1/schedule/games/postseason{params}",
 			params = gen_params! {
 				"season": self.season,
 				"sportId": self.sport_id,

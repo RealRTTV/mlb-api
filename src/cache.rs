@@ -218,7 +218,6 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     
     <crate::meta::BaseballStat as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::BaseballStat>::new().get().await?.entries);
     <crate::meta::JobType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::JobType>::new().get().await?.entries);
-    <crate::meta::EventType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::EventType>::new().get().await?.entries);
     <crate::meta::GameStatus as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::GameStatus>::new().get().await?.entries);
     <crate::meta::Metric as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::Metric>::new().get().await?.entries);
     <crate::meta::PitchCode as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::PitchCode>::new().get().await?.entries);
@@ -254,7 +253,6 @@ pub fn precache() -> Result<(), crate::request::Error> {
 
     <crate::meta::BaseballStat as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::BaseballStat>::new().get()?.entries);
     <crate::meta::JobType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::JobType>::new().get()?.entries);
-    <crate::meta::EventType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::EventType>::new().get()?.entries);
     <crate::meta::GameStatus as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::GameStatus>::new().get()?.entries);
     <crate::meta::Metric as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::Metric>::new().get()?.entries);
     <crate::meta::PitchCode as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::PitchCode>::new().get()?.entries);
