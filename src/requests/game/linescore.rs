@@ -157,6 +157,7 @@ impl RequestURL for LinescoreRequest {
 
 #[cfg(test)]
 mod tests {
+    use crate::TEST_YEAR;
     use crate::game::LinescoreRequest;
     use crate::meta::GameType;
     use crate::request::RequestURLBuilderExt;
@@ -170,8 +171,8 @@ mod tests {
     }
     
     #[tokio::test]
-	async fn postseason_2025_linescore() {
-		let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
+	async fn postseason_linescore() {
+		let [season]: [Season; 1] = SeasonsRequest::builder().season(TEST_YEAR).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
 		let postseason = season.postseason.expect("Expected the MLB to have a postseason");
 		let games = ScheduleRequest::<()>::builder().date_range(postseason).sport_id(SportId::MLB).build_and_get().await.unwrap();
 		let games = games.dates.into_iter().flat_map(|date| date.games).filter(|game| game.game_type.is_postseason()).map(|game| game.game_id).collect::<Vec<_>>();
@@ -187,8 +188,8 @@ mod tests {
 
 	#[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     #[tokio::test]
-    async fn regular_season_2025_linescore() {
-        let [season]: [Season; 1] = SeasonsRequest::builder().season(2025).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
+    async fn regular_season_linescore() {
+        let [season]: [Season; 1] = SeasonsRequest::builder().season(TEST_YEAR).sport_id(SportId::MLB).build_and_get().await.unwrap().seasons.try_into().unwrap();
         let regular_season = season.regular_season;
         let games = ScheduleRequest::<()>::builder().date_range(regular_season).sport_id(SportId::MLB).build_and_get().await.unwrap();
         let games = games.dates.into_iter().flat_map(|date| date.games).filter(|game| game.game_type == GameType::RegularSeason).collect::<Vec<_>>();
