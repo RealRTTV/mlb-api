@@ -366,7 +366,6 @@ impl Display for Streak {
     }
 }
 
-// todo: hook into [`GameOutcome`]?
 /// A game outcome for streak purposes
 #[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display)]
 pub enum StreakKind {

@@ -8,15 +8,15 @@
 //! Almost all the types here are for private use and occasionally might be
 //!
 //! ## Examples
-//! See [`stats_type!`](crate::stats_type) for examples on how to use the macro.
+//! See [`stats_hydrations!`](crate::stats_hydrations) for examples on how to use the macro.
 //!
 //! ## Notes
 //! 1. The stat type registry is admittedly incomplete, only some stat types are implemented (see [`stat_types`]), more will come in the future.
 //! 2. Some stats are only implemented for specific [`StatGroup`](crate::meta::StatGroup)s, if you have a complicated request such as:
 //! ```
-//! stats_type! {
+//! stats_hydrations! {
 //!     pub struct TechnicalStats {
-//!         [Sabermetrics, Career] = [Hitting, Pitching, Fielding, Catching]
+//!         [Sabermetrics, Career] + [Hitting, Pitching, Fielding, Catching]
 //!     }
 //! }
 //! ```

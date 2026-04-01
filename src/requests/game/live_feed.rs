@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
 use serde::Deserialize;
 use serde::de::IgnoredAny;
-use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameStatLeaders, GameTags, PlayAbout, Plays, ResourceUsage, ReviewData, SimplifiedTimestamp, WeatherConditions};
+use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameStatLeaders, GameTags, PlayAbout, Plays, ResourceUsage, TeamReviewData, SimplifiedTimestamp, WeatherConditions};
 use crate::game::linescore::Linescore;
 use crate::meta::{GameStatus, GameType};
 use crate::meta::LogicalEventId;
@@ -71,7 +71,7 @@ pub struct LiveFeedData {
 	pub weather: WeatherConditions,
 	#[serde(rename = "gameInfo")]
 	pub info: GameInfo,
-	pub review: ReviewData,
+	pub review: TeamReviewData,
 	#[serde(rename = "flags")]
 	pub live_tags: GameTags,
 	pub probable_pitchers: HomeAway<NamedPerson>,
@@ -82,6 +82,10 @@ pub struct LiveFeedData {
     #[doc(hidden)]
     #[serde(rename = "alerts", default)]
 	pub __alerts: IgnoredAny,
+
+	#[doc(hidden)] // todo
+	#[serde(rename = "absChallenges", default)]
+	pub __abs_challenges: IgnoredAny,
 }
 
 /// More specific information about the "game", child of [`LiveFeedData`]
@@ -120,7 +124,7 @@ pub struct LiveFeedDataMeta {
 pub struct LiveFeedLiveData {
 	pub linescore: Linescore,
 	pub boxscore: Boxscore,
-	pub decisions: Decisions,
+	pub decisions: Option<Decisions>,
 	pub leaders: GameStatLeaders,
 	pub plays: Plays,
 }

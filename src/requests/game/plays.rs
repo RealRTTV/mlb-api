@@ -32,7 +32,6 @@ pub struct Plays {
     pub(super) play_indices_by_inning: Vec<InningPlaysIndices>,
 }
 
-// todo: add recache functions for scoring plays, etc.
 impl Plays {
     /// Gives a mutable refernece to the underlying plays.
     ///
@@ -142,7 +141,7 @@ pub struct Play {
     pub play_events: Vec<PlayEvent>,
     pub runners: Vec<RunnerData>,
     #[serde(rename = "reviewDetails", default, deserialize_with = "deserialize_review_data")]
-    pub review_data: Vec<ReviewData>,
+    pub reviews: Vec<ReviewData>,
     
     /// Timestamp at which the [`Play`] is called complete.
     #[serde(rename = "playEndTime", deserialize_with = "crate::deserialize_datetime")]
@@ -167,20 +166,13 @@ pub struct Play {
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayDetails {
-    #[serde(rename = "eventType")]
-    pub event: EventType,
-    /// Shohei Ohtani strikes out swinging.
-    pub description: String,
-
-    /// Runs batted in
-    pub rbi: usize,
+    #[serde(flatten, default)]
+    pub completed_play_details: Option<CompletedPlayDetails>,
+    
     /// Score as of the end of the play
     pub away_score: usize,
     /// Score as of the end of the play
     pub home_score: usize,
-
-    /// Whether the batter in the play is out
-    pub is_out: bool,
 
     #[doc(hidden)]
     #[serde(rename = "event", default)]
@@ -189,6 +181,21 @@ pub struct PlayDetails {
     #[doc(hidden)]
     #[serde(rename = "type", default)]
     pub __type: IgnoredAny,
+}
+
+/// Information supplied to [`PlayDetails`] when the play is complete
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
+pub struct CompletedPlayDetails {
+    #[serde(rename = "eventType")]
+    pub event: EventType,
+    /// Shohei Ohtani strikes out swinging.
+    pub description: String,
+    /// Runs batted in
+    pub rbi: usize,
+    /// Whether the batter in the play is out
+    pub is_out: bool,
 }
 
 /// Miscallaneous data regarding a play
@@ -226,7 +233,7 @@ pub struct PlayAbout {
     /// Note that [`Play`]s that include [`PlayEvent`]s that score runs that are not part of the [`Play`] (such as stealing home) do not indicate this as true.
     ///
     /// This is the predicate for [`Plays::scoring_plays`]
-    pub is_scoring_play: bool,
+    pub is_scoring_play: Option<bool>,
 
     /// Whether the play has a replay review occur. Note that At-Bats can have multiple challenges occur.
     #[serde(default)]
@@ -235,12 +242,14 @@ pub struct PlayAbout {
     /// Whether the play has counted towards an out so far.
     ///
     /// todo: check if includes play events like pickoffs.
+    #[serde(default)]
     pub has_out: bool,
 
     /// Ordinal ranking for +/- WPA effect.
     ///
     /// `1` means largest effect on WPA,
     /// `2` means second most, etc.
+    #[serde(default)]
     pub captivating_index: usize,
 
     #[doc(hidden)]
@@ -608,8 +617,10 @@ pub struct ReviewData {
     pub is_in_progress: bool,
     pub review_type: ReviewReasonId,
     /// If `None`, then a crew-chief review.
-    #[serde(rename = "challengeTeamId")]
+    #[serde(alias = "challengeTeamId")]
     pub challenging_team: Option<TeamId>,
+    /// For ABS challenges
+    pub player: Option<NamedPerson>,
 }
 
 /// An "indivisible" play, such as pickoff, pitch, stolen base, etc.
@@ -643,7 +654,7 @@ pub enum PlayEvent {
     #[serde(rename = "stepoff")]
     Stepoff {
         details: StepoffPlayDetails,
-        play_id: Uuid,
+        play_id: Option<Uuid>,
         
         #[serde(flatten)]
         common: PlayEventCommon,
@@ -651,7 +662,7 @@ pub enum PlayEvent {
     #[serde(rename = "no_pitch")]
     NoPitch {
         details: NoPitchPlayDetails,
-        play_id: Uuid,
+        play_id: Option<Uuid>,
         /// Starts at 1
         #[serde(rename = "pitchNumber", default)]
         pitch_ordinal: usize,
@@ -716,7 +727,7 @@ pub struct PlayEventCommon {
     /// Base correlated with play, such as a stolen base
     pub base: Option<Base>,
     #[serde(rename = "reviewDetails", default, deserialize_with = "deserialize_review_data")]
-    pub review_data: Vec<ReviewData>,
+    pub reviews: Vec<ReviewData>,
     pub injury_type: Option<String>,
     
     #[doc(hidden)]
@@ -1241,8 +1252,10 @@ impl<'de> Deserialize<'de> for PitchData {
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "__HitDataStruct")]
 pub struct HitData {
-    pub hit_trajectory: HitTrajectory,
-    pub contact_hardness: ContactHardness,
+    /// sometimes just takes a second to be present
+    pub hit_trajectory: Option<HitTrajectory>,
+    /// sometimes just takes a second to be present
+    pub contact_hardness: Option<ContactHardness>,
     pub statcast: Option<StatcastHitData>,
 }
 
@@ -1251,29 +1264,29 @@ pub struct HitData {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
-pub struct __HitDataStruct {
+struct __HitDataStruct {
     #[serde_as(deserialize_as = "DefaultOnError")]
-    #[serde(rename = "trajectory")]
-    pub hit_trajectory: Option<HitTrajectory>,
-    #[serde(rename = "hardness")]
-    pub contact_hardness: ContactHardness,
+    #[serde(rename = "trajectory", default)]
+    hit_trajectory: Option<HitTrajectory>,
+    #[serde(rename = "hardness", default)]
+    contact_hardness: Option<ContactHardness>,
 
     #[serde(flatten, default)]
-    pub statcast: Option<StatcastHitData>,
+    statcast: Option<StatcastHitData>,
 
     #[doc(hidden)]
     #[serde(rename = "location", default)]
-    pub __location: IgnoredAny,
+    __location: IgnoredAny,
 
     #[doc(hidden)]
     #[serde(rename = "coordinates")]
-    pub __coordinates: IgnoredAny,
+    __coordinates: IgnoredAny,
 }
 
 impl From<__HitDataStruct> for HitData {
     fn from(__HitDataStruct { hit_trajectory, contact_hardness, statcast, .. }: __HitDataStruct) -> Self {
         Self {
-            hit_trajectory: hit_trajectory.or(statcast.as_ref().map(|statcast| statcast.launch_angle).map(HitTrajectory::from_launch_angle)).unwrap_or(HitTrajectory::FlyBall),
+            hit_trajectory: hit_trajectory.or_else(|| statcast.as_ref().map(|statcast| statcast.launch_angle).map(HitTrajectory::from_launch_angle)),
             contact_hardness,
             statcast,
         }

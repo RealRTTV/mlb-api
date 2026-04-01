@@ -292,7 +292,7 @@ macro_rules! __stats__request_data {
 			$crate::__stats__request_data! { @ metrics [$($stat_type),+]
 				#[derive(::bon::Builder)]
 				#[builder(derive(Into))]
-				#[allow(unused, reason = "could be used by the end user")]
+				#[allow(unused, reason = "could be unused by the end user")]
 				$vis struct [<$name RequestData>] {
 					#[builder(default)]
 					game_type: $crate::meta::GameType,
@@ -405,7 +405,7 @@ macro_rules! __stats__request_data {
 #[macro_export]
 macro_rules! __stats0 {
     ($vis:vis struct $name:ident {
-		[$($stat_type:ident),+ $(,)?] = $stat_groups:tt
+		[$($stat_type:ident),+ $(,)?] + $stat_groups:tt
 	}) => {
 		::pastey::paste! {
 			#[derive(Debug, PartialEq, Clone)]
@@ -454,11 +454,90 @@ macro_rules! __stats0 {
     };
 }
 
+
+// todo: see why we need a clone
+
+/// Shorthand function for getting a single [`StatType`] and [`StatGroup`] for a specific player.
+///
+/// ## Examples
+/// ```no_run
+/// let stat = single_stat!(Season + Hitting for 660_271).await.unwrap();
+/// 
+/// // or supply builder params with
+/// let stat = single_stat!(Season + Hitting for 660_271; with |builder| builder.season(2024)).await.unwrap();
+/// ```
+#[cfg(feature = "reqwest")]
+#[macro_export]
+macro_rules! single_stat {
+	($stat_type:ident + $stat_group:ident for $person_id:expr) => {
+		$crate::single_stat! { $stat_type + $stat_group for $person_id; with |builder| builder }
+	};
+	($stat_type:ident + $stat_group:ident for $person_id:expr; with |$builder:ident| $builder_expr:expr) => {{
+		::pastey::paste! {
+			$crate::person_hydrations! {
+				struct [<$stat_type $stat_group SingleStatHydrations >] {
+				    stats: { [$stat_type] + [$stat_group] },
+				}
+			}
+			
+			async {
+				let request = $crate::person::PersonRequest::<[<$stat_type $stat_group SingleStatHydrations >]>::builder().hydrations([<$stat_type $stat_group SingleStatHydrations>]::builder().stats({
+					let $builder = [<$stat_type $stat_group SingleStatHydrationsInlineStats>]::builder();
+					$builder_expr
+				})).id($person_id).build();
+				let response = $crate::request::RequestURL::get(&request).await;
+				response.and_then::<[$crate::person::Person<[<$stat_type $stat_group SingleStatHydrations>]>; 1], _>(|response|
+					response.people.try_into().map_err(|_| $crate::request::Error::MLB($crate::MLBError { message: "Expected one person in a single stat response".to_owned() }))
+				)
+				.map(|[person]| person.extras.stats.[<$stat_type:snake>].[<$stat_group:snake>].clone())
+			}
+		}
+	}};
+}
+
+/// Shorthand function for getting a single [`StatType`] and [`StatGroup`] for a specific player.
+///
+/// ## Examples
+/// ```no_run
+/// let stat = single_stat!(Season + Hitting for 660_271).await.unwrap();
+/// 
+/// // or supply builder params with
+/// let stat = single_stat!(Season + Hitting for 660_271; with |builder| builder.season(2024)).await.unwrap();
+/// ```
+#[cfg(feature = "ureq")]
+#[macro_export]
+macro_rules! single_stat {
+	($stat_type:ident + $stat_group:ident for $person_id:expr) => {
+		$crate::single_stat! { $stat_type + $stat_group for $person_id; with |builder| builder }
+	};
+	($stat_type:ident + $stat_group:ident for $person_id:expr; with |$builder:ident| $builder_expr:expr) => {{
+		::pastey::paste! {
+			$crate::person_hydrations! {
+				struct [<$stat_type $stat_group SingleStatHydrations >] {
+				    stats: { [$stat_type] + [$stat_group] },
+				}
+			}
+			
+			{
+				let request = $crate::person::PersonRequest::<[<$stat_type $stat_group SingleStatHydrations >]>::builder().hydrations([<$stat_type $stat_group SingleStatHydrations>]::builder().stats({
+					let $builder = [<$stat_type $stat_group SingleStatHydrationsInlineStats>]::builder();
+					$builder_expr
+				})).id($person_id).build();
+				let response = $crate::request::RequestURL::get(&request);
+				response.and_then::<[$crate::person::Person<[<$stat_type $stat_group SingleStatHydrations>]>; 1], _>(|response|
+					response.people.try_into().map_err(|_| $crate::request::Error::MLB($crate::MLBError { message: "Expected one person in a single stat response".to_owned() }))
+				)
+				.map(|[person]| person.extras.stats.[<$stat_type:snake>].[<$stat_group:snake>].clone())
+			}
+		}
+	}};
+}
+
 /// Generates stat data types to be used in requests.
 ///
 /// These are commonly associated with [`person_hydrations`](crate::person_hydrations) to create a [`PersonRequest`](crate::person::PersonRequest).
 ///
-/// # Stat Types & Stat Groups for [`stats_type!`](crate::stats_type!)
+/// # Stat Types & Stat Groups for [`stats_hydrations!`](crate::stats_hydrations!)
 ///
 /// | Name                  | Stat Type                            | Stat Group | Notes                        |
 /// |-----------------------|--------------------------------------|------------|------------------------------|
@@ -493,9 +572,9 @@ macro_rules! __stats0 {
 ///
 /// # Examples
 ///```
-/// mlb_api::stats_type! {
+/// mlb_api::stats_hydrations! {
 ///     pub struct MyStats {
-///         [Season, Career] = [Hitting, Pitching]
+///         [Season, Career] + [Hitting, Pitching]
 ///     }
 /// }
 ///
@@ -540,7 +619,7 @@ macro_rules! __stats0 {
 /// [`StatGroup`]: crate::meta::StatGroup
 /// [`WithPlayer<_>`]: crate::stats::wrappers::WithPlayer
 #[macro_export]
-macro_rules! stats_type {
+macro_rules! stats_hydrations {
     ($($t:tt)*) => {
 		$crate::__stats0! { $($t)* }
 	};

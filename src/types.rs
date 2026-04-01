@@ -584,7 +584,7 @@ impl<'de> Deserialize<'de> for IntegerOrFloatStat {
 #[derive(Debug, Deserialize, Display)]
 #[display("An error occurred parsing the statsapi http request: {message}")]
 pub struct MLBError {
-	message: String,
+	pub(crate) message: String,
 }
 
 impl std::error::Error for MLBError {}

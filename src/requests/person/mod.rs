@@ -408,7 +408,7 @@ impl PersonHydrations for () {}
 ///
 /// person_hydrations! {
 ///     pub struct TestHydrations {        ->  pub struct TestHydrations {
-///         stats: { [Season] = [Hitting] },  ->      stats: TestHydrationsInlineStats,
+///         stats: { [Season] + [Hitting] },  ->      stats: TestHydrationsInlineStats,
 ///     }                                     ->  }
 /// }
 ///
@@ -437,8 +437,8 @@ impl PersonHydrations for () {}
 /// | `roster_entries` | [`Vec<RosterEntry>`]             |
 /// | `transactions`   | [`Vec<Transaction>`]             |
 /// | `social`         | [`HashMap<String, Vec<String>>`] |
-/// | `stats`          | [`stats_type!`]                  |
-/// | `external_references`        | [`Vec<ExternalReference>`]       |
+/// | `stats`          | [`stats_hydrations!`]            |
+/// | `external_references` | [`Vec<ExternalReference>`]  |
 ///
 /// [`Vec<Award>`]: crate::awards::Award
 /// [`Team`]: crate::team::Team
@@ -452,13 +452,13 @@ impl PersonHydrations for () {}
 /// [`Vec<RosterEntry>`]: crate::team::rosterRosterEntry
 /// [`Vec<Transaction>`]: crate::transactions::Transaction
 /// [`HashMap<String, Vec<String>>`]: std::collections::HashMap
-/// [`stats_type!`]: crate::stats_type
+/// [`stats_hydrations!`]: crate::stats_hydrations
 /// [`Vec<ExternalReference>`]: crate::types::ExternalReference
 #[macro_export]
 macro_rules! person_hydrations {
 	(@ inline_structs [stats: { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
         ::pastey::paste! {
-            $crate::stats_type! {
+            $crate::stats_hydrations! {
                 $vis struct [<$name InlineStats>] {
                     $($contents)*
                 }
@@ -676,7 +676,7 @@ mod tests {
 	async fn only_stats_hydrations() {
 		person_hydrations! {
 			pub struct StatOnlyHydrations {
-				stats: { [Sabermetrics] = [Pitching] },
+				stats: { [Sabermetrics] + [Pitching] },
 			}
 		}
 

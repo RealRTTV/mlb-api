@@ -3,13 +3,13 @@
 use chrono::NaiveDate;
 use crate::person::PersonRequest;
 use crate::request::{RequestURL, RequestURLBuilderExt};
-use crate::{person_hydrations, stats_type, TEST_YEAR};
+use crate::{TEST_YEAR, person_hydrations, single_stat, stats_hydrations};
 use crate::meta::{GameType, SituationCodeId};
 use crate::stats::units::ThreeDecimalPlaceRateStat;
 
 #[tokio::test]
 async fn shohei_ohtani_pitching_2025() {
-	stats_type! {
+	stats_hydrations! {
 		struct PitchingStats {
 			[
                 Projected,
@@ -28,7 +28,7 @@ async fn shohei_ohtani_pitching_2025() {
 				ByDayOfWeek,
 				ByMonth,
 				OpponentsFaced,
-			] = [Pitching]
+			] + [Pitching]
 		}
 	}
 
@@ -39,7 +39,7 @@ async fn shohei_ohtani_pitching_2025() {
 	}
 
 	let request = PersonRequest::<PitchingStatsHydrations>::builder()
-		.id(660271)
+		.id(660_271)
 		.hydrations(PitchingStatsHydrations::builder()
 			.stats(PitchingStats::builder().season(TEST_YEAR).build())
 			.build())
@@ -58,7 +58,7 @@ async fn shohei_ohtani_pitching_2025() {
 
 #[tokio::test]
 async fn shohei_ohtani_hitting_2025() {
-	stats_type! {
+	stats_hydrations! {
 		struct HittingStats {
 			[
 				Projected,
@@ -77,7 +77,7 @@ async fn shohei_ohtani_hitting_2025() {
 				ByDayOfWeek,
 				ByMonth,
 				OpponentsFaced,
-			] = [Hitting]
+			] + [Hitting]
 		}
 	}
 
@@ -88,7 +88,7 @@ async fn shohei_ohtani_hitting_2025() {
 	}
 
 	let request = PersonRequest::<HittingStatsHydrations>::builder()
-		.id(660271)
+		.id(660_271)
 		.hydrations(HittingStatsHydrations::builder()
 			.stats(HittingStats::builder().season(TEST_YEAR)))
 		.build();
@@ -111,7 +111,7 @@ async fn shohei_ohtani_hitting_2025() {
 
 #[tokio::test]
 async fn shohei_ohtani_hitting_2025_custom() {
-	stats_type! {
+	stats_hydrations! {
 		struct HittingStats {
 			[
 				VsPlayer5Y,
@@ -120,7 +120,7 @@ async fn shohei_ohtani_hitting_2025_custom() {
 				ByDateRangeAdvanced,
 				StatSplits,
 				StatSplitsAdvanced,
-			] = [Hitting]
+			] + [Hitting]
 		}
 	}
 
@@ -131,11 +131,11 @@ async fn shohei_ohtani_hitting_2025_custom() {
 	}
 
 	let request = PersonRequest::<HittingStatsHydrations>::builder()
-		.id(660271)
+		.id(660_271)
 		.hydrations(HittingStatsHydrations::builder()
 			.stats(HittingStats::builder()
 				.season(TEST_YEAR)
-				.opponent_player(453286)
+				.opponent_player(453_286)
 				.game_type(GameType::RegularSeason)
 				.games_back(5)
 				.date_range(NaiveDate::from_ymd_opt(TEST_YEAR as _, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR as _, 6, 12).unwrap())
@@ -153,7 +153,7 @@ async fn shohei_ohtani_hitting_2025_custom() {
 
 #[tokio::test]
 async fn shohei_ohtani_pitching_2025_custom() {
-	stats_type! {
+	stats_hydrations! {
 		struct PitchingStats {
 			[
 				VsPlayer5Y,
@@ -162,7 +162,7 @@ async fn shohei_ohtani_pitching_2025_custom() {
 				ByDateRangeAdvanced,
 				StatSplits,
 				StatSplitsAdvanced,
-			] = [Pitching]
+			] + [Pitching]
 		}
 	}
 
@@ -173,7 +173,7 @@ async fn shohei_ohtani_pitching_2025_custom() {
 	}
 
 	let request = PersonRequest::<PitchingStatsHydrations>::builder()
-		.id(660271)
+		.id(660_271)
 		.hydrations(PitchingStatsHydrations::builder()
 			.stats(PitchingStats::builder()
 				.season(TEST_YEAR)
@@ -195,7 +195,7 @@ async fn shohei_ohtani_pitching_2025_custom() {
 
 #[tokio::test]
 async fn daulton_varsho_fielding_2025() {
-	stats_type! {
+	stats_hydrations! {
 		struct FieldingStats {
 			[
 				YearByYear,
@@ -209,7 +209,7 @@ async fn daulton_varsho_fielding_2025() {
 				HomeAndAway,
 				WinLoss,
 				OpponentsFaced
-			] = [Fielding]
+			] + [Fielding]
 		}
 	}
 
@@ -220,7 +220,7 @@ async fn daulton_varsho_fielding_2025() {
 	}
 
 	let response = PersonRequest::<FieldingStatsHydrations>::builder()
-		.id(662139)
+		.id(662_139)
 		.hydrations(FieldingStatsHydrations::builder().stats(FieldingStats::builder().season(TEST_YEAR)))
 		.build_and_get()
 		.await
@@ -229,13 +229,13 @@ async fn daulton_varsho_fielding_2025() {
 
 #[tokio::test]
 async fn daulton_varsho_fielding_2025_custom() {
-	stats_type! {
+	stats_hydrations! {
 		struct FieldingStats {
 			[
 				LastXGames,
 				ByDateRange,
 				ByDateRangeAdvanced,
-			] = [Fielding]
+			] + [Fielding]
 		}
 	}
 
@@ -246,7 +246,7 @@ async fn daulton_varsho_fielding_2025_custom() {
 	}
 
 	let response = PersonRequest::<FieldingStatsHydrations>::builder()
-		.id(662139)
+		.id(662_139)
 		.hydrations(FieldingStatsHydrations::builder().stats(FieldingStats::builder()
 			.season(TEST_YEAR)
 			.games_back(10)
@@ -259,7 +259,7 @@ async fn daulton_varsho_fielding_2025_custom() {
 
 #[tokio::test]
 async fn alejandro_kirk_catching_2025() {
-	stats_type! {
+	stats_hydrations! {
 		struct CatchingStats {
 			[
 				YearByYear,
@@ -273,7 +273,7 @@ async fn alejandro_kirk_catching_2025() {
 				HomeAndAway,
 				WinLoss,
 				OpponentsFaced
-			] = [Catching]
+			] + [Catching]
 		}
 	}
 
@@ -284,7 +284,7 @@ async fn alejandro_kirk_catching_2025() {
 	}
 
 	let response = PersonRequest::<CatchingStatsHydrations>::builder()
-		.id(672386)
+		.id(672_386)
 		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(TEST_YEAR)))
 		.build_and_get()
 		.await
@@ -293,13 +293,13 @@ async fn alejandro_kirk_catching_2025() {
 
 #[tokio::test]
 async fn alejandro_kirk_catching_2025_custom() {
-	stats_type! {
+	stats_hydrations! {
 		struct CatchingStats {
 			[
 				LastXGames,
 				ByDateRange,
 				ByDateRangeAdvanced,
-			] = [Catching]
+			] + [Catching]
 		}
 	}
 
@@ -310,9 +310,14 @@ async fn alejandro_kirk_catching_2025_custom() {
 	}
 
 	let response = PersonRequest::<CatchingStatsHydrations>::builder()
-		.id(672386)
+		.id(672_386)
 		.hydrations(CatchingStatsHydrations::builder().stats(CatchingStats::builder().season(TEST_YEAR).date_range(NaiveDate::from_ymd_opt(TEST_YEAR as _, 6, 1).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR as _, 8, 1).unwrap()).games_back(10)))
 		.build_and_get()
 		.await
 		.unwrap();
+}
+
+#[tokio::test]
+async fn single_stat_tests() {
+	let _stats = single_stat! { Career + Catching for 672_386 }.await.unwrap();
 }

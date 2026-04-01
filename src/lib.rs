@@ -6,6 +6,8 @@
 //! This API contains wrappers / bindings for all known public MLB API endpoints (unless incomplete), the table of which can be seen below.
 //! Additional information can be found at <https://github.com/toddrob99/MLB-StatsAPI/wiki/Endpoints> (thanks Todd Roberts)
 //!
+//! Stars hightlight the most popular and used endpoints
+//! 
 //! | Endpoint                   | Description                                      |
 //! |----------------------------|--------------------------------------------------|
 //! | [`attendance`]             | Team attendance data by season                   |
@@ -13,7 +15,7 @@
 //! | [`conference`]             | Conferences, like divisions but not              |
 //! | [`division`]               | Names, has a wildcard or not, playoff teams      |
 //! | [`draft`]                  | Draft rounds, players, etc.                      |
-//! | [`live_feed`]              | [`boxscore`], [`linescore`], [`plays`], and misc |
+//! | [`live_feed`] ⭐           | [`boxscore`], [`linescore`], [`plays`], and misc |
 //! | [`diff_patch`]             | JSON diff patch for live feed                    |
 //! | [`timestamps`]             | List of timestamps for game plays & play events  |
 //! | [`changes`]                | Games that underwent scheduling changes (?)      |
@@ -28,24 +30,24 @@
 //! | [`home_run_derby`]         | Home Run Derby stats                             |
 //! | [`league`]                 | League data, AL, NL, divisions contained, etc.   |
 //! | [`all_star`]               | ASG data                                         |
-//! | [`person`]                 | A person, lots of data here                      |
+//! | [`person`] ⭐              | A person, lots of data here                      |
 //! | [`free_agents`]            | Free agents in any given year                    |
 //! | [`person_stats`]           | Player stats for a single game                   |
 //! | [`jobs`]                   | List of all people with a job, ex: scorer, ump   |
 //! | [`jobs::umpire`]           | List of all umpires                              |
 //! | [`jobs::datacasters`]      | List of all datacasters                          |
 //! | [`jobs::official_scorers`] | List of all official scorers                     |
-//! | [`schedule`]               | All games played within a certain date range     |
+//! | [`schedule`] ⭐            | All games played within a certain date range     |
 //! | [`schedule::tied`]         | All games that ended tied (?)                    |
 //! | [`schedule::postseason`]   | Postseason schedule                              |
 //! | [`schedule::postseason::series`] | Postseason series schedule                 |
 //! | [`season`]                 | Date ranges for season states: reg, post, spring |
 //! | [`sport`]                  | List of sports, MLB, AAA, AA, A+, etc.           |
-//! | [`players`]                | List of all players in a sport and season        |
+//! | [`players`] ⭐             | List of all players in a sport and season        |
 //! | [`standings`]              | Standings information for teams                  |
 //! | [`stats`]                  | Stats data                                       |
 //! | [`stats::leaders`]         | League leaders in specific stats                 |
-//! | [`team`]                   | Team data                                        |
+//! | [`team`] ⭐                | Team data                                        |
 //! | [`team::history`]          | History of a team, such as Brooklyn & LA Dodgers |
 //! | [`team::stats`]            | Stats for a team                                 |
 //! | [`team::affiliates`]       | Minor league affiliate teams                     |
@@ -182,8 +184,6 @@ macro_rules! id {
 	};
 }
 
-// todo: add macro to lookup one stat type under one stat group for a player and return the type directly.
-// todo: add table for all requests on lib.rs mod docs
 // todo: add `request` fn to all requests rather than using the request type directly
 // todo: add deny_unknown_fields to everything
 
