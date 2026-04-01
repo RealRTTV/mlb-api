@@ -18,7 +18,7 @@ use crate::hydrations::Hydrations;
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase", bound = "H: VenueHydrations")]
-pub struct VenuesResponse<H: VenueHydrations> {
+pub struct VenuesResponse<H: VenueHydrations = ()> {
 	pub copyright: Copyright,
 	pub venues: Vec<Venue<H>>,
 }

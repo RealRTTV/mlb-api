@@ -1,7 +1,67 @@
-//! # The Rust MLB Stats API Wrapper
+//! <div align="center">
+//!   <!-- Version -->
+//!   <a href="https://crates.io/crates/mlb-api">
+//!     <img src="https://img.shields.io/crates/v/mlb-api.svg?style=flat-square"
+//!     alt="Crates.io version" />
+//!   </a>
+//!   <!-- Docs -->
+//!   <a href="https://docs.rs/mlb-api">
+//!     <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
+//!       alt="docs.rs docs" />
+//!   </a>
+//!   <!-- Downloads -->
+//!   <a href="https://crates.io/crates/mlb-api">
+//!     <img src="https://img.shields.io/crates/d/mlb-api.svg?style=flat-square"
+//!       alt="Crates.io downloads" />
+//!   </a>
+//! </div>
+//!
+//! # The Rust MLB API Wrapper
 //!
 //! This project and its author are not affiliated with MLB or any MLB team. This crate wraps the existing MLB Stats API, which is subject to the notice posted at <http://gdx.mlb.com/components/copyright.txt>.
 //!
+//! ## Usage
+//! Endpoints are most commonly used using their module's builder functions.
+//! ```
+//! use mlb_api::sport::SportId;
+//! use mlb_api::request::RequestUrlBuilderExt;
+//! use mlb_api::schedule::{self, ScheduleResponse, ScheduleDate};
+//! 
+//! let response: ScheduleResponse = schedule::request()
+//!     .sport_id(SportId::MLB)
+//!     .build_and_get()
+//!     .await?;
+//! 
+//! let [date]: [ScheduleDate; 1] = response.dates.try_into()?;
+//! ```
+//!
+//! Play Streams are the recommended way to process live games
+//! ```no_run
+//! use mlb_api::game::PlayStream;
+//! 
+//! let game: ScheduleGame = ...;
+//! 
+//! PlayStream::new(game.game_id).run(|event, _meta, _data| { ... }).await?;
+//! ```
+//!
+//! Use [`single_stat!`](crate::single_stat) for simple stats requests and make your own hydrations for more complicated requests
+//! ```no_run
+//! use mlb_api::single_stat;
+//! use mlb_api::person::{self, PeopleResonse};
+//!
+//! let season_hitting = single_stat!( Season + Hitting for 660_271 ).await?;
+//! let sabermetrics_pitching = single_stat!( Sabermetrics + Pitching for 660_271; with |builder| builder.season(2024) ).await?;
+//!
+//! person_hydrations! {
+//!     struct PersonDisplayHydrations {
+//!         nicknames,
+//!         stats: { [Season, Sabermetrics] = [Hitting, Pitching] },
+//!     }
+//! }
+//!
+//! let response: PeopleResponse = person::request_with_hydrations::<PersonDisplayHydrations>(660_271).await?;
+//! ```
+//! 
 //! ## Endpoints
 //! This API contains wrappers / bindings for all known public MLB API endpoints (unless incomplete), the table of which can be seen below.
 //! Additional information can be found at <https://github.com/toddrob99/MLB-StatsAPI/wiki/Endpoints> (thanks Todd Roberts)
@@ -63,7 +123,6 @@
 //! 
 //! ## Usage & Appendix
 //! 1. This API defaults to using `reqwest` and `tokio` for non-blocking IO, there is a `ureq` feature to switch to `ureq` and `parking_lot` for blocking IO.
-//! 2. Use `::request` functions on modules rather than the underlying `*Request` type, ideally those types never need to be `use`d.
 //! 3. Use [`PlayStream`](crate::game::PlayStream) for obtaining live updates on games.
 //! 4. Use [`single_stat!`](crate::single_stat) for simple stat requests rather than making [`person_hydrations!`] and [`PersonRequest`](crate::person::PersonRequest) yourself.
 //! 5. Use [`as_complete_or_request`](crate::cache::RequestableEntrypoint::as_complete_or_request) and the numerous `crate::*_hydrations!` items to obtain additional information in requests, try to minimize request quantity.
