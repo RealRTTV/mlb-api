@@ -3,13 +3,14 @@
 #![allow(clippy::redundant_pub_crate, reason = "re-exported as pub lol")]
 
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
-use derive_more::{Display, FromStr, Not};
+use derive_more::{Display, FromStr};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use std::fmt::{Debug, Display, Formatter};
 use std::num::{ParseFloatError, ParseIntError};
 use std::ops::{Add, RangeInclusive};
 use std::str::FromStr;
+use std::ops::Not;
 use thiserror::Error;
 use crate::season::SeasonId;
 
@@ -270,11 +271,22 @@ where
 		.map_err(|e| Error::custom(format!("{e:?}")))
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Not, Default)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum TeamSide {
 	#[default]
 	Home,
 	Away,
+}
+
+impl Not for TeamSide {
+	type Output = Self;
+
+	fn not(self) -> Self::Output {
+		match self {
+			Self::Home => Self::Away,
+			Self::Away => Self::Home,
+		}
+	}
 }
 
 impl TeamSide {

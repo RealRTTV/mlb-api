@@ -71,10 +71,10 @@ struct __GameDateTimeStruct {
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(from = "__GameDateTimeStruct")]
 pub struct GameDateTime {
-	datetime: NaiveDateTime,
-	original_date: NaiveDate,
-	official_date: NaiveDate,
-	sky: DayNight,
+	pub datetime: NaiveDateTime,
+	pub original_date: NaiveDate,
+	pub official_date: NaiveDate,
+	pub sky: DayNight,
 }
 
 impl From<__GameDateTimeStruct> for GameDateTime {
@@ -584,31 +584,148 @@ pub enum PlayStreamEvent<'a> {
 	GameEnd(&'a Decisions, &'a Linescore, &'a Boxscore, &'a GameStatLeaders),
 }
 
+macro_rules! gen_play_stream_impl {
+($d:tt; $($async:tt)?; $($await:tt)?; $($fn_mut:tt)?; $sleep:path) => {
 impl PlayStream {
 	/// Runs through plays until the game is over.
 	///
 	/// # Errors
 	/// See [`request::Error`]
-	pub async fn run<F: FnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, request::Error>>(self, f: F) -> Result<(), request::Error> {
-		self.run_custom_error::<request::Error, F>(f).await
+	pub $($async)? fn run<F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, request::Error>>(self, f: F) -> Result<(), request::Error> {
+		self.run_with_custom_error::<request::Error, F>(f) $(.$await)?
+	}
+
+	/// Evaluation for the current play
+	pub(crate) $($async)? fn run_current_play<E, F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, current_play: &Play, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
+		macro_rules! flow_try {
+			($d ($d t:tt)*) => {
+				match ($d ($d t)*) $(.$await)? ? {
+					ControlFlow::Continue(()) => {},
+					ControlFlow::Break(()) => return Ok(ControlFlow::Break(())),
+				}
+			};
+		}
+		
+		if !self.in_progress_current_play {
+			flow_try!(f(PlayStreamEvent::StartPlay(current_play), meta, data));
+		}
+		let mut play_events = current_play.play_events.iter().skip(self.current_play_event_idx);
+		if let Some(current_play_event) = play_events.next() {
+			flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event), meta, data));
+			let mut reviews = current_play_event.reviews.iter().skip(self.current_play_event_review_idx);
+			if let Some(current_review) = reviews.next() {
+				if !self.in_progress_current_play_event_review {
+					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(current_review), meta, data));
+				}
+				if !current_review.is_in_progress {
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(current_review), meta, data));
+				}
+			}
+			for review in reviews {
+				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review), meta, data));
+				if !review.is_in_progress {
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review), meta, data));
+				}
+			}
+		}
+		for play_event in play_events {
+			flow_try!(f(PlayStreamEvent::PlayEvent(play_event), meta, data));
+			for review in &play_event.reviews {
+				flow_try!(f(PlayStreamEvent::PlayReviewStart(review), meta, data));
+				if !review.is_in_progress {
+					flow_try!(f(PlayStreamEvent::PlayReviewEnd(review), meta, data));
+				}
+			}
+		}
+		let mut reviews = current_play.reviews.iter().skip(self.current_play_review_idx);
+		if let Some(current_review) = reviews.next() {
+			if !self.in_progress_current_play_review {
+				flow_try!(f(PlayStreamEvent::PlayReviewStart(current_review), meta, data));
+			}
+			if !current_review.is_in_progress {
+				flow_try!(f(PlayStreamEvent::PlayReviewEnd(current_review), meta, data));
+			}
+		}
+		
+		for review in reviews {
+			flow_try!(f(PlayStreamEvent::PlayReviewStart(review), meta, data));
+			if !review.is_in_progress {
+				flow_try!(f(PlayStreamEvent::PlayReviewEnd(review), meta, data));
+			}
+		}
+		if current_play.about.is_complete {
+			flow_try!(f(PlayStreamEvent::EndPlay(current_play), meta, data));
+		}
+		
+		Ok(ControlFlow::Continue(()))
+	}
+
+	/// Evaluation for remaining plays
+	pub(crate) $($async)? fn run_next_plays<E, F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, plays: impl Iterator<Item=&Play>, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
+		macro_rules! flow_try {
+			($d ($d t:tt)*) => {
+				match ($d ($d t)*) $(.$await)? ? {
+					ControlFlow::Continue(()) => {},
+					ControlFlow::Break(()) => return Ok(ControlFlow::Break(())),
+				}
+			};
+		}
+		
+		for play in plays {
+			flow_try!(f(PlayStreamEvent::StartPlay(play), meta, data));
+			for play_event in &play.play_events {
+				flow_try!(f(PlayStreamEvent::PlayEvent(play_event), meta, data));
+				for review in &play_event.reviews {
+					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review), meta, data));
+					if !review.is_in_progress {
+						flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review), meta, data));
+					}
+				}
+			}
+			if play.about.is_complete {
+				flow_try!(f(PlayStreamEvent::EndPlay(play), meta, data));
+			}
+		}
+
+		Ok(ControlFlow::Continue(()))
+	}
+
+	pub(crate) fn update_indices(&mut self, plays: &[Play]) {
+		let latest_play = plays.last();
+
+		self.in_progress_current_play = latest_play.is_some_and(|play| !play.about.is_complete);
+		self.current_play_idx = if self.in_progress_current_play { plays.len() - 1 } else { plays.len() };
+
+		let current_play = plays.get(self.current_play_idx);
+		let current_play_event = current_play.and_then(|play| play.play_events.last());
+		let current_play_review = current_play.and_then(|play| play.reviews.last());
+		let current_play_event_review = current_play_event.and_then(|play_event| play_event.reviews.last());
+		
+		self.in_progress_current_play_review = current_play_review.is_some_and(|review| review.is_in_progress);
+		self.current_play_review_idx = current_play.map_or(0, |play| if self.in_progress_current_play_review { play.reviews.len() - 1 } else { play.reviews.len() });
+
+		self.current_play_event_idx = current_play.map_or(0, |play| play.play_events.len());
+
+		self.in_progress_current_play_event_review = current_play_event_review.is_some_and(|review| review.is_in_progress);
+		self.current_play_event_review_idx = current_play_event.map_or(0, |play_event| if self.in_progress_current_play_event_review { play_event.reviews.len() - 1 } else { play_event.reviews.len() });
 	}
 
 	/// Variant of the ``run`` function that allows for custom error types.
 	///
 	/// # Errors
 	/// See [`request::Error`]
-	pub async fn run_custom_error<E: From<request::Error>, F: FnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(mut self, mut f: F) -> Result<(), E> {
+	pub $($async)? fn run_with_custom_error<E: From<request::Error>, F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(mut self, mut f: F) -> Result<(), E> {
 		macro_rules! flow_try {
-			($($t:tt)*) => {
-				match ($($t)*)? {
+			($d ($d t:tt)*) => {
+				match ($d ($d t)*) $(.$await)? ? {
 					ControlFlow::Continue(()) => {},
 					ControlFlow::Break(()) => return Ok(()),
 				}
 			};
 		}
 		
-		let mut feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
-		
+		let mut feed = LiveFeedRequest::builder().id(self.game_id).build_and_get() $(.$await)? ?;
+
 		flow_try!(f(PlayStreamEvent::GameStart, &feed.meta, &feed.data));
 		
 		loop {
@@ -619,113 +736,34 @@ impl PlayStream {
 			let mut plays = plays.iter().skip(self.current_play_idx);
 
 			if let Some(current_play) = plays.next() {
-				if !self.in_progress_current_play {
-					flow_try!(f(PlayStreamEvent::StartPlay(current_play), meta, data));
-				}
-
-				let mut play_events = current_play.play_events.iter().skip(self.current_play_event_idx);
-				if let Some(current_play_event) = play_events.next() {
-					flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event), meta, data));
-
-					let mut reviews = current_play_event.reviews.iter().skip(self.current_play_event_review_idx);
-					if let Some(current_review) = reviews.next() {
-						if !self.in_progress_current_play_event_review {
-							flow_try!(f(PlayStreamEvent::PlayEventReviewStart(current_review), meta, data));
-						}
-						if !current_review.is_in_progress {
-							flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(current_review), meta, data));
-						}
-					}
-					for review in reviews {
-						flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review), meta, data));
-						if !review.is_in_progress {
-							flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review), meta, data));
-						}
-					}
-				}
-
-				for play_event in play_events {
-					flow_try!(f(PlayStreamEvent::PlayEvent(play_event), meta, data));
-					for review in &play_event.reviews {
-						flow_try!(f(PlayStreamEvent::PlayReviewStart(review), meta, data));
-						if !review.is_in_progress {
-							flow_try!(f(PlayStreamEvent::PlayReviewEnd(review), meta, data));
-						}
-					}
-				}
-
-				let mut reviews = current_play.reviews.iter().skip(self.current_play_review_idx);
-				if let Some(current_review) = reviews.next() {
-					if !self.in_progress_current_play_review {
-						flow_try!(f(PlayStreamEvent::PlayReviewStart(current_review), meta, data));
-					}
-
-					if !current_review.is_in_progress {
-						flow_try!(f(PlayStreamEvent::PlayReviewEnd(current_review), meta, data));
-					}
-				}
-				
-				for review in reviews {
-					flow_try!(f(PlayStreamEvent::PlayReviewStart(review), meta, data));
-					if !review.is_in_progress {
-						flow_try!(f(PlayStreamEvent::PlayReviewEnd(review), meta, data));
-					}
-				}
-
-				if current_play.about.is_complete {
-					flow_try!(f(PlayStreamEvent::EndPlay(current_play), meta, data));
-				}
+				flow_try!(self.run_current_play(&mut f, current_play, meta, data));
 			}
 
-			for play in plays {
-				flow_try!(f(PlayStreamEvent::StartPlay(play), meta, data));
-				for play_event in &play.play_events {
-					flow_try!(f(PlayStreamEvent::PlayEvent(play_event), meta, data));
-					for review in &play_event.reviews {
-						flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review), meta, data));
-						if !review.is_in_progress {
-							flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review), meta, data));
-						}
-					}
-				}
-				if play.about.is_complete {
-					flow_try!(f(PlayStreamEvent::EndPlay(play), meta, data));
-				}
-			}
+			flow_try!(self.run_next_plays(&mut f, plays, meta, data));
 			
 			if data.status.abstract_game_code.is_finished() && let Some(decisions) = decisions {
-				let _ = f(PlayStreamEvent::GameEnd(decisions, linescore, boxscore, leaders), meta, data)?;
+				let _ = f(PlayStreamEvent::GameEnd(decisions, linescore, boxscore, leaders), meta, data) $(.$await)? ?;
 				return Ok(())
 			}
 
-			let latest_play = live.plays.last();
-
-			self.in_progress_current_play = latest_play.is_some_and(|play| !play.about.is_complete);
-			self.current_play_idx = if self.in_progress_current_play { live.plays.len() - 1 } else { live.plays.len() };
-
-			let current_play = live.plays.get(self.current_play_idx);
-			let current_play_event = current_play.and_then(|play| play.play_events.last());
-			let current_play_review = current_play.and_then(|play| play.reviews.last());
-			let current_play_event_review = current_play_event.and_then(|play_event| play_event.reviews.last());
-			
-			self.in_progress_current_play_review = current_play_review.is_some_and(|review| review.is_in_progress);
-			self.current_play_review_idx = current_play.map_or(0, |play| if self.in_progress_current_play_review { play.reviews.len() - 1 } else { play.reviews.len() });
-
-			self.current_play_event_idx = current_play.map_or(0, |play| play.play_events.len());
-
-			self.in_progress_current_play_event_review = current_play_event_review.is_some_and(|review| review.is_in_progress);
-			self.current_play_event_review_idx = current_play_event.map_or(0, |play_event| if self.in_progress_current_play_event_review { play_event.reviews.len() - 1 } else { play_event.reviews.len() });
+			self.update_indices(&live.plays);
 
 			let total_sleep_time = Duration::from_secs(meta.recommended_poll_rate as _);
 			drop(feed);
 			let remaining_sleep_time = total_sleep_time.saturating_sub(since_last_request.elapsed());
-			tokio::time::sleep(remaining_sleep_time).await;
-			
-		    feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
+			$sleep(remaining_sleep_time) $(.$await)?;
+		    feed = LiveFeedRequest::builder().id(self.game_id).build_and_get() $(.$await)? ?;
 		}
 	}
 }
+};
+}
 
+#[cfg(feature = "reqwest")]
+gen_play_stream_impl!($; async; await; AsyncFnMut; tokio::time::sleep);
+#[cfg(feature = "ureq")]
+gen_play_stream_impl!($; ; ; FnMut; std::thread::sleep);
+	
 #[cfg(test)]
 mod tests {
     use std::ops::ControlFlow;
@@ -733,7 +771,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_play_stream() {
-		PlayStream::new(822_834).run(|event, _meta, _data| {
+		PlayStream::new(822_834).run(async |event, _meta, _data| {
 			match event {
 				PlayStreamEvent::GameStart => println!("GameStart"),
 				PlayStreamEvent::StartPlay(play) => println!("PlayStart; {} vs. {}", play.matchup.batter.full_name, play.matchup.pitcher.full_name),
