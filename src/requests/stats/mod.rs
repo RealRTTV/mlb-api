@@ -84,8 +84,7 @@ impl<T: SingletonSplitStat> Stat for T {
 	}
 }
 
-#[allow(unused, reason = "might not be used by end user")]
-pub(crate) trait StatTypeStats {
+pub trait StatTypeStats {
 	type Hitting: Stat;
 
 	type Pitching: Stat;
