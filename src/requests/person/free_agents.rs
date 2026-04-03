@@ -38,7 +38,7 @@ struct __FreeAgentStruct {
 }
 
 /// Wrapper over [`NamedPerson`], displays the [`Team`](NamedTeam) they were with, the date the signed, their position, etc.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__FreeAgentStruct")]
 pub struct FreeAgent {
 	pub player: NamedPerson,

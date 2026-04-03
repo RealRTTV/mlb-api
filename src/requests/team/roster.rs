@@ -42,7 +42,7 @@ pub struct RosterPlayer<H: RosterHydrations = ()> {
 }
 
 /// Status on the roster
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(try_from = "__RosterStatusStruct")]
 pub enum RosterStatus {
     Active,
@@ -126,7 +126,7 @@ impl<H: RosterHydrations, S: roster_request_builder::State + roster_request_buil
 
 impl RosterRequest {
     pub fn for_team(team_id: impl Into<TeamId>) -> RosterRequestBuilder<(), roster_request_builder::SetHydrations<roster_request_builder::SetTeamId>> {
-        Self::builder().team_id(team_id).hydrations(<() as Hydrations>::RequestData::default())
+        Self::builder().team_id(team_id).hydrations(())
     }
 }
 

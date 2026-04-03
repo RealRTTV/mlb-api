@@ -68,7 +68,7 @@ struct __GameDateTimeStruct {
 }
 
 /// Date & Time of the game. Note that the time is typically rounded to the hour and the :07, :05 on the hour is for the first pitch, which is a different timestamp.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__GameDateTimeStruct")]
 pub struct GameDateTime {
 	pub datetime: NaiveDateTime,
@@ -127,7 +127,7 @@ impl TryFrom<__WeatherConditionsStruct> for WeatherConditions {
 }
 
 /// Misc
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct GameInfo {
@@ -143,7 +143,7 @@ pub struct GameInfo {
 }
 
 /// Review usage for each team and if the game supports challenges.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct TeamReviewData {
@@ -154,7 +154,7 @@ pub struct TeamReviewData {
 
 /// Tags about a game, such as a perfect game in progress, no-hitter, etc.
 #[allow(clippy::struct_excessive_bools, reason = "")]
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct GameTags {
@@ -169,7 +169,7 @@ pub struct GameTags {
 }
 
 /// Double-header information.
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum DoubleHeaderKind {
 	#[serde(rename = "N")]
 	/// Not a doubleheader
@@ -191,7 +191,7 @@ impl DoubleHeaderKind {
 	}
 }
 
-#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Deref, DerefMut, From)]
+#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Eq, Deref, DerefMut, From)]
 pub struct Inning(usize);
 
 impl Display for Inning {
@@ -201,7 +201,7 @@ impl Display for Inning {
 }
 
 /// Half of the inning.
-#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Not)]
+#[derive(Debug, Deserialize, Copy, Clone, PartialEq, Eq, Not)]
 pub enum InningHalf {
 	#[serde(rename = "Top", alias = "top")]
 	Top,
@@ -230,7 +230,7 @@ impl InningHalf {
 }
 
 /// The balls and strikes in a given at bat. Along with the number of outs (this technically can change during the AB due to pickoffs etc)
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
 #[display("{balls}-{strikes} ({outs} out)")]
 pub struct AtBatCount {
 	pub balls: u8,
@@ -239,7 +239,7 @@ pub struct AtBatCount {
 }
 
 /// The classic "R | H | E" and LOB in a scoreboard.
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(from = "__RHEStruct")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct RHE {
@@ -288,7 +288,7 @@ impl From<__RHEStruct> for RHE {
 /// | First pitch   | 8:10 PM.  |
 /// | Weather       | 68 degrees, Roof Closed |
 /// | Att           | 44,713.   |
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LabelledValue {
 	pub label: String,
@@ -296,7 +296,7 @@ pub struct LabelledValue {
 	pub value: String,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct SectionedLabelledValues {
 	#[serde(rename = "title")]
@@ -307,7 +307,7 @@ pub struct SectionedLabelledValues {
 
 /// Various flags about the player in the current game
 #[allow(clippy::struct_excessive_bools, reason = "not what's happening here")]
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayerGameStatusFlags {
@@ -317,7 +317,7 @@ pub struct PlayerGameStatusFlags {
 	pub is_substitute: bool,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct Official {
@@ -325,7 +325,7 @@ pub struct Official {
 	pub official_type: OfficialType,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum OfficialType {
 	#[serde(rename = "Home Plate")]
 	HomePlate,
@@ -352,7 +352,7 @@ pub enum OfficialType {
 /// Charlie pinch runs and takes over from then on (major = 1, minor = 2)
 ///
 /// Note: These minors are [`Display`]ed incremented one more than is done internally, so (major = 1, minor = 1) displays as `1st (2)`.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct BattingOrderIndex {
 	pub major: usize,
 	pub minor: usize,
@@ -382,7 +382,7 @@ impl Display for BattingOrderIndex {
 }
 
 /// Decisions of winner & loser (and potentially the save)
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct Decisions {
@@ -422,6 +422,7 @@ pub enum Base {
 }
 
 impl<'de> Deserialize<'de> for Base {
+	#[allow(clippy::too_many_lines, reason = "Visitor impl takes up the bulk, is properly scoped")]
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 	where
 		D: Deserializer<'de>
@@ -513,24 +514,24 @@ pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserialize
 /// ## Examples
 /// ```no_run
 /// PlayStream::new(/* game id */).run(|event: PlayStreamEvent, meta: &LiveFeedMetadata, data: &LiveFeedData| {
-///	    match event {
-///	        PlayStreamEvent::GameStart => println!("Game Start"),
-///	        PlayStreamEvent::StartPlay(play) => println!("{} vs. {}", play.matchup.batter.full_name, play.matchup.pitcher.full_name),
-///	        PlayStreamEvent::PlayEvent(play_event) => {
-///	            match play_event {
-///	                PlayEvent::Action { details, .. } => println!("{}", details.description),
-///	                PlayEvent::Pitch { details, common, .. } => println!("{} -> {}", details.call, common.count),
-///	                PlayEvent::Stepoff { .. } => println!("Stepoff"),
-///	                PlayEvent::NoPitch { .. } => println!("No Pitch"),
-///	                PlayEvent::Pickoff { .. } => println!("Pickoff"),
-///	            }
-///	        },
-///	        PlayStreamEvent::PlayEventReviewStart(review) => println!("PlayEventReviewStart; {}", review.review_type),
-///	        PlayStreamEvent::PlayEventReviewEnd(review) => println!("PlayEventReviewEnd; {}", review.review_type),
-///	        PlayStreamEvent::PlayReviewStart(review) => println!("PlayReviewStart; {}", review.review_type),
-///	        PlayStreamEvent::PlayReviewEnd(review) => println!("PlayReviewEnd; {}", review.review_type),
-///	        PlayStreamEvent::EndPlay(play) => println!("{}", play.result.completed_play_details.as_ref().expect("Completed play").description),
-///	        PlayStreamEvent::GameEnd(_, _, _, _) => println!("GameEnd"),
+///     match event {
+///         PlayStreamEvent::GameStart => println!("Game Start"),
+///         PlayStreamEvent::StartPlay(play) => println!("{} vs. {}", play.matchup.batter.full_name, play.matchup.pitcher.full_name),
+///         PlayStreamEvent::PlayEvent(play_event) => {
+///             match play_event {
+///                 PlayEvent::Action { details, .. } => println!("{}", details.description),
+///                 PlayEvent::Pitch { details, common, .. } => println!("{} -> {}", details.call, common.count),
+///                 PlayEvent::Stepoff { .. } => println!("Stepoff"),
+///                 PlayEvent::NoPitch { .. } => println!("No Pitch"),
+///                 PlayEvent::Pickoff { .. } => println!("Pickoff"),
+///             }
+///         },
+///         PlayStreamEvent::PlayEventReviewStart(review) => println!("PlayEventReviewStart; {}", review.review_type),
+///         PlayStreamEvent::PlayEventReviewEnd(review) => println!("PlayEventReviewEnd; {}", review.review_type),
+///         PlayStreamEvent::PlayReviewStart(review) => println!("PlayReviewStart; {}", review.review_type),
+///         PlayStreamEvent::PlayReviewEnd(review) => println!("PlayReviewEnd; {}", review.review_type),
+///         PlayStreamEvent::EndPlay(play) => println!("{}", play.result.completed_play_details.as_ref().expect("Completed play").description),
+///         PlayStreamEvent::GameEnd(_, _, _, _) => println!("GameEnd"),
 ///     }
 /// }).await?;
 /// ```
@@ -723,7 +724,6 @@ impl PlayStream {
 		}
 		
 		let mut feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
-
 		flow_try!(f(PlayStreamEvent::GameStart, &feed.meta, &feed.data));
 		
 		loop {
@@ -736,7 +736,7 @@ impl PlayStream {
 			if let Some(current_play) = plays.next() {
 				flow_try!(self.run_current_play(&mut f, current_play, meta, data));
 			}
-
+			
 			flow_try!(self.run_next_plays(&mut f, plays, meta, data));
 			
 			if data.status.abstract_game_code.is_finished() && let Some(decisions) = decisions {
@@ -748,8 +748,7 @@ impl PlayStream {
 
 			let total_sleep_time = Duration::from_secs(meta.recommended_poll_rate as _);
 			drop(feed);
-			let remaining_sleep_time = total_sleep_time.saturating_sub(since_last_request.elapsed());
-			tokio::time::sleep(remaining_sleep_time).await;
+			tokio::time::sleep(total_sleep_time.saturating_sub(since_last_request.elapsed())).await;
 		    feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
 		}
 	}

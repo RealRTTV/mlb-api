@@ -102,7 +102,7 @@ impl DraftPick {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct School {
 	pub name: Option<String>,
@@ -112,7 +112,7 @@ pub struct School {
 	pub state: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
 #[serde(try_from = "__DraftTypeStruct")]
 pub enum DraftType {
 	#[display("June Amateur Draft")]

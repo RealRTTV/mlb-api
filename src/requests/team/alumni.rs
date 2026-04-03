@@ -24,7 +24,7 @@ impl AlumniRequest {
 	pub fn for_team(team_id: impl Into<TeamId>) -> AlumniRequestBuilder<(), alumni_request_builder::SetHydrations<alumni_request_builder::SetTeamId>> {
 		Self::builder()
 			.team_id(team_id.into())
-			.hydrations(<() as Hydrations>::RequestData::default())
+			.hydrations(())
 	}
 }
 

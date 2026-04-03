@@ -184,7 +184,7 @@ pub struct PlayDetails {
 }
 
 /// Information supplied to [`PlayDetails`] when the play is complete
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct CompletedPlayDetails {
@@ -590,7 +590,7 @@ pub enum CreditKind {
 }
 
 /// # Errors
-/// See D::Error, likely [`serde_json::Error`]
+/// See `D::Error`, likely [`serde_json::Error`]
 pub fn deserialize_review_data<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<ReviewData>, D::Error> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]

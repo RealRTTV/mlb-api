@@ -215,7 +215,7 @@ pub use hot_cold_zones::*;
 pub use pitch_usage::*;
 
 /// For old data, some stats are just omitted, like pitch count and stuff. So every field is now possibly omittable. Gotta `?` everything now. (this api is legendary)
-#[derive(Debug, Error, PartialEq, Copy, Clone)]
+#[derive(Debug, Error, PartialEq, Eq, Copy, Clone)]
 #[error("This stat was omitted.")]
 pub struct OmittedStatError;
 

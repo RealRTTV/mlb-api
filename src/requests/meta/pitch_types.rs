@@ -19,12 +19,12 @@ pub struct PitchType {
 	pub id: PitchTypeId,
 }
 
-pub(crate) fn fallback_pitch_type_deserializer<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PitchType, D::Error> {
+pub fn fallback_pitch_type_deserializer<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PitchType, D::Error> {
 	Ok(PitchType::deserialize(deserializer).ok().unwrap_or_else(unknown_pitch_type))
 }
 
 #[must_use]
-pub(crate) fn unknown_pitch_type() -> PitchType {
+pub fn unknown_pitch_type() -> PitchType {
 	PitchType {
 		description: "Unknown".to_owned(),
 		id: PitchTypeId::new("UN"),

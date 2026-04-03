@@ -6,8 +6,8 @@ id!(#[doc = "A [`String`] representing an electronic platform"] PlatformId { pla
 ///
 /// ## Examples
 /// Platform {
-///     name: "iOS Phone".into(),
-///     id: "ios-phone".into(),
+///     name: "iOS `Phone".into()`,
+///     id: "`ios-phone".into()`,
 /// }
 #[derive(Debug, Deserialize, Clone)]
 pub struct Platform {

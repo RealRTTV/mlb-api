@@ -255,7 +255,7 @@ struct __TeamNameRaw {
 /// | Los Angeles Dodgers   | `lan`       | `la`        | `LAD`          | Dodgers   | Dodgers      | Los Angeles    | LA Dodgers    |
 /// | Washington Nationals  | `was`       | `was`       | `WSH`          | Nationals | Nationals    | Washington     | Washington    |
 /// | New York Mets         | `nyn`       | `nym`       | `NYM`          | Mets      | Mets         | New York       | NY Mets       |
-#[derive(Debug, PartialEq, Deref, DerefMut, Clone)]
+#[derive(Debug, PartialEq, Eq, Deref, DerefMut, Clone)]
 pub struct TeamName {
 	/// Typically 3 characters and all lowercase.
 	pub team_code: String,
@@ -312,7 +312,7 @@ pub struct NamedOrganization {
 id!(#[doc = "ID of a parent organization -- still don't know what this is."] OrganizationId { id: u32 });
 
 /// Honestly, no clue. Would love to know.
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Default)]
 pub enum AllStarStatus {
 	/// 'tis an All-Star team (?)
 	#[serde(rename = "Y")]

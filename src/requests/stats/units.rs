@@ -250,7 +250,7 @@ impl Default for TwoDecimalPlaceRateStat {
 	}
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct InningsPitched {
 	major: u32,
 	minor: u8,

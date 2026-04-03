@@ -4,6 +4,8 @@ use serde::de::Error;
 use thiserror::Error;
 use std::str::FromStr;
 
+// todo: replace with macro and use attributes for fns
+
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Display, Hash)]
 pub enum EventType {
     // ---------- Misc ----------

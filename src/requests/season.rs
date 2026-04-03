@@ -180,7 +180,7 @@ pub struct QualificationMultipliers {
 }
 
 /// Current state of the season
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum SeasonState {
 	#[serde(rename = "spring training")]
 	SpringTraining,

@@ -27,7 +27,7 @@ pub struct ScheduleSeries<H: ScheduleHydrations> {
 	pub data: SeriesData,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SeriesData {
 	#[serde(rename = "id", deserialize_with = "series_number_from_id")]

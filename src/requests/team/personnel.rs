@@ -26,7 +26,7 @@ impl PersonnelRequest {
     pub fn for_team(team_id: impl Into<TeamId>) -> PersonnelRequestBuilder<(), personnel_request_builder::SetHydrations<personnel_request_builder::SetTeamId>> {
         Self::builder()
             .team_id(team_id)
-            .hydrations(<() as Hydrations>::RequestData::default())
+            .hydrations(())
     }
 }
 

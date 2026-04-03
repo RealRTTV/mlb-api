@@ -4,7 +4,7 @@ use crate::season::SeasonId;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::stats::wrappers::SeasonPiece;
 
-#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(bound = "T: RawStat")]
 pub struct WithSeason<T: RawStat> {
 	pub season: SeasonId,

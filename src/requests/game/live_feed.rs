@@ -38,7 +38,7 @@ pub struct LiveFeedResponse {
 }
 
 /// Metadata about the game, often not useful.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct LiveFeedMetadata {

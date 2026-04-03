@@ -3,7 +3,7 @@ use serde::Deserialize;
 use crate::stats::{RawStat, SingletonSplitStat};
 use crate::team::NamedTeam;
 
-#[derive(Debug, Deserialize, PartialEq, Clone, Deref, DerefMut)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Deref, DerefMut)]
 #[serde(bound = "T: RawStat")]
 pub struct WithTeam<T: RawStat> {
 	pub team: NamedTeam,

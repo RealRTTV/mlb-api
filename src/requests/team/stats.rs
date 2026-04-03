@@ -1,7 +1,5 @@
 // todo
 
-// #![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
-//
 // use crate::meta::GameType;
 // use crate::person::PersonId;
 // use crate::request::RequestURL;

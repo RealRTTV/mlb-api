@@ -9,7 +9,7 @@ use thiserror::Error;
 use crate::stats::Stat;
 use crate::{RGBAColor, HeatmapTemperature};
 
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone, TryFrom)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, TryFrom)]
 #[serde(try_from = "u8")]
 #[try_from(repr)]
 #[repr(u8)]

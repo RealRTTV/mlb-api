@@ -130,7 +130,7 @@ impl<H: StandingsHydrations> TeamRecord<H> {
 
     /// Net runs scored for the team
     #[must_use]
-    pub fn run_differential(&self) -> isize {
+    pub const fn run_differential(&self) -> isize {
         self.runs_scored as isize - self.runs_allowed as isize
     }
 }
@@ -289,7 +289,7 @@ impl Display for GamesBack {
             write!(f, "-")?;
         }
 
-        write!(f, ".{c}", c = self.half.then_some('5').unwrap_or('0'))?;
+        write!(f, ".{c}", c = if self.half { '5' } else { '0' })?;
 
         Ok(())
     }
@@ -331,7 +331,7 @@ impl FromStr for GamesBack {
     }
 }
 
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Add, AddAssign)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Add, AddAssign)]
 pub struct Record {
     wins: usize,
     losses: usize,
@@ -346,7 +346,7 @@ impl Record {
 
     /// Number of games played
     #[must_use]
-    pub fn games_played(self) -> usize {
+    pub const fn games_played(self) -> usize {
         self.wins + self.losses
     }
 }
@@ -367,7 +367,7 @@ impl Display for Streak {
 }
 
 /// A game outcome for streak purposes
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
 pub enum StreakKind {
     /// A game that ended in a win for this team.
     #[serde(rename = "wins")]
@@ -408,7 +408,7 @@ pub struct LeagueRecordSplit {
     pub league: NamedLeague,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone, Hash)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum RecordSplitKind {
     /// Games as the home team
@@ -664,7 +664,7 @@ mod tests {
     async fn all_mlb_leagues() {
         for league_id in [LeagueId::new(103), LeagueId::new(104)] {
             let _ = StandingsRequest::<()>::builder().season(TEST_YEAR).league_id(league_id).build_and_get().await.unwrap();
-            let _ = StandingsRequest::<()>::builder().season(TEST_YEAR).date(NaiveDate::from_ymd_opt(TEST_YEAR as _, 09, 26).unwrap()).league_id(league_id).build_and_get().await.unwrap();
+            let _ = StandingsRequest::<()>::builder().season(TEST_YEAR).date(NaiveDate::from_ymd_opt(TEST_YEAR as _, 9, 26).unwrap()).league_id(league_id).build_and_get().await.unwrap();
         }
     }
 }

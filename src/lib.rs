@@ -181,7 +181,7 @@
 
 #![warn(clippy::pedantic, clippy::nursery, clippy::complexity, clippy::cargo, clippy::perf, clippy::style)]
 #![warn(clippy::allow_attributes_without_reason)]
-#![allow(clippy::multiple_crate_versions, clippy::cast_lossless, reason = "deemed unnecessary")]
+#![allow(clippy::multiple_crate_versions, clippy::cast_lossless, clippy::ignore_without_reason, reason = "deemed unnecessary")]
 
 macro_rules! id {
     ($(#[$meta:meta])* $name:ident { $id_field:ident: String }) => {

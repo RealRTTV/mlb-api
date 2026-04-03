@@ -25,8 +25,6 @@
 //! are not registered in an enum as if new cutting-edge situation-codes come out,
 //! this API being outdated shouldn't limit in that factor.
 
-#![allow(clippy::trait_duplication_in_bounds, reason = "serde")]
-
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::convert::Infallible;
@@ -86,7 +84,7 @@ impl<T: SingletonSplitStat> Stat for T {
 	}
 }
 
-#[allow(unused)]
+#[allow(unused, reason = "might not be used by end user")]
 pub(crate) trait StatTypeStats {
 	type Hitting: Stat;
 
@@ -97,7 +95,7 @@ pub(crate) trait StatTypeStats {
 	type Catching: Stat;
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone, Default)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
 pub struct PlayStat {
 	// pub play: Play,
 }

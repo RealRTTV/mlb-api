@@ -32,7 +32,7 @@ use crate::request::RequestURL;
 /// Returns a [`Vec`] of [`AttendanceRecord`].
 ///
 /// Example: <http://statsapi.mlb.com/api/v1/attendance?teamId=141>
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "AttendanceResponseStruct")]
 pub struct AttendanceResponse {
 	pub copyright: Copyright,
@@ -66,7 +66,7 @@ impl From<AttendanceResponseStruct> for AttendanceResponse {
 /// Does not represent a single opening, those opening-by-opening requests require a little more MacGyver-ing with the date.
 ///
 /// Represents a full season of attendance data (segmented by [`GameType`]).
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "AnnualRecordStruct")]
 pub struct AttendanceRecord {
 	pub total_openings: HomeAway<u32>,
@@ -250,6 +250,7 @@ struct AnnualRecordStruct {
 }
 
 impl From<AnnualRecordStruct> for AttendanceRecord {
+	#[allow(clippy::too_many_lines, reason = "low cognitive complexity")]
 	fn from(value: AnnualRecordStruct) -> Self {
 		let AnnualRecordStruct {
 			// openings_total,
@@ -276,10 +277,9 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 			game_type,
 			// team,
 		} = value;
-		let single_opening_min_max = if let Some(attendance_high) = attendance_high
-			&& let Some(attendance_high_date) = attendance_high_date
-			&& let Some(attendance_high_game) = attendance_high_game
-		{
+
+		let single_opening_min_max = if let Some(((attendance_high, attendance_high_date), attendance_high_game)) = attendance_high
+			.zip(attendance_high_date).zip(attendance_high_game) {
 			let max = DatedAttendance {
 				value: attendance_high,
 				date: attendance_high_date.date(),
@@ -287,10 +287,8 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 			};
 
 			let min = {
-				if let Some(attendance_low) = attendance_low
-					&& let Some(attendance_low_date) = attendance_low_date
-					&& let Some(attendance_low_game) = attendance_low_game
-				{
+				if let Some(((attendance_low, attendance_low_date), attendance_low_game)) = attendance_low
+					.zip(attendance_low_date).zip(attendance_low_game) {
 					DatedAttendance {
 						value: attendance_low,
 						date: attendance_low_date.date(),
@@ -305,6 +303,7 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 		} else {
 			None
 		};
+		
 		Self {
 			total_openings: HomeAway {
 				home: openings_total_home,

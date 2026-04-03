@@ -7,56 +7,56 @@ use serde::Deserialize;
 #[derive(Deserialize, Default, PartialEq, Eq, Copy, Clone, Display, Hash)]
 #[serde(try_from = "__StandingsTypeStruct")]
 pub enum StandingsType {
-	///	Regular Season Standings
+	/// Regular Season Standings
 	#[default]
 	#[display("Regular Season")]
 	RegularSeason,
 
-	///	Wild card standings
+	/// Wild card standings
 	#[display("Wild Card")]
 	WildCard,
 
-	///	Division Leader standings
+	/// Division Leader standings
 	#[display("Division Leaders")]
 	DivisionLeaders,
 
-	///	Wild card standings with Division Leaders
+	/// Wild card standings with Division Leaders
 	#[display("Wild Card With Leaders")]
 	WildCardWithLeaders,
 
-	///	First half standings.  Only valid for leagues with a split season.
+	/// First half standings.  Only valid for leagues with a split season.
 	#[display("First Half")]
 	FirstHalf,
 
-	///	Second half standings. Only valid for leagues with a split season.
+	/// Second half standings. Only valid for leagues with a split season.
 	#[display("Second Half")]
 	SecondHalf,
 
-	///	Spring Training Standings
+	/// Spring Training Standings
 	#[display("Spring Training")]
 	SpringTraining,
 
-	///	Postseason Standings
+	/// Postseason Standings
 	#[display("Postseason")]
 	Postseason,
 
-	///	Standings by Division
+	/// Standings by Division
 	#[display("By Division")]
 	ByDivision,
 
-	///	Standings by Conference
+	/// Standings by Conference
 	#[display("By Conference")]
 	ByConference,
 
-	///	Standings by League
+	/// Standings by League
 	#[display("By League")]
 	ByLeague,
 
-	///	Standing by Organization
+	/// Standing by Organization
 	#[display("By Organization")]
 	ByOrganization,
 
-	///	Current Half Standings. Returns standings in the current half for split season leagues and overall standings for full season leagues.
+	/// Current Half Standings. Returns standings in the current half for split season leagues and overall standings for full season leagues.
 	#[display("Current Half")]
 	CurrentHalf,
 }

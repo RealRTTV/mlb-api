@@ -177,7 +177,7 @@ async fn shohei_ohtani_pitching_2025_custom() {
 		.hydrations(PitchingStatsHydrations::builder()
 			.stats(PitchingStats::builder()
 				.season(TEST_YEAR)
-				.opponent_player(672386)
+				.opponent_player(672_386)
 				.game_type(GameType::RegularSeason)
 				.games_back(5)
 				.date_range(NaiveDate::from_ymd_opt(TEST_YEAR as _, 5, 5).unwrap()..=NaiveDate::from_ymd_opt(TEST_YEAR as _, 6, 12).unwrap())

@@ -171,7 +171,7 @@ impl<H: ScheduleHydrations> From<__ScheduleGameStruct<H>> for ScheduleGame<H> {
 	}
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SeriesData {
 	pub games_in_series: u32,
@@ -197,7 +197,7 @@ pub struct TeamWithStandings<H: ScheduleHydrations> {
 	pub series_ordinal: Option<u32>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamWithStandingsGameScore {
 	#[serde(rename = "score")]
@@ -205,7 +205,7 @@ pub struct TeamWithStandingsGameScore {
 	pub is_winner: bool,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Standings {
 	pub wins: u32,

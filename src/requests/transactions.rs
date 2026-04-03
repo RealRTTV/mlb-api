@@ -30,7 +30,7 @@ pub struct TransactionCommon {
 	pub dates: TransactionDates,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionDates {
 	pub date: NaiveDate,

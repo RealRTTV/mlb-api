@@ -160,6 +160,7 @@ impl<T: Requestable> CacheTable<T> {
 /// # Errors
 /// See variants of [`crate::request::Error`]
 #[cfg(feature = "cache")]
+#[allow(clippy::too_many_lines, reason = "low cognitive complexity")]
 pub async fn precache() -> Result<(), crate::request::Error> {
     let people_response = PlayersRequest::for_sport(SportId::MLB).build_and_get();
     

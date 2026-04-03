@@ -22,8 +22,6 @@
 //!
 //! This module also contains [`person_hydrations`](crate::person_hydrations), which are used to get additional data about people when making requests.
 
-#![allow(clippy::trait_duplication_in_bounds, reason = "serde duplicates it")]
-
 pub mod free_agents;
 pub mod stats;
 pub mod players;
@@ -206,7 +204,7 @@ pub enum Person<H: PersonHydrations = ()> {
 
 impl<H: PersonHydrations> Person<H> {
 	#[must_use]
-	pub fn as_ballplayer(&self) -> Option<&Ballplayer<H>> {
+	pub const fn as_ballplayer(&self) -> Option<&Ballplayer<H>> {
 		match self {
 			Self::Ballplayer(x) => Some(x),
 			Self::Regular(_) => None,
@@ -216,7 +214,7 @@ impl<H: PersonHydrations> Person<H> {
 
 impl<H: PersonHydrations> Person<H> {
 	#[must_use]
-	pub fn as_ballplayer_mut(&mut self) -> Option<&mut Ballplayer<H>> {
+	pub const fn as_ballplayer_mut(&mut self) -> Option<&mut Ballplayer<H>> {
 		match self {
 			Self::Ballplayer(x) => Some(x),
 			Self::Regular(_) => None,
@@ -287,7 +285,7 @@ pub struct PersonRequest<H: PersonHydrations> {
 
 impl PersonRequest<()> {
 	pub fn for_id(id: impl Into<PersonId>) -> PersonRequestBuilder<(), person_request_builder::SetHydrations<person_request_builder::SetId>> {
-		Self::builder().id(id).hydrations(<() as Hydrations>::RequestData::default())
+		Self::builder().id(id).hydrations(())
 	}
 }
 
@@ -312,7 +310,7 @@ impl<H: PersonHydrations> RequestURL for PersonRequest<H> {
 
 /// The number on the back of a jersey, useful for radix sorts maybe??
 #[repr(transparent)]
-#[derive(Debug, Deref, Display, PartialEq, Copy, Clone, Hash, From)]
+#[derive(Debug, Deref, Display, PartialEq, Eq, Copy, Clone, Hash, From)]
 pub struct JerseyNumber(u8);
 
 impl<'de> Deserialize<'de> for JerseyNumber {
@@ -325,7 +323,7 @@ impl<'de> Deserialize<'de> for JerseyNumber {
 }
 
 /// Data regarding birthplace.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BirthData {
 	pub birth_date: NaiveDate,
@@ -371,7 +369,7 @@ pub struct PreferredTeamData {
 }
 
 /// Relative to the ballplayer, father, son, etc.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Relative {
 	pub has_stats: bool,
