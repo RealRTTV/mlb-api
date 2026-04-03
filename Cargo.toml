@@ -40,7 +40,7 @@ optional = true
 tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }
 
 [features]
-default = ["reqwest", "cache", "aggressive_cache"]
+default = ["cache", "aggressive_cache"]
 cache = []
 aggressive_cache = ["cache"]
 _heavy_tests = []

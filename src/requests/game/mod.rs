@@ -749,7 +749,7 @@ impl PlayStream {
 			let total_sleep_time = Duration::from_secs(meta.recommended_poll_rate as _);
 			drop(feed);
 			let remaining_sleep_time = total_sleep_time.saturating_sub(since_last_request.elapsed());
-			tokio::time::sleep(remaining_sleep_time).await?;
+			tokio::time::sleep(remaining_sleep_time).await;
 		    feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
 		}
 	}

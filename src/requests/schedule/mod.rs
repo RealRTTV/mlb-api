@@ -455,17 +455,17 @@ impl<H: ScheduleHydrations> Display for ScheduleRequest<H> {
 			f,
 			"http://statsapi.mlb.com/api/v1/schedule{params}",
 			params = gen_params! {
+				"hydrate"?: hydrations,
 				"sportId": self.sport_id,
 				"gamePks"?: self.game_ids.as_ref().map(|ids| ids.iter().map(ToString::to_string).join(",")),
 				"teamId"?: self.team_id,
 				"leagueId"?: self.league_id,
-				"venueIds"?: self.venue_ids.as_ref().map(|ids| ids.iter().map(ToString::to_string).join(",")),
 				"date"?: self.date.as_ref().left().map(|x| x.format(MLB_API_DATE_FORMAT)),
 				"startDate"?: self.date.as_ref().right().map(|range| range.start().format(MLB_API_DATE_FORMAT)),
 				"endDate"?: self.date.as_ref().right().map(|range| range.end().format(MLB_API_DATE_FORMAT)),
 				"opponentId"?; self.opponent_id,
 				"season"?: self.season,
-				"hydrate"?: hydrations,
+				"venueIds"?: self.venue_ids.as_ref().map(|ids| ids.iter().map(ToString::to_string).join(",")),
 			}
 		)
 	}
