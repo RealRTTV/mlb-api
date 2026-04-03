@@ -1,18 +1,33 @@
-//! Handles the request portion of the code; uses [`::ureq`] or [`::reqwest`] for blocking or non-blocking networking.
+//! Handles the request portion of the code
 
 use serde::de::DeserializeOwned;
 use crate::MLBError;
 
-#[cfg(feature = "ureq")]
-mod ureq;
+/// # Errors
+/// See variants of [`Error`]
+#[cfg(not(feature = "_debug"))]
+pub async fn get<T: DeserializeOwned>(url: String) -> Result<T> {
+	let bytes = reqwest::Client::builder().build()?.get(url).send().await?.bytes().await?;
+	let e = match serde_json::from_slice::<'_, T>(&bytes) {
+		Ok(t) => return Ok(t),
+		Err(e) => Error::Serde(e),
+	};
+	Err(Error::MLB(serde_json::from_slice::<'_, MLBError>(&bytes).map_err(|_| e)?))
+}
 
-#[cfg(feature = "ureq")]
-pub use ureq::*;
-
-#[cfg(feature = "reqwest")]
-mod reqwest;
-#[cfg(feature = "reqwest")]
-pub use reqwest::*;
+/// # Errors
+/// See variants of [`Error`]
+#[cfg(feature = "_debug")]
+pub async fn get<T: DeserializeOwned>(url: String) -> Result<T> {
+	let bytes = reqwest::Client::builder().build()?.get(url).send().await?.bytes().await?;
+	let mut de = serde_json::Deserializer::from_slice(&bytes);
+	let result: std::result::Result<T, serde_path_to_error::Error<_>> = serde_path_to_error::deserialize(&mut de);
+	let e = match result {
+		Ok(t) => return Ok(t),
+		Err(e) => Error::Serde(e),
+	};
+	Err(Error::MLB(serde_json::from_slice::<'_, MLBError>(&bytes).map_err(|_| e)?))
+}
 
 /// Error variant
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -20,12 +35,6 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// Represents the error returned when making an HTTP request for stats
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-	/// Error from [`::ureq`], likely network error.
-	#[cfg(feature = "ureq")]
-	#[error(transparent)]
-	Network(#[from] ::ureq::Error),
-	/// Error from [`::reqwest`], likely network error.
-	#[cfg(feature = "reqwest")]
 	#[error(transparent)]
 	Network(#[from] ::reqwest::Error),
 	/// Error from [`serde`], likely deserialization error.
@@ -41,25 +50,11 @@ pub enum Error {
 	MLB(#[from] MLBError),
 }
 
-#[cfg(all(feature = "reqwest", feature = "ureq"))]
-compile_error!("Only one http backend is allowed!");
-
 /// A type in which you can request the response from its URL
 pub trait RequestURL: ToString {
 	type Response: DeserializeOwned;
 
 	/// Get the response from the URL
-	#[cfg(feature = "ureq")]
-	fn get(&self) -> Result<Self::Response>
-	where
-		Self: Sized,
-	{
-		let url = self.to_string();
-		get::<Self::Response>(url)
-	}
-
-	/// Get the response from the URL
-	#[cfg(feature = "reqwest")]
 	fn get(&self) -> impl Future<Output = Result<Self::Response>>
 	where
 		Self: Sized,
@@ -74,17 +69,6 @@ pub trait RequestURLBuilderExt where Self: Sized {
 	/// Built type; [`PersonRequest`](crate::person::PersonRequest) for [`PersonRequestBuilder`](crate::person::PersonRequestBuilder)
 	type Built: RequestURL + From<Self>;
 
-	#[cfg(feature = "ureq")]
-	fn build_and_get(self) -> Result<<Self::Built as RequestURL>::Response> {
-		let built = Self::Built::from(self);
-		let url = built.to_string();
-		if cfg!(feature = "_debug") && cfg!(test) {
-			println!("url = {url}");
-		}
-		get::<<Self::Built as RequestURL>::Response>(url)
-	}
-
-	#[cfg(feature = "reqwest")]
 	fn build_and_get(self) -> impl Future<Output = Result<<Self::Built as RequestURL>::Response>> {
 		async {
 			let built = Self::Built::from(self);

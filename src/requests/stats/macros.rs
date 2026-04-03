@@ -466,7 +466,6 @@ macro_rules! __stats0 {
 /// // or supply builder params with
 /// let stat = single_stat!(Season + Hitting for 660_271; with |builder| builder.season(2024)).await.unwrap();
 /// ```
-#[cfg(feature = "reqwest")]
 #[macro_export]
 macro_rules! single_stat {
 	($stat_type:ident + $stat_group:ident for $person_id:expr) => {
@@ -486,44 +485,6 @@ macro_rules! single_stat {
 					$builder_expr
 				})).id($person_id).build();
 				let response = $crate::request::RequestURL::get(&request).await;
-				response.and_then::<[$crate::person::Person<[<$stat_type $stat_group SingleStatHydrations>]>; 1], _>(|response|
-					response.people.try_into().map_err(|_| $crate::request::Error::MLB($crate::MLBError { message: "Expected one person in a single stat response".to_owned() }))
-				)
-				.map(|[person]| person.extras.stats.[<$stat_type:snake>].[<$stat_group:snake>].clone())
-			}
-		}
-	}};
-}
-
-/// Shorthand function for getting a single [`StatType`] and [`StatGroup`] for a specific player.
-///
-/// ## Examples
-/// ```no_run
-/// let stat = single_stat!(Season + Hitting for 660_271).await.unwrap();
-/// 
-/// // or supply builder params with
-/// let stat = single_stat!(Season + Hitting for 660_271; with |builder| builder.season(2024)).await.unwrap();
-/// ```
-#[cfg(feature = "ureq")]
-#[macro_export]
-macro_rules! single_stat {
-	($stat_type:ident + $stat_group:ident for $person_id:expr) => {
-		$crate::single_stat! { $stat_type + $stat_group for $person_id; with |builder| builder }
-	};
-	($stat_type:ident + $stat_group:ident for $person_id:expr; with |$builder:ident| $builder_expr:expr) => {{
-		::pastey::paste! {
-			$crate::person_hydrations! {
-				struct [<$stat_type $stat_group SingleStatHydrations >] {
-				    stats: { [$stat_type] + [$stat_group] },
-				}
-			}
-			
-			{
-				let request = $crate::person::PersonRequest::<[<$stat_type $stat_group SingleStatHydrations >]>::builder().hydrations([<$stat_type $stat_group SingleStatHydrations>]::builder().stats({
-					let $builder = [<$stat_type $stat_group SingleStatHydrationsInlineStats>]::builder();
-					$builder_expr
-				})).id($person_id).build();
-				let response = $crate::request::RequestURL::get(&request);
 				response.and_then::<[$crate::person::Person<[<$stat_type $stat_group SingleStatHydrations>]>; 1], _>(|response|
 					response.people.try_into().map_err(|_| $crate::request::Error::MLB($crate::MLBError { message: "Expected one person in a single stat response".to_owned() }))
 				)

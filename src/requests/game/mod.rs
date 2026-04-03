@@ -584,22 +584,20 @@ pub enum PlayStreamEvent<'a> {
 	GameEnd(&'a Decisions, &'a Linescore, &'a Boxscore, &'a GameStatLeaders),
 }
 
-macro_rules! gen_play_stream_impl {
-($d:tt; $($async:tt)?; $($await:tt)?; $($fn_mut:tt)?; $sleep:path) => {
 impl PlayStream {
 	/// Runs through plays until the game is over.
 	///
 	/// # Errors
 	/// See [`request::Error`]
-	pub $($async)? fn run<F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, request::Error>>(self, f: F) -> Result<(), request::Error> {
-		self.run_with_custom_error::<request::Error, F>(f) $(.$await)?
+	pub async fn run<F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, request::Error>>(self, f: F) -> Result<(), request::Error> {
+		self.run_with_custom_error::<request::Error, F>(f).await
 	}
 
 	/// Evaluation for the current play
-	pub(crate) $($async)? fn run_current_play<E, F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, current_play: &Play, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
+	async fn run_current_play<E, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, current_play: &Play, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
 		macro_rules! flow_try {
-			($d ($d t:tt)*) => {
-				match ($d ($d t)*) $(.$await)? ? {
+			($($t:tt)*) => {
+				match ($($t)*).await? {
 					ControlFlow::Continue(()) => {},
 					ControlFlow::Break(()) => return Ok(ControlFlow::Break(())),
 				}
@@ -661,10 +659,10 @@ impl PlayStream {
 	}
 
 	/// Evaluation for remaining plays
-	pub(crate) $($async)? fn run_next_plays<E, F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, plays: impl Iterator<Item=&Play>, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
+	async fn run_next_plays<E, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, plays: impl Iterator<Item=&Play>, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
 		macro_rules! flow_try {
-			($d ($d t:tt)*) => {
-				match ($d ($d t)*) $(.$await)? ? {
+			($($t:tt)*) => {
+				match ($($t)*).await? {
 					ControlFlow::Continue(()) => {},
 					ControlFlow::Break(()) => return Ok(ControlFlow::Break(())),
 				}
@@ -690,7 +688,7 @@ impl PlayStream {
 		Ok(ControlFlow::Continue(()))
 	}
 
-	pub(crate) fn update_indices(&mut self, plays: &[Play]) {
+	fn update_indices(&mut self, plays: &[Play]) {
 		let latest_play = plays.last();
 
 		self.in_progress_current_play = latest_play.is_some_and(|play| !play.about.is_complete);
@@ -714,17 +712,17 @@ impl PlayStream {
 	///
 	/// # Errors
 	/// See [`request::Error`]
-	pub $($async)? fn run_with_custom_error<E: From<request::Error>, F: $($fn_mut)?(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(mut self, mut f: F) -> Result<(), E> {
+	pub async fn run_with_custom_error<E: From<request::Error>, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(mut self, mut f: F) -> Result<(), E> {
 		macro_rules! flow_try {
-			($d ($d t:tt)*) => {
-				match ($d ($d t)*) $(.$await)? ? {
+			($($t:tt)*) => {
+				match ($($t)*).await? {
 					ControlFlow::Continue(()) => {},
 					ControlFlow::Break(()) => return Ok(()),
 				}
 			};
 		}
 		
-		let mut feed = LiveFeedRequest::builder().id(self.game_id).build_and_get() $(.$await)? ?;
+		let mut feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
 
 		flow_try!(f(PlayStreamEvent::GameStart, &feed.meta, &feed.data));
 		
@@ -742,7 +740,7 @@ impl PlayStream {
 			flow_try!(self.run_next_plays(&mut f, plays, meta, data));
 			
 			if data.status.abstract_game_code.is_finished() && let Some(decisions) = decisions {
-				let _ = f(PlayStreamEvent::GameEnd(decisions, linescore, boxscore, leaders), meta, data) $(.$await)? ?;
+				let _ = f(PlayStreamEvent::GameEnd(decisions, linescore, boxscore, leaders), meta, data).await?;
 				return Ok(())
 			}
 
@@ -751,18 +749,11 @@ impl PlayStream {
 			let total_sleep_time = Duration::from_secs(meta.recommended_poll_rate as _);
 			drop(feed);
 			let remaining_sleep_time = total_sleep_time.saturating_sub(since_last_request.elapsed());
-			$sleep(remaining_sleep_time) $(.$await)?;
-		    feed = LiveFeedRequest::builder().id(self.game_id).build_and_get() $(.$await)? ?;
+			tokio::time::sleep(remaining_sleep_time).await?;
+		    feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
 		}
 	}
 }
-};
-}
-
-#[cfg(feature = "reqwest")]
-gen_play_stream_impl!($; async; await; AsyncFnMut; tokio::time::sleep);
-#[cfg(feature = "ureq")]
-gen_play_stream_impl!($; ; ; FnMut; std::thread::sleep);
 	
 #[cfg(test)]
 mod tests {

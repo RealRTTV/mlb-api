@@ -124,12 +124,11 @@ Stars hightlight the most popular and used endpoints
 | [`meta`]                   | Metadata endpoints, typically cached or enums    |
 
 ### Usage & Appendix
-1. This API defaults to using `reqwest` and `tokio` for non-blocking IO, there is a `ureq` feature to switch to `ureq` and `parking_lot` for blocking IO.
-3. Use [`PlayStream`](crate::game::PlayStream) for obtaining live updates on games.
-4. Use [`single_stat!`](crate::single_stat) for simple stat requests rather than making [`person_hydrations!`] and [`PersonRequest`](crate::person::PersonRequest) yourself.
-5. Use [`as_complete_or_request`](crate::cache::RequestableEntrypoint::as_complete_or_request) and the numerous `crate::*_hydrations!` items to obtain additional information in requests, try to minimize request quantity.
-6. The [`precache`](crate::cache::precache) function allows caching commonly requested values before usage to make [`as_complete_or_request`](crate::cache::RequestableEntrypoint::as_complete_or_request) faster to use.
-7. Supply [`SeasonId`](crate::season::SeasonId)s to requests to not have them break when the year changes.
+1. Use [`PlayStream`](crate::game::PlayStream) for obtaining live updates on games.
+2. Use [`single_stat!`](crate::single_stat) for simple stat requests rather than making [`person_hydrations!`] and [`PersonRequest`](crate::person::PersonRequest) yourself.
+3. Use [`as_complete_or_request`](crate::cache::RequestableEntrypoint::as_complete_or_request) and the numerous `crate::*_hydrations!` items to obtain additional information in requests, try to minimize request quantity.
+4. The [`precache`](crate::cache::precache) function allows caching commonly requested values before usage to make [`as_complete_or_request`](crate::cache::RequestableEntrypoint::as_complete_or_request) faster to use.
+5. Supply [`SeasonId`](crate::season::SeasonId)s to requests to not have them break when the year changes.
 
 [`attendance`]: crate::requests::attendance
 [`awards`]: crate::requests::awards

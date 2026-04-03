@@ -68,7 +68,6 @@ pub trait RequestableEntrypoint {
 
     fn id(&self) -> &<<Self as RequestableEntrypoint>::Complete as Requestable>::Identifier;
 
-    #[cfg(feature = "reqwest")]
     #[cfg(feature = "cache")]
     fn as_complete_or_request(&self) -> impl Future<Output = Result<Arc<<Self as RequestableEntrypoint>::Complete>, Error<Self>>>
     where
@@ -87,25 +86,6 @@ pub trait RequestableEntrypoint {
         cache.get(id).cloned().ok_or_else(|| Error::NoMatchingVariant(id.clone()))
     } }
 
-    #[cfg(feature = "ureq")]
-    #[cfg(feature = "cache")]
-    fn as_complete_or_request(&self) -> Result<Arc<<Self as RequestableEntrypoint>::Complete>, Error<Self>>
-    where
-        Self: Sized
-    {
-        let cache_lock = <<Self as RequestableEntrypoint>::Complete as Requestable>::get_cache_table();
-        let id = self.id();
-        let cache = cache_lock.read();
-        if let Some(complete_entry) = cache.get(id).cloned() {
-            return Ok(complete_entry);
-        }
-
-        let mut cache = cache_lock.write();
-        cache.request_and_add(id)?;
-        cache.get(id).cloned().ok_or_else(|| Error::NoMatchingVariant(id.clone()))
-    }
-
-    #[cfg(feature = "reqwest")]
     #[cfg(not(feature = "cache"))]
     fn as_complete_or_request(&self) -> impl Future<Output = Result<<Self as RequestableEntrypoint>::Complete, Error<Self>>>
     where
@@ -117,16 +97,6 @@ pub trait RequestableEntrypoint {
         let entries = <Self::Complete as Requestable>::get_entries(response);
         entries.into_iter().next().ok_or_else(|| Error::<Self>::NoMatchingVariant(id.clone()))
     } }
-
-    #[cfg(feature = "ureq")]
-    #[cfg(not(feature = "cache"))]
-    fn as_complete_or_request(&self) -> Result<Arc<<Self as RequestableEntrypoint>::Complete>, Error<Self>> {
-        let id = self.id();
-        let url = <Self::Complete as Requestable>::url_for_id(id).to_string();
-        let response = crate::request::get::<<<Self::Complete as Requestable>::URL as RequestURL>::Response>(&url)?;
-        let entries = <Self::Complete as Requestable>::get_entries(response);
-        entries.into_iter().next().ok_or_else(|| Error::<Self>::NoMatchingVariant(id.clone()))
-    }
 }
 
 /// Type representing the cached values of `T`; stored as `static` using [`Arc<RwLock<_>>`]
@@ -177,18 +147,9 @@ impl<T: Requestable> CacheTable<T> {
 
     /// # Errors
     /// See variants of [`crate::request::Error`]
-    #[cfg(feature = "reqwest")]
     pub async fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
         let url = <T as Requestable>::url_for_id(id).to_string();
         let response = crate::request::get::<<<T as Requestable>::URL as RequestURL>::Response>(url).await?;
-        self.add_entries(<T as Requestable>::get_entries(response));
-        Ok(())
-    }
-
-    #[cfg(feature = "ureq")]
-    pub fn request_and_add(&mut self, id: &T::Identifier) -> Result<(), crate::request::Error> {
-        let url = <T as Requestable>::url_for_id(id).to_string();
-        let response = crate::request::get::<<<T as Requestable>::URL as RequestURL>::Response>(url)?;
         self.add_entries(<T as Requestable>::get_entries(response));
         Ok(())
     }
@@ -199,7 +160,6 @@ impl<T: Requestable> CacheTable<T> {
 /// # Errors
 /// See variants of [`crate::request::Error`]
 #[cfg(feature = "cache")]
-#[cfg(feature = "reqwest")]
 pub async fn precache() -> Result<(), crate::request::Error> {
     let people_response = PlayersRequest::for_sport(SportId::MLB).build_and_get();
     
@@ -233,41 +193,6 @@ pub async fn precache() -> Result<(), crate::request::Error> {
     <crate::meta::WindDirection as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::WindDirection>::new().get().await?.entries);
 
     <Person as Requestable>::get_cache_table().write().await.add_entries(people_response.await?.people);
-
-    Ok(())
-}
-
-/// Caches popular types for [`Requestable`] use.
-///
-/// # Errors
-/// See variants of [`crate::request::Error`]
-#[cfg(feature = "cache")]
-#[cfg(feature = "ureq")]
-pub fn precache() -> Result<(), crate::request::Error> {
-    <crate::awards::Award as Requestable>::get_cache_table().write().add_entries(crate::awards::AwardRequest::builder().build_and_get()?.awards);
-    <crate::division::Division as Requestable>::get_cache_table().write().add_entries(crate::division::DivisionsRequest::builder().build_and_get()?.divisions);
-    <crate::conference::Conference as Requestable>::get_cache_table().write().add_entries(crate::conference::ConferencesRequest::builder().build_and_get()?.conferences);
-    <crate::venue::Venue as Requestable>::get_cache_table().write().add_entries(crate::venue::VenuesRequest::builder().build_and_get()?.venues);
-    <crate::league::League as Requestable>::get_cache_table().write().add_entries(crate::league::LeaguesRequest::builder().build_and_get()?.leagues);
-    <crate::sport::Sport as Requestable>::get_cache_table().write().add_entries(crate::sport::SportsRequest::builder().build_and_get()?.sports);
-
-    <crate::meta::BaseballStat as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::BaseballStat>::new().get()?.entries);
-    <crate::meta::JobType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::JobType>::new().get()?.entries);
-    <crate::meta::GameStatus as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::GameStatus>::new().get()?.entries);
-    <crate::meta::Metric as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::Metric>::new().get()?.entries);
-    <crate::meta::PitchCode as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::PitchCode>::new().get()?.entries);
-    <crate::meta::PitchType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::PitchType>::new().get()?.entries);
-    <crate::meta::Platform as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::Platform>::new().get()?.entries);
-    <crate::meta::Position as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::Position>::new().get()?.entries);
-    <crate::meta::ReviewReason as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::ReviewReason>::new().get()?.entries);
-    <crate::meta::ScheduleEventType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::ScheduleEventType>::new().get()?.entries);
-    <crate::meta::SituationCode as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::SituationCode>::new().get()?.entries);
-    <crate::meta::SkyDescription as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::SkyDescription>::new().get()?.entries);
-    <crate::meta::GameType as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::GameType>::new().get()?.entries);
-    <crate::meta::GameType as Requestable>::get_cache_table().write().await.add_entries(MetaRequest::<crate::meta::GameType>::new().get().await?.entries);
-    <crate::meta::WindDirection as Requestable>::get_cache_table().write().add_entries(MetaRequest::<crate::meta::WindDirection>::new().get()?.entries);
-
-    <crate::person::Person as Requestable>::get_cache_table().write().add_entries(PlayersRequest::for_sport(SportId::MLB).build_and_get()?.people);
 
     Ok(())
 }
