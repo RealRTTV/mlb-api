@@ -227,6 +227,14 @@ impl InningHalf {
 			Self::Bottom => '▽',
 		}
 	}
+
+	#[must_use]
+	pub const fn three_char(self) -> &'static str {
+		match self {
+			Self::Top => "Top",
+			Self::Bottom => "Bot",
+		}
+	}
 }
 
 /// The balls and strikes in a given at bat. Along with the number of outs (this technically can change during the AB due to pickoffs etc)
@@ -610,7 +618,7 @@ impl PlayStream {
 		}
 		let mut play_events = current_play.play_events.iter().skip(self.current_play_event_idx);
 		if let Some(current_play_event) = play_events.next() {
-			flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event, play), meta, data));
+			flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event, current_play), meta, data));
 			let mut reviews = current_play_event.reviews.iter().skip(self.current_play_event_review_idx);
 			if let Some(current_review) = reviews.next() {
 				if !self.in_progress_current_play_event_review {
