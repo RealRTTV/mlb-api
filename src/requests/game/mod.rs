@@ -20,7 +20,7 @@ use crate::meta::{DayNight, NamedPosition};
 use crate::request::RequestURLBuilderExt;
 use crate::team::TeamId;
 use crate::team::roster::RosterStatus;
-use crate::{DayHalf, HomeAway, ResourceUsage};
+use crate::{DayHalf, HomeAway, ResourceUsage, TeamSide};
 use crate::meta::WindDirectionId;
 use crate::request;
 
@@ -228,11 +228,30 @@ impl InningHalf {
 		}
 	}
 
+	/// Three ascii characters representing the inning half
 	#[must_use]
 	pub const fn three_char(self) -> &'static str {
 		match self {
 			Self::Top => "Top",
 			Self::Bottom => "Bot",
+		}
+	}
+
+	/// The team that bats in this inning half
+	#[must_use]
+	pub const fn bats(self) -> TeamSide {
+		match self {
+			Self::Top => TeamSide::Away,
+			Self::Bottom => TeamSide::Home.
+		}
+	}
+
+	/// The team that pitches in this inning half
+	#[must_use]
+	pub const fn pitches(self) -> TeamSide {
+		match Self {
+			Self::Top => TeamSide::Home,
+			Self::Bottom => TeamSide::Away,
 		}
 	}
 }
@@ -518,14 +537,16 @@ pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserialize
 ///
 /// The [`PlayStream`] is meant to be for consistently polling the MLB API for live play-by-play updates.
 /// The list of events can be seen on [`PlayStreamEvent`]
+///
+/// Note that the [`Linescore`] and [`Boxscore`] are not timed to the current state of the game as of the event, to achieve that it is recommended the timecode argument to live feed and iterate through the timecodes on its endpoint; however is much slower, or using diffPatch.
 /// 
 /// ## Examples
 /// ```no_run
-/// PlayStream::new(/* game id */).run(|event: PlayStreamEvent, meta: &LiveFeedMetadata, data: &LiveFeedData| {
+/// PlayStream::new(/* game id */).run(|event: PlayStreamEvent, meta: &LiveFeedMetadata, data: &LiveFeedData, linescore: &Linescore, boxscore: &Boxscore| {
 ///     match event {
-///         PlayStreamEvent::GameStart => println!("Game Start"),
+///         PlayStreamEvent::Start => println!("Start"),
 ///         PlayStreamEvent::StartPlay(play) => println!("{} vs. {}", play.matchup.batter.full_name, play.matchup.pitcher.full_name),
-///         PlayStreamEvent::PlayEvent(play_event) => {
+///         PlayStreamEvent::PlayEvent(play_event, _play) => {
 ///             match play_event {
 ///                 PlayEvent::Action { details, .. } => println!("{}", details.description),
 ///                 PlayEvent::Pitch { details, common, .. } => println!("{} -> {}", details.call, common.count),
@@ -534,10 +555,10 @@ pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserialize
 ///                 PlayEvent::Pickoff { .. } => println!("Pickoff"),
 ///             }
 ///         },
-///         PlayStreamEvent::PlayEventReviewStart(review) => println!("PlayEventReviewStart; {}", review.review_type),
-///         PlayStreamEvent::PlayEventReviewEnd(review) => println!("PlayEventReviewEnd; {}", review.review_type),
-///         PlayStreamEvent::PlayReviewStart(review) => println!("PlayReviewStart; {}", review.review_type),
-///         PlayStreamEvent::PlayReviewEnd(review) => println!("PlayReviewEnd; {}", review.review_type),
+///         PlayStreamEvent::PlayEventReviewStart(review, _play_event, _play) => println!("PlayEventReviewStart; {}", review.review_type),
+///         PlayStreamEvent::PlayEventReviewEnd(review, _play_event, _play) => println!("PlayEventReviewEnd; {}", review.review_type),
+///         PlayStreamEvent::PlayReviewStart(review, _play) => println!("PlayReviewStart; {}", review.review_type),
+///         PlayStreamEvent::PlayReviewEnd(review, _play) => println!("PlayReviewEnd; {}", review.review_type),
 ///         PlayStreamEvent::EndPlay(play) => println!("{}", play.result.completed_play_details.as_ref().expect("Completed play").description),
 ///         PlayStreamEvent::GameEnd(_, _, _, _) => println!("GameEnd"),
 ///     }
@@ -578,8 +599,8 @@ impl PlayStream {
 /// An event in a game, such as the game starting, ending, a [`Play`] (At-Bat) starting, or a [`PlayEvent`] occuring, or a challenge on a play or play event.
 #[derive(Debug, PartialEq, Clone)]
 pub enum PlayStreamEvent<'a> {
-	/// Sent at the beginning of a game
-	GameStart,
+	/// Sent at the beginning of a stream
+	Start,
 	
 	StartPlay(&'a Play),
 	PlayReviewStart(&'a ReviewData, &'a Play),
@@ -598,12 +619,12 @@ impl PlayStream {
 	///
 	/// # Errors
 	/// See [`request::Error`]
-	pub async fn run<F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, request::Error>>(self, f: F) -> Result<(), request::Error> {
+	pub async fn run<F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData, &Linescore, &Boxscore) -> Result<ControlFlow<()>, request::Error>>(self, f: F) -> Result<(), request::Error> {
 		self.run_with_custom_error::<request::Error, F>(f).await
 	}
 
 	/// Evaluation for the current play
-	async fn run_current_play<E, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, current_play: &Play, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
+	async fn run_current_play<E, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData, &Linescore, &Boxscore) -> Result<ControlFlow<()>, E>>(&self, mut f: F, current_play: &Play, meta: &LiveFeedMetadata, data: &LiveFeedData, linescore: &Linescore, boxscore: &Boxscore) -> Result<ControlFlow<()>, E> {
 		macro_rules! flow_try {
 			($($t:tt)*) => {
 				match ($($t)*).await? {
@@ -614,61 +635,61 @@ impl PlayStream {
 		}
 		
 		if !self.in_progress_current_play {
-			flow_try!(f(PlayStreamEvent::StartPlay(current_play), meta, data));
+			flow_try!(f(PlayStreamEvent::StartPlay(current_play), meta, data, linescore, boxscore));
 		}
 		let mut play_events = current_play.play_events.iter().skip(self.current_play_event_idx);
 		if let Some(current_play_event) = play_events.next() {
-			flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event, current_play), meta, data));
+			flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event, current_play), meta, data, linescore, boxscore));
 			let mut reviews = current_play_event.reviews.iter().skip(self.current_play_event_review_idx);
 			if let Some(current_review) = reviews.next() {
 				if !self.in_progress_current_play_event_review {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(current_review, current_play_event, current_play), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(current_review, current_play_event, current_play), meta, data, linescore, boxscore));
 				}
 				if !current_review.is_in_progress {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(current_review, current_play_event, current_play), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(current_review, current_play_event, current_play), meta, data, linescore, boxscore));
 				}
 			}
 			for review in reviews {
-				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, current_play_event, current_play), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, current_play_event, current_play), meta, data, linescore, boxscore));
 				if !review.is_in_progress {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, current_play_event, current_play), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, current_play_event, current_play), meta, data, linescore, boxscore));
 				}
 			}
 		}
 		for play_event in play_events {
-			flow_try!(f(PlayStreamEvent::PlayEvent(play_event, current_play), meta, data));
+			flow_try!(f(PlayStreamEvent::PlayEvent(play_event, current_play), meta, data, linescore, boxscore));
 			for review in &play_event.reviews {
-				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, play_event, current_play), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, play_event, current_play), meta, data, linescore, boxscore));
 				if !review.is_in_progress {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, play_event, current_play), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, play_event, current_play), meta, data, linescore, boxscore));
 				}
 			}
 		}
 		let mut reviews = current_play.reviews.iter().skip(self.current_play_review_idx);
 		if let Some(current_review) = reviews.next() {
 			if !self.in_progress_current_play_review {
-				flow_try!(f(PlayStreamEvent::PlayReviewStart(current_review, current_play), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayReviewStart(current_review, current_play), meta, data, linescore, boxscore));
 			}
 			if !current_review.is_in_progress {
-				flow_try!(f(PlayStreamEvent::PlayReviewEnd(current_review, current_play), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayReviewEnd(current_review, current_play), meta, data, linescore, boxscore));
 			}
 		}
 		
 		for review in reviews {
-			flow_try!(f(PlayStreamEvent::PlayReviewStart(review, current_play), meta, data));
+			flow_try!(f(PlayStreamEvent::PlayReviewStart(review, current_play), meta, data, linescore, boxscore));
 			if !review.is_in_progress {
-				flow_try!(f(PlayStreamEvent::PlayReviewEnd(review, current_play), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayReviewEnd(review, current_play), meta, data, linescore, boxscore));
 			}
 		}
 		if current_play.about.is_complete {
-			flow_try!(f(PlayStreamEvent::EndPlay(current_play), meta, data));
+			flow_try!(f(PlayStreamEvent::EndPlay(current_play), meta, data, linescore, boxscore));
 		}
 		
 		Ok(ControlFlow::Continue(()))
 	}
 
 	/// Evaluation for remaining plays
-	async fn run_next_plays<E, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(&self, mut f: F, plays: impl Iterator<Item=&Play>, meta: &LiveFeedMetadata, data: &LiveFeedData) -> Result<ControlFlow<()>, E> {
+	async fn run_next_plays<E, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData, &Linescore, &Boxscore) -> Result<ControlFlow<()>, E>>(&self, mut f: F, plays: impl Iterator<Item=&Play>, meta: &LiveFeedMetadata, data: &LiveFeedData, linescore: &Linescore, boxscore: &Boxscore) -> Result<ControlFlow<()>, E> {
 		macro_rules! flow_try {
 			($($t:tt)*) => {
 				match ($($t)*).await? {
@@ -679,24 +700,24 @@ impl PlayStream {
 		}
 		
 		for play in plays {
-			flow_try!(f(PlayStreamEvent::StartPlay(play), meta, data));
+			flow_try!(f(PlayStreamEvent::StartPlay(play), meta, data, linescore, boxscore));
 			for play_event in &play.play_events {
-				flow_try!(f(PlayStreamEvent::PlayEvent(play_event, play), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayEvent(play_event, play), meta, data, linescore, boxscore));
 				for review in &play_event.reviews {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, play_event, play), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, play_event, play), meta, data, linescore, boxscore));
 					if !review.is_in_progress {
-						flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, play_event, play), meta, data));
+						flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, play_event, play), meta, data, linescore, boxscore));
 					}
 				}
 			}
 			for review in &play.reviews {
-				flow_try!(f(PlayStreamEvent::PlayReviewStart(review, play), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayReviewStart(review, play), meta, data, linescore, boxscore));
 				if !review.is_in_progress {
-					flow_try!(f(PlayStreamEvent::PlayReviewEnd(review, play), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayReviewEnd(review, play), meta, data, linescore, boxscore));
 				}
 			}
 			if play.about.is_complete {
-				flow_try!(f(PlayStreamEvent::EndPlay(play), meta, data));
+				flow_try!(f(PlayStreamEvent::EndPlay(play), meta, data, linescore, boxscore));
 			}
 		}
 
@@ -727,7 +748,16 @@ impl PlayStream {
 	///
 	/// # Errors
 	/// See [`request::Error`]
-	pub async fn run_with_custom_error<E: From<request::Error>, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData) -> Result<ControlFlow<()>, E>>(mut self, mut f: F) -> Result<(), E> {
+	pub async fn run_with_custom_error<E: From<request::Error>, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData, &Linescore, &Boxscore) -> Result<ControlFlow<()>, E>>(self, f: F) -> Result<(), E> {
+		let feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
+		Self::with_presupplied_feed(feed, f).await
+	}
+
+	/// Variant of the ``run`` function that begins with a pre-supplied [`LiveFeedResponse`], useful if preprocessing was done before the play stream.
+	///
+	/// # Errors
+	/// See [`request::Error`]
+	pub async fn with_presupplied_feed<E: From<request::Error>, F: AsyncFnMut(PlayStreamEvent, &LiveFeedMetadata, &LiveFeedData, &Linescore, &Boxscore) -> Result<ControlFlow<()>, E>>(mut feed: LiveFeedResponse, mut f: F) -> Result<(), E> {
 		macro_rules! flow_try {
 			($($t:tt)*) => {
 				match ($($t)*).await? {
@@ -736,34 +766,34 @@ impl PlayStream {
 				}
 			};
 		}
-		
-		let mut feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
-		flow_try!(f(PlayStreamEvent::GameStart, &feed.meta, &feed.data));
+
+		let mut this = Self::new(feed.id);
+		flow_try!(f(PlayStreamEvent::Start, &feed.meta, &feed.data, &feed.live.linescore, &feed.live.boxscore));
 		
 		loop {
 		    let since_last_request = Instant::now();
 		    
 			let LiveFeedResponse { meta, data, live, .. } = &feed;
 			let LiveFeedLiveData { linescore, boxscore, decisions, leaders, plays } = live;
-			let mut plays = plays.iter().skip(self.current_play_idx);
+			let mut plays = plays.iter().skip(this.current_play_idx);
 
 			if let Some(current_play) = plays.next() {
-				flow_try!(self.run_current_play(&mut f, current_play, meta, data));
+				flow_try!(this.run_current_play(&mut f, current_play, meta, data, linescore, boxscore));
 			}
 			
-			flow_try!(self.run_next_plays(&mut f, plays, meta, data));
+			flow_try!(this.run_next_plays(&mut f, plays, meta, data, linescore, boxscore));
 			
 			if data.status.abstract_game_code.is_finished() && let Some(decisions) = decisions {
-				let _ = f(PlayStreamEvent::GameEnd(decisions, linescore, boxscore, leaders), meta, data).await?;
+				let _ = f(PlayStreamEvent::GameEnd(decisions, linescore, boxscore, leaders), meta, data, linescore, boxscore).await?;
 				return Ok(())
 			}
 
-			self.update_indices(&live.plays);
+			this.update_indices(&live.plays);
 
 			let total_sleep_time = Duration::from_secs(meta.recommended_poll_rate as _);
 			drop(feed);
 			tokio::time::sleep(total_sleep_time.saturating_sub(since_last_request.elapsed())).await;
-		    feed = LiveFeedRequest::builder().id(self.game_id).build_and_get().await?;
+		    feed = LiveFeedRequest::builder().id(this.game_id).build_and_get().await?;
 		}
 	}
 }
@@ -775,9 +805,9 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_play_stream() {
-		PlayStream::new(822_834).run(async |event, _meta, _data| {
+		PlayStream::new(822_834).run(async |event, _meta, _data, _linescore, _boxscore| {
 			match event {
-				PlayStreamEvent::GameStart => println!("GameStart"),
+				PlayStreamEvent::Start => println!("GameStart"),
 				PlayStreamEvent::StartPlay(play) => println!("PlayStart; {} vs. {}", play.matchup.batter.full_name, play.matchup.pitcher.full_name),
 				PlayStreamEvent::PlayEvent(play_event, _play) => {
 					print!("PlayEvent; ");

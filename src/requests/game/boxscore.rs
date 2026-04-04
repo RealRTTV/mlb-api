@@ -28,6 +28,13 @@ pub struct Boxscore {
     pub officials: Vec<Official>,
 }
 
+impl Boxscore {
+    /// Returns a [`PlayerWithGameData`] if present in the baseball game.
+    pub fn find_player_with_game_data(&self, id: PersonId) -> Option<&PlayerWithGameData> {
+        self.teams.home.players.get(id).or_else(|| self.teams.away.players.get(id))
+    }
+}
+
 /// One of three "top performers" of the game, measured by game score.
 ///
 /// Originally an enum but the amount of two-way-players that exist make it pointlessly annoying and easy to break.
@@ -49,14 +56,12 @@ pub struct TopPerformer {
 }
 
 /// A person with some potentially useful information regarding their performance in the current game.
-#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(from = "__PlayerWithGameDataStruct")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayerWithGameData {
 	pub person: NamedPerson,
-	#[serde(default)]
-	#[serde_as(deserialize_as = "DefaultOnError")]
+	pub boxscore_name: String,
 	pub jersey_number: Option<JerseyNumber>,
 	pub position: NamedPosition,
 	pub status: RosterStatus,
@@ -64,13 +69,71 @@ pub struct PlayerWithGameData {
 	/// Uses the active game's [`GameType`], not the regular season stats.
 	pub season_stats: BoxscoreStatCollection,
 	pub game_status: PlayerGameStatusFlags,
-	#[serde(default)]
 	pub all_positions: Vec<NamedPosition>,
 	pub batting_order: Option<BattingOrderIndex>,
 
+	pub __parent_team_id: IgnoredAny,
+}
+
+#[doc(hidden)]
+#[serde_as]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
+struct __PlayerWithGameDataStruct {
+	person: __NamedPersonWithBoxscoreName,
+	#[serde(default)]
+	#[serde_as(deserialize_as = "DefaultOnError")]
+	jersey_number: Option<JerseyNumber>,
+	position: NamedPosition,
+	status: RosterStatus,
+	stats: BoxscoreStatCollection,
+	season_stats: BoxscoreStatCollection,
+	game_status: PlayerGameStatusFlags,
+	#[serde(default)]
+	all_positions: Vec<NamedPosition>,
+	batting_order: Option<BattingOrderIndex>,
+
     #[doc(hidden)]
     #[serde(rename = "parentTeamId", default)]
-	pub __parent_team_id: IgnoredAny,
+	__parent_team_id: IgnoredAny,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct __NamedPersonWithBoxscoreName {
+    id: PersonId,
+    full_name: String,
+    boxscore_name: String,
+}
+
+impl From<__PlayerWithGameDataStruct> for PlayerWithGameData {
+    fn from(__PlayerWithGameDataStruct {
+        person,
+        jersey_number,
+        position,
+        status,
+        stats,
+        season_stats,
+        game_status,
+        all_positions,
+        batting_order,
+        __parent_team_id
+    }: __PlayerWithGameDataStruct) -> Self {
+        Self {
+            person: NamedPerson { full_name: person.full_name, id: person.id },
+            boxscore_name: person.boxscore_name,
+            jersey_number,
+            position,
+            status,
+            stats,
+            season_stats,
+            game_status,
+            all_positions,
+            batting_order,
+            __parent_team_id
+        }
+    }
 }
 
 /// A team with some potentially useful information regarding their performance in the current game.
