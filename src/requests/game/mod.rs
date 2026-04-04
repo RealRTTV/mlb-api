@@ -574,13 +574,13 @@ pub enum PlayStreamEvent<'a> {
 	GameStart,
 	
 	StartPlay(&'a Play),
-	PlayReviewStart(&'a ReviewData),
-	PlayReviewEnd(&'a ReviewData),
+	PlayReviewStart(&'a ReviewData, &'a Play),
+	PlayReviewEnd(&'a ReviewData, &'a Play),
 	EndPlay(&'a Play),
 	
-	PlayEvent(&'a PlayEvent),
-	PlayEventReviewStart(&'a ReviewData),
-	PlayEventReviewEnd(&'a ReviewData),
+	PlayEvent(&'a PlayEvent, &'a Play),
+	PlayEventReviewStart(&'a ReviewData, &'a PlayEvent, &'a Play),
+	PlayEventReviewEnd(&'a ReviewData, &'a PlayEvent, &'a Play),
 	
 	GameEnd(&'a Decisions, &'a Linescore, &'a Boxscore, &'a GameStatLeaders),
 }
@@ -610,46 +610,46 @@ impl PlayStream {
 		}
 		let mut play_events = current_play.play_events.iter().skip(self.current_play_event_idx);
 		if let Some(current_play_event) = play_events.next() {
-			flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event), meta, data));
+			flow_try!(f(PlayStreamEvent::PlayEvent(current_play_event, play), meta, data));
 			let mut reviews = current_play_event.reviews.iter().skip(self.current_play_event_review_idx);
 			if let Some(current_review) = reviews.next() {
 				if !self.in_progress_current_play_event_review {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(current_review), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(current_review, current_play_event, current_play), meta, data));
 				}
 				if !current_review.is_in_progress {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(current_review), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(current_review, current_play_event, current_play), meta, data));
 				}
 			}
 			for review in reviews {
-				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, current_play_event, current_play), meta, data));
 				if !review.is_in_progress {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, current_play_event, current_play), meta, data));
 				}
 			}
 		}
 		for play_event in play_events {
-			flow_try!(f(PlayStreamEvent::PlayEvent(play_event), meta, data));
+			flow_try!(f(PlayStreamEvent::PlayEvent(play_event, current_play), meta, data));
 			for review in &play_event.reviews {
-				flow_try!(f(PlayStreamEvent::PlayReviewStart(review), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, play_event, current_play), meta, data));
 				if !review.is_in_progress {
-					flow_try!(f(PlayStreamEvent::PlayReviewEnd(review), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, play_event, current_play), meta, data));
 				}
 			}
 		}
 		let mut reviews = current_play.reviews.iter().skip(self.current_play_review_idx);
 		if let Some(current_review) = reviews.next() {
 			if !self.in_progress_current_play_review {
-				flow_try!(f(PlayStreamEvent::PlayReviewStart(current_review), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayReviewStart(current_review, current_play), meta, data));
 			}
 			if !current_review.is_in_progress {
-				flow_try!(f(PlayStreamEvent::PlayReviewEnd(current_review), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayReviewEnd(current_review, current_play), meta, data));
 			}
 		}
 		
 		for review in reviews {
-			flow_try!(f(PlayStreamEvent::PlayReviewStart(review), meta, data));
+			flow_try!(f(PlayStreamEvent::PlayReviewStart(review, current_play), meta, data));
 			if !review.is_in_progress {
-				flow_try!(f(PlayStreamEvent::PlayReviewEnd(review), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayReviewEnd(review, current_play), meta, data));
 			}
 		}
 		if current_play.about.is_complete {
@@ -673,12 +673,18 @@ impl PlayStream {
 		for play in plays {
 			flow_try!(f(PlayStreamEvent::StartPlay(play), meta, data));
 			for play_event in &play.play_events {
-				flow_try!(f(PlayStreamEvent::PlayEvent(play_event), meta, data));
+				flow_try!(f(PlayStreamEvent::PlayEvent(play_event, play), meta, data));
 				for review in &play_event.reviews {
-					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review), meta, data));
+					flow_try!(f(PlayStreamEvent::PlayEventReviewStart(review, play_event, play), meta, data));
 					if !review.is_in_progress {
-						flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review), meta, data));
+						flow_try!(f(PlayStreamEvent::PlayEventReviewEnd(review, play_event, play), meta, data));
 					}
+				}
+			}
+			for review in &play.reviews {
+				flow_try!(f(PlayStreamEvent::PlayReviewStart(review, play), meta, data));
+				if !review.is_in_progress {
+					flow_try!(f(PlayStreamEvent::PlayReviewEnd(review, play), meta, data));
 				}
 			}
 			if play.about.is_complete {
@@ -765,7 +771,7 @@ mod tests {
 			match event {
 				PlayStreamEvent::GameStart => println!("GameStart"),
 				PlayStreamEvent::StartPlay(play) => println!("PlayStart; {} vs. {}", play.matchup.batter.full_name, play.matchup.pitcher.full_name),
-				PlayStreamEvent::PlayEvent(play_event) => {
+				PlayStreamEvent::PlayEvent(play_event, _play) => {
 					print!("PlayEvent; ");
 					match play_event {
 						PlayEvent::Action { details, .. } => println!("{}", details.description),
@@ -775,10 +781,10 @@ mod tests {
 						PlayEvent::Pickoff { .. } => println!("Pickoff"),
 					}
 				},
-				PlayStreamEvent::PlayEventReviewStart(review) => println!("PlayEventReviewStart; {}", review.review_type),
-				PlayStreamEvent::PlayEventReviewEnd(review) => println!("PlayEventReviewEnd; {}", review.review_type),
-				PlayStreamEvent::PlayReviewStart(review) => println!("PlayReviewStart; {}", review.review_type),
-				PlayStreamEvent::PlayReviewEnd(review) => println!("PlayReviewEnd; {}", review.review_type),
+				PlayStreamEvent::PlayEventReviewStart(review, _, _) => println!("PlayEventReviewStart; {}", review.review_type),
+				PlayStreamEvent::PlayEventReviewEnd(review, _, _) => println!("PlayEventReviewEnd; {}", review.review_type),
+				PlayStreamEvent::PlayReviewStart(review, _) => println!("PlayReviewStart; {}", review.review_type),
+				PlayStreamEvent::PlayReviewEnd(review, _) => println!("PlayReviewEnd; {}", review.review_type),
 				PlayStreamEvent::EndPlay(play) => println!("PlayEnd; {}", play.result.completed_play_details.as_ref().expect("Completed play").description),
 				PlayStreamEvent::GameEnd(_, _, _, _) => println!("GameEnd"),
 			}
