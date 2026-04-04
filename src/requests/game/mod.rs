@@ -242,14 +242,14 @@ impl InningHalf {
 	pub const fn bats(self) -> TeamSide {
 		match self {
 			Self::Top => TeamSide::Away,
-			Self::Bottom => TeamSide::Home.
+			Self::Bottom => TeamSide::Home,
 		}
 	}
 
 	/// The team that pitches in this inning half
 	#[must_use]
 	pub const fn pitches(self) -> TeamSide {
-		match Self {
+		match self {
 			Self::Top => TeamSide::Home,
 			Self::Bottom => TeamSide::Away,
 		}
@@ -560,7 +560,7 @@ pub(crate) fn deserialize_players_cache<'de, T: DeserializeOwned, D: Deserialize
 ///         PlayStreamEvent::PlayReviewStart(review, _play) => println!("PlayReviewStart; {}", review.review_type),
 ///         PlayStreamEvent::PlayReviewEnd(review, _play) => println!("PlayReviewEnd; {}", review.review_type),
 ///         PlayStreamEvent::EndPlay(play) => println!("{}", play.result.completed_play_details.as_ref().expect("Completed play").description),
-///         PlayStreamEvent::GameEnd(_, _, _, _) => println!("GameEnd"),
+///         PlayStreamEvent::GameEnd(_, _) => println!("GameEnd"),
 ///     }
 /// }).await?;
 /// ```
@@ -611,7 +611,7 @@ pub enum PlayStreamEvent<'a> {
 	PlayEventReviewStart(&'a ReviewData, &'a PlayEvent, &'a Play),
 	PlayEventReviewEnd(&'a ReviewData, &'a PlayEvent, &'a Play),
 	
-	GameEnd(&'a Decisions, &'a Linescore, &'a Boxscore, &'a GameStatLeaders),
+	GameEnd(&'a Decisions, &'a GameStatLeaders),
 }
 
 impl PlayStream {
@@ -784,7 +784,7 @@ impl PlayStream {
 			flow_try!(this.run_next_plays(&mut f, plays, meta, data, linescore, boxscore));
 			
 			if data.status.abstract_game_code.is_finished() && let Some(decisions) = decisions {
-				let _ = f(PlayStreamEvent::GameEnd(decisions, linescore, boxscore, leaders), meta, data, linescore, boxscore).await?;
+				let _ = f(PlayStreamEvent::GameEnd(decisions, leaders), meta, data, linescore, boxscore).await?;
 				return Ok(())
 			}
 
@@ -824,7 +824,7 @@ mod tests {
 				PlayStreamEvent::PlayReviewStart(review, _) => println!("PlayReviewStart; {}", review.review_type),
 				PlayStreamEvent::PlayReviewEnd(review, _) => println!("PlayReviewEnd; {}", review.review_type),
 				PlayStreamEvent::EndPlay(play) => println!("PlayEnd; {}", play.result.completed_play_details.as_ref().expect("Completed play").description),
-				PlayStreamEvent::GameEnd(_, _, _, _) => println!("GameEnd"),
+				PlayStreamEvent::GameEnd(_, _) => println!("GameEnd"),
 			}
 			Ok(ControlFlow::Continue(()))
 		}).await.unwrap();

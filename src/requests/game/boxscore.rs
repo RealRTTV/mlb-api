@@ -31,7 +31,7 @@ pub struct Boxscore {
 impl Boxscore {
     /// Returns a [`PlayerWithGameData`] if present in the baseball game.
     pub fn find_player_with_game_data(&self, id: PersonId) -> Option<&PlayerWithGameData> {
-        self.teams.home.players.get(id).or_else(|| self.teams.away.players.get(id))
+        self.teams.home.players.get(&id).or_else(|| self.teams.away.players.get(&id))
     }
 }
 
@@ -65,7 +65,7 @@ pub struct PlayerWithGameData {
 	pub jersey_number: Option<JerseyNumber>,
 	pub position: NamedPosition,
 	pub status: RosterStatus,
-	pub stats: BoxscoreStatCollection,
+	pub game_stats: BoxscoreStatCollection,
 	/// Uses the active game's [`GameType`], not the regular season stats.
 	pub season_stats: BoxscoreStatCollection,
 	pub game_status: PlayerGameStatusFlags,
@@ -87,7 +87,8 @@ struct __PlayerWithGameDataStruct {
 	jersey_number: Option<JerseyNumber>,
 	position: NamedPosition,
 	status: RosterStatus,
-	stats: BoxscoreStatCollection,
+	#[serde(rename = "stats")]
+	game_stats: BoxscoreStatCollection,
 	season_stats: BoxscoreStatCollection,
 	game_status: PlayerGameStatusFlags,
 	#[serde(default)]
@@ -113,7 +114,7 @@ impl From<__PlayerWithGameDataStruct> for PlayerWithGameData {
         jersey_number,
         position,
         status,
-        stats,
+        game_stats,
         season_stats,
         game_status,
         all_positions,
@@ -126,7 +127,7 @@ impl From<__PlayerWithGameDataStruct> for PlayerWithGameData {
             jersey_number,
             position,
             status,
-            stats,
+            game_stats,
             season_stats,
             game_status,
             all_positions,

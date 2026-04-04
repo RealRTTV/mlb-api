@@ -198,11 +198,14 @@ pub enum Gender {
 /// Handedness
 ///
 /// Either for batting or pitching
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
 #[serde(try_from = "__HandednessStruct")]
 pub enum Handedness {
+	#[display("L")]
 	Left,
+	#[display("R")]
 	Right,
+	#[display("S")]
 	Switch,
 }
 
