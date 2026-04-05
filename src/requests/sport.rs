@@ -125,7 +125,7 @@ macro_rules! sports_hydrations {
 	(@ actual $vis:vis struct $name:ident {
 		$(season $season_comma:tt)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
 			$(pub season_date_info: $crate::season::Season $season_comma)?

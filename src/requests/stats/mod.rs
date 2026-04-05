@@ -129,7 +129,7 @@ pub mod stat_types {
 			$catching:ty,
 			$fielding:ty $(,)?
 		}) => {
-			::pastey::paste! {
+			$crate::macro_use::pastey::paste! {
 				#[doc(hidden)]
 				pub struct [<__ $name StatTypeStats>];
 

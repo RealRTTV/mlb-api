@@ -10,7 +10,7 @@ use crate::stats::ThreeDecimalPlaceRateStat;
 use crate::team::NamedTeam;
 use crate::Copyright;
 use bon::Builder;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{DateTime, NaiveDate, Utc};
 use derive_more::{Add, AddAssign, Deref, DerefMut, Display};
 use itertools::Itertools;
 use serde::Deserialize;
@@ -45,7 +45,7 @@ pub struct DivisionalStandings<H: StandingsHydrations> {
     #[serde(rename = "sport")]
     pub sport_id: H::Sport,
     #[serde(deserialize_with = "crate::deserialize_datetime")]
-    pub last_updated: NaiveDateTime,
+    pub last_updated: DateTime<Utc>,
     pub team_records: Vec<TeamRecord<H>>,
 }
 
@@ -64,7 +64,7 @@ pub struct TeamRecord<H: StandingsHydrations> {
     pub is_divisional_leader: bool,
     pub has_wildcard: bool,
     #[serde(deserialize_with = "crate::deserialize_datetime")]
-    pub last_updated: NaiveDateTime,
+    pub last_updated: DateTime<Utc>,
     pub streak: Streak,
     #[serde(rename = "records")]
     pub splits: RecordSplits,

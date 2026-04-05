@@ -242,7 +242,6 @@ macro_rules! id {
 	};
 }
 
-// todo: add `request` fn to all requests rather than using the request type directly
 // todo: add deny_unknown_fields to everything
 
 pub mod hydrations;
@@ -250,6 +249,16 @@ pub mod request;
 mod types;
 pub mod cache;
 mod requests;
+
+#[doc(hidden)]
+pub mod macro_use {
+	#[doc(hidden)]
+	pub use ::bon as bon;
+	#[doc(hidden)]
+	pub use ::serde as serde;
+	#[doc(hidden)]
+	pub use ::pastey as pastey;
+}
 
 pub use requests::*;
 pub use types::*;

@@ -56,85 +56,33 @@ pub struct TopPerformer {
 }
 
 /// A person with some potentially useful information regarding their performance in the current game.
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
-#[serde(from = "__PlayerWithGameDataStruct")]
+#[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct PlayerWithGameData {
 	pub person: NamedPerson,
-	pub boxscore_name: String,
+	#[serde(default)]
+	#[serde_as(deserialize_as = "DefaultOnError")]
 	pub jersey_number: Option<JerseyNumber>,
 	pub position: NamedPosition,
 	pub status: RosterStatus,
+	#[serde(rename = "stats")]
 	pub game_stats: BoxscoreStatCollection,
-	/// Uses the active game's [`GameType`], not the regular season stats.
 	pub season_stats: BoxscoreStatCollection,
 	pub game_status: PlayerGameStatusFlags,
+	#[serde(default)]
 	pub all_positions: Vec<NamedPosition>,
 	pub batting_order: Option<BattingOrderIndex>,
 
-	pub __parent_team_id: IgnoredAny,
-}
-
-#[doc(hidden)]
-#[serde_as]
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
-struct __PlayerWithGameDataStruct {
-	person: __NamedPersonWithBoxscoreName,
-	#[serde(default)]
-	#[serde_as(deserialize_as = "DefaultOnError")]
-	jersey_number: Option<JerseyNumber>,
-	position: NamedPosition,
-	status: RosterStatus,
-	#[serde(rename = "stats")]
-	game_stats: BoxscoreStatCollection,
-	season_stats: BoxscoreStatCollection,
-	game_status: PlayerGameStatusFlags,
-	#[serde(default)]
-	all_positions: Vec<NamedPosition>,
-	batting_order: Option<BattingOrderIndex>,
-
     #[doc(hidden)]
     #[serde(rename = "parentTeamId", default)]
-	__parent_team_id: IgnoredAny,
-}
+	pub __parent_team_id: IgnoredAny,
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct __NamedPersonWithBoxscoreName {
-    id: PersonId,
-    full_name: String,
-    boxscore_name: String,
-}
-
-impl From<__PlayerWithGameDataStruct> for PlayerWithGameData {
-    fn from(__PlayerWithGameDataStruct {
-        person,
-        jersey_number,
-        position,
-        status,
-        game_stats,
-        season_stats,
-        game_status,
-        all_positions,
-        batting_order,
-        __parent_team_id
-    }: __PlayerWithGameDataStruct) -> Self {
-        Self {
-            person: NamedPerson { full_name: person.full_name, id: person.id },
-            boxscore_name: person.boxscore_name,
-            jersey_number,
-            position,
-            status,
-            game_stats,
-            season_stats,
-            game_status,
-            all_positions,
-            batting_order,
-            __parent_team_id
-        }
-    }
+	// only sometimes present
+	#[doc(hidden)]
+	#[serde(rename = "boxscoreName", default)]
+	pub __boxscore_name: IgnoredAny,
 }
 
 /// A team with some potentially useful information regarding their performance in the current game.

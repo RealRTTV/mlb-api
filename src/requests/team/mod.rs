@@ -421,7 +421,7 @@ impl TeamHydrations for () {
 #[macro_export]
 macro_rules! team_hydrations {
 	(@ inline_structs [previous_schedule: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::schedule_hydrations! {
 				$vis struct [<$name InlinePreviousSchedule>] {
 					$($inline_tt)*
@@ -437,7 +437,7 @@ macro_rules! team_hydrations {
 		}
 	};
 	(@ inline_structs [next_schedule: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::schedule_hydrations! {
 				$vis struct [<$name InlineNextSchedule>] {
 					$($inline_tt)*
@@ -453,7 +453,7 @@ macro_rules! team_hydrations {
 		}
 	};
 	(@ inline_structs [venue: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::venue_hydrations! {
 				$vis struct [<$name InlineVenue>] {
 					$($inline_tt)*
@@ -469,7 +469,7 @@ macro_rules! team_hydrations {
 		}
 	};
 	(@ inline_structs [spring_venue: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::venue_hydrations! {
 				$vis struct [<$name InlineSpringVenue>] {
 					$($inline_tt)*
@@ -485,7 +485,7 @@ macro_rules! team_hydrations {
 		}
 	};
 	(@ inline_structs [sport: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::sports_hydrations! {
 				$vis struct [<$name InlineSport>] {
 					$($inline_tt)*
@@ -501,7 +501,7 @@ macro_rules! team_hydrations {
 		}
 	};
 	(@ inline_structs [standings: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::standings_hydrations! {
 				$vis struct [<$name InlineStandings>] {
 					$($inline_tt)*
@@ -566,7 +566,7 @@ macro_rules! team_hydrations {
 		$(division $division_comma:tt)?
 		$(external_references $external_references_comma:tt)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		$vis struct $name {
 			$(#[serde(rename = "previousGameSchedule")] previous_schedule: $crate::schedule::ScheduleResponse<$previous_schedule>,)?
 			$(#[serde(rename = "nextGameSchedule")] next_schedule: $crate::schedule::ScheduleResponse<$next_schedule>,)?

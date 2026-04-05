@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 use std::ops::{ControlFlow, Sub};
 use std::time::{Duration, Instant};
 use bon::Builder;
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use derive_more::{Deref, DerefMut, Display, From, Not};
 use fxhash::FxHashMap;
 use serde::{Deserialize, Deserializer};
@@ -58,7 +58,7 @@ id!(#[doc = "A [`u32`] representing a baseball game. [Sport](crate::sport)-indep
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 struct __GameDateTimeStruct {
 	#[serde(rename = "dateTime", deserialize_with = "crate::deserialize_datetime")]
-	datetime: NaiveDateTime,
+	datetime: DateTime<Utc>,
 	original_date: NaiveDate,
 	official_date: NaiveDate,
 	#[serde(rename = "dayNight")]
@@ -67,22 +67,26 @@ struct __GameDateTimeStruct {
 	ampm: DayHalf,
 }
 
-/// Date & Time of the game. Note that the time is typically rounded to the hour and the :07, :05 on the hour is for the first pitch, which is a different timestamp.
+/// Date & Time of the game. 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(from = "__GameDateTimeStruct")]
 pub struct GameDateTime {
-	pub datetime: NaiveDateTime,
+	/// The date and time of the game. Note that the time is typically rounded to the hour and the :07, :05 on the hour is for the first pitch, which is a different timestamp.
+	pub datetime: DateTime<Utc>,
+	/// The original planned date of the game
 	pub original_date: NaiveDate,
+	/// The currently set "date" of the game.
 	pub official_date: NaiveDate,
+	/// Day or night
 	pub sky: DayNight,
 }
 
 impl From<__GameDateTimeStruct> for GameDateTime {
 	fn from(value: __GameDateTimeStruct) -> Self {
-		let date = value.datetime.date();
+		let date = value.datetime.date_naive();
 		let time = value.ampm.into_24_hour_time(value.time);
 		Self {
-			datetime: NaiveDateTime::new(date, time),
+			datetime: NaiveDateTime::new(date, time).and_utc(),
 			original_date: value.original_date,
 			official_date: value.official_date,
 			sky: value.sky,
@@ -133,7 +137,7 @@ impl TryFrom<__WeatherConditionsStruct> for WeatherConditions {
 pub struct GameInfo {
 	pub attendance: Option<u32>,
 	#[serde(deserialize_with = "crate::deserialize_datetime")]
-	pub first_pitch: NaiveDateTime,
+	pub first_pitch: DateTime<Utc>,
 	/// Measured in minutes,
 	#[serde(rename = "gameDurationMinutes")]
 	pub game_duration: Option<u32>,

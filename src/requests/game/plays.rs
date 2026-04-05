@@ -1,7 +1,7 @@
 use std::{fmt::Display, num::NonZeroUsize, ops::{Deref, DerefMut}};
 
 use bon::Builder;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use derive_more::{Deref, DerefMut, Display};
 use serde::{Deserialize, Deserializer, de::IgnoredAny};
 use serde_with::{serde_as, DefaultOnNull, DefaultOnError};
@@ -145,7 +145,7 @@ pub struct Play {
     
     /// Timestamp at which the [`Play`] is called complete.
     #[serde(rename = "playEndTime", deserialize_with = "crate::deserialize_datetime")]
-    pub play_end_timestamp: NaiveDateTime,
+    pub play_end_timestamp: DateTime<Utc>,
 
     #[doc(hidden)]
     #[serde(rename = "pitchIndex", default)]
@@ -217,11 +217,11 @@ pub struct PlayAbout {
 
     /// The timestamp that this play begins; includes milliseconds
     #[serde(rename = "startTime", deserialize_with = "crate::deserialize_datetime")]
-    pub start_timestamp: NaiveDateTime,
+    pub start_timestamp: DateTime<Utc>,
 
     /// The timestamp that this play ends at; includes milliseconds
     #[serde(rename = "endTime", deserialize_with = "crate::deserialize_datetime")]
-    pub end_timestamp: NaiveDateTime,
+    pub end_timestamp: DateTime<Utc>,
 
     /// Whether the play is "complete" or not, i.e. opposite of ongoing.
     ///
@@ -703,9 +703,9 @@ pub struct PlayEventCommon {
     /// At the end of the play event
     pub count: AtBatCount,
     #[serde(rename = "startTime", deserialize_with = "crate::deserialize_datetime")]
-    pub start_timestamp: NaiveDateTime,
+    pub start_timestamp: DateTime<Utc>,
     #[serde(rename = "endTime", deserialize_with = "crate::deserialize_datetime")]
-    pub end_timestamp: NaiveDateTime,
+    pub end_timestamp: DateTime<Utc>,
     pub is_pitch: bool,
     #[serde(rename = "isBaseRunningPlay", default)]
     pub is_baserunning_play: bool,

@@ -15,7 +15,7 @@ use crate::season::SeasonId;
 use crate::team::TeamId;
 use crate::{Copyright, HomeAway, MLB_API_DATE_FORMAT};
 use bon::Builder;
-use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
+use chrono::{DateTime, Datelike, Local, NaiveDate, Utc};
 use either::Either;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
@@ -236,10 +236,10 @@ struct AnnualRecordStruct {
 	// attendance_average_home: u32,
 	// attendance_average_ytd: u32,
 	attendance_high: Option<u32>,
-	attendance_high_date: Option<NaiveDateTime>,
+	attendance_high_date: Option<DateTime<Utc>>,
 	attendance_high_game: Option<GameId>,
 	attendance_low: Option<u32>,
-	attendance_low_date: Option<NaiveDateTime>,
+	attendance_low_date: Option<DateTime<Utc>>,
 	attendance_low_game: Option<GameId>,
 	// attendance_opening_average: u32,
 	// attendance_total: u32,
@@ -282,7 +282,7 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 			.zip(attendance_high_date).zip(attendance_high_game) {
 			let max = DatedAttendance {
 				value: attendance_high,
-				date: attendance_high_date.date(),
+				date: attendance_high_date.date_naive(),
 				game: attendance_high_game,
 			};
 
@@ -291,7 +291,7 @@ impl From<AnnualRecordStruct> for AttendanceRecord {
 					.zip(attendance_low_date).zip(attendance_low_game) {
 					DatedAttendance {
 						value: attendance_low,
-						date: attendance_low_date.date(),
+						date: attendance_low_date.date_naive(),
 						game: attendance_low_game,
 					}
 				} else {

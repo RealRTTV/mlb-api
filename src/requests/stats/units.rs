@@ -374,7 +374,7 @@ impl Display for PlusStat {
 /// Ex: Hits
 pub type CountingStat = u32;
 
-#[derive(Deserialize, PartialEq, Copy, Clone, Deref, DerefMut)]
+#[derive(Deserialize, PartialEq, Copy, Clone, Deref, DerefMut, Default)]
 pub struct FloatCountingStat<const N: usize>(f64);
 
 impl<const N: usize> Add for FloatCountingStat<N> {

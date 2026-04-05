@@ -121,7 +121,7 @@ macro_rules! venue_hydrations {
 		$(external_references $external_references_comma:tt)?
 		$(tracking_system $tracking_system_comma:tt)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
 			$(#[serde(default)] pub location: $crate::types::Location $location_comma)?

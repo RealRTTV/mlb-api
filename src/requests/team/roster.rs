@@ -263,7 +263,7 @@ macro_rules! roster_hydrations {
         $(person: $person:ty ,)?
     }) => {
         ::pastey::paste! {
-            #[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
+            #[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
             #[serde(rename_all = "camelCase")]
             $vis struct $name {}
 
@@ -286,7 +286,7 @@ macro_rules! roster_hydrations {
                 }
             }
 
-            #[derive(::bon::Builder)]
+            #[derive($crate::macro_use::bon::Builder)]
             #[builder(derive(Into))]
             $vis struct [<$name RequestData>] {
                 $(#[builder(into)] person: <$person as $crate::hydrations::Hydrations>::RequestData,)?

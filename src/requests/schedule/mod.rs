@@ -16,7 +16,7 @@ use crate::team::TeamId;
 use crate::venue::{NamedVenue, VenueId};
 use crate::{Copyright, HomeAway, MLB_API_DATE_FORMAT, NaiveDateRange};
 use bon::Builder;
-use chrono::{NaiveDate, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use either::Either;
 use itertools::Itertools;
 use serde::Deserialize;
@@ -53,8 +53,8 @@ pub struct ScheduleGame<H: ScheduleHydrations> {
 	pub game_guid: Uuid,
 	pub game_type: GameType,
 	pub season: SeasonId,
-	pub game_date: NaiveDateTime,
-	/// Different from `game_date.date()` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
+	pub game_date: DateTime<Utc>,
+	/// Different from `game_date.date_naive()` in cases such as a rescheduled/postponed game (ex: Toronto @ Boston June 26, 2024)
 	pub official_date: NaiveDate,
 	pub status: GameStatus,
 	pub teams: HomeAway<TeamWithStandings<H>>,
@@ -90,7 +90,7 @@ struct __ScheduleGameStruct<H: ScheduleHydrations> {
 	game_type: GameType,
 	season: SeasonId,
 	#[serde(deserialize_with = "crate::deserialize_datetime")]
-	game_date: NaiveDateTime,
+	game_date: DateTime<Utc>,
 	official_date: NaiveDate,
 	status: GameStatus,
 	teams: HomeAway<TeamWithStandings<H>>,
@@ -298,7 +298,7 @@ impl ScheduleHydrations for () {
 #[macro_export]
 macro_rules! schedule_hydrations {
 	(@ inline_structs [team: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::team_hydrations! {
 				$vis struct [<$name InlineTeam>] {
 					$($inline_tt)*
@@ -314,7 +314,7 @@ macro_rules! schedule_hydrations {
 		}
 	};
 	(@ inline_structs [venue: { $($inline_tt:tt)* } $(, $($tt:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::venue_hydrations! {
 				$vis struct [<$name InlineVenue>] {
 					$($inline_tt)*
@@ -358,7 +358,7 @@ macro_rules! schedule_hydrations {
 		$(team: $team:ty ,)?
 		$(venue: $venue:ty)?
 	}) => {
-		#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
+		#[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
 

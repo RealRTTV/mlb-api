@@ -61,7 +61,7 @@ impl<T: SingletonSplitStat> Stat for Vec<T> {
 
 macro_rules! piece {
     ($name:ident => $ty:ty) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			pub trait [<$name Piece>] {
 				fn [<$name:snake>](&self) -> &$ty;
 			}

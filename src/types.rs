@@ -2,7 +2,7 @@
 
 #![allow(clippy::redundant_pub_crate, reason = "re-exported as pub lol")]
 
-use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Timelike};
+use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, DateTime, Utc, TimeDelta, Timelike};
 use derive_more::{Display, FromStr};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
@@ -249,7 +249,7 @@ pub(crate) const MLB_API_DATE_FORMAT: &str = "%m/%d/%Y";
 /// # Errors
 /// 1. If a string cannot be deserialized
 /// 2. If the data does not appear in the format `%Y-%m-%dT%H:%M:%SZ(%#z)?`. Why the MLB removes the +00:00 or -00:00 sometimes? I have no clue.
-pub(crate) fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -> Result<NaiveDateTime, D::Error> {
+pub(crate) fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -> Result<DateTime<Utc>, D::Error> {
 	let string = String::deserialize(deserializer)?;
 	let fmt = match (string.ends_with('Z'), string.contains('.')) {
 		(false, false) => "%FT%TZ%#z",
@@ -257,7 +257,7 @@ pub(crate) fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -
 		(true, false) => "%FT%TZ",
 		(true, true) => "%FT%T%.3fZ",
 	};
-	NaiveDateTime::parse_from_str(&string, fmt).map_err(D::Error::custom)
+	NaiveDateTime::parse_from_str(&string, fmt).map(|x| x.and_utc()).map_err(D::Error::custom)
 }
 
 /// # Errors
@@ -407,6 +407,16 @@ impl<T> HomeAway<T> {
 	#[must_use]
 	pub fn either(self, mut f: impl FnMut(T) -> bool) -> bool {
 		f(self.home) || f(self.away)
+	}
+}
+
+impl<T> HomeAway<Option<T>> {
+	#[must_use]
+	pub fn flatten(self) -> Option<HomeAway<T>> {
+		Some(HomeAway {
+			home: self.home?,
+			away: self.away?,
+		})
 	}
 }
 

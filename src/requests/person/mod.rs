@@ -455,7 +455,7 @@ impl PersonHydrations for () {}
 #[macro_export]
 macro_rules! person_hydrations {
 	(@ inline_structs [stats: { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             $crate::stats_hydrations! {
                 $vis struct [<$name InlineStats>] {
                     $($contents)*
@@ -474,7 +474,7 @@ macro_rules! person_hydrations {
         ::core::compile_error!("Found unknown inline struct");
     };
     (@ inline_structs [$marker:ident $(: $value:ty)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             $crate::person_hydrations! { @ inline_structs [$($($rest)*)?]
                 $vis struct $name {
                     $($field_tt)*
@@ -484,7 +484,7 @@ macro_rules! person_hydrations {
         }
     };
     (@ inline_structs [$(,)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             $crate::person_hydrations! { @ actual
                 $vis struct $name {
                     $($field_tt)*
@@ -510,8 +510,8 @@ macro_rules! person_hydrations {
 			$(external_references $external_references_comma:tt)?
 		}
     ) => {
-		::pastey::paste! {
-			#[derive(::core::fmt::Debug, ::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
+		$crate::macro_use::pastey::paste! {
+			#[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 			#[serde(rename_all = "camelCase")]
 			$vis struct $name {
 				$(#[serde(default)] pub awards: ::std::vec::Vec<$crate::awards::Award> $awards_comma)?
@@ -560,7 +560,7 @@ macro_rules! person_hydrations {
 				}
 			}
 
-			#[derive(::bon::Builder)]
+			#[derive($crate::macro_use::bon::Builder)]
 			#[builder(derive(Into))]
 			$vis struct [<$name RequestData>] {
 				$(#[builder(into)] stats: <$stats as $crate::hydrations::Hydrations>::RequestData,)?

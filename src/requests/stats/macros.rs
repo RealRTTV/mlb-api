@@ -2,7 +2,7 @@
 #[doc(hidden)]
 macro_rules! __stats__stat_type_definition {
     ($parent_name:ident => $vis:vis struct $name:ident { $stat_type:ident => [$($stat_group:ident),+] }) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			#[derive(Debug, PartialEq, Clone)]
 			$vis struct $name {
 				$($vis [< $stat_group:snake >]: ::std::boxed::Box<<$crate::stats::stat_types::[<__ $stat_type StatTypeStats>] as $crate::stats::StatTypeStats>::$stat_group>),+
@@ -27,7 +27,7 @@ macro_rules! __stats__stat_type_definition {
 #[doc(hidden)]
 macro_rules! __stats__base_hydration_text {
     ([$first_stat_type:ident $(, $stat_type:ident)* $(,)?] [$first_stat_group:ident $(, $stat_group:ident)* $(,)?]) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			::core::concat!(
 				"type=[",
 				::core::stringify!([<$first_stat_type:lower_camel>]),
@@ -158,7 +158,7 @@ macro_rules! __stats__needle_haystack_opponent_player {
 #[doc(hidden)]
 macro_rules! __stats__request_data {
 	(@ metrics [$($stat_type:ident),+] $(#[$m:meta])* $vis:vis struct $name:ident { $($field_tt:tt)* } $($impl_tt:tt)*) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::__stats__needle_haystack_metrics! { [$($stat_type),+] => {
 				$crate::__stats__request_data! { @ date_range [$($stat_type),+]
 					$(#[$m])*
@@ -188,7 +188,7 @@ macro_rules! __stats__request_data {
 		}
 	};
 	(@ date_range [$($stat_type:ident),+] $(#[$m:meta])* $vis:vis struct $name:ident { $($field_tt:tt)* } $($impl_tt:tt)*) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::__stats__needle_haystack_date_range!{[$($stat_type),+] => {
 				$crate::__stats__request_data! { @ situations [$($stat_type),+]
 					$(#[$m])*
@@ -210,7 +210,7 @@ macro_rules! __stats__request_data {
 		}
 	};
 	(@ situations [$($stat_type:ident),+] $(#[$m:meta])* $vis:vis struct $name:ident { $($field_tt:tt)* } $($impl_tt:tt)*) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::__stats__needle_haystack_situations!{[$($stat_type),+] => {
 				$crate::__stats__request_data! { @ games_back [$($stat_type),+]
 					$(#[$m])*
@@ -243,7 +243,7 @@ macro_rules! __stats__request_data {
 		}
 	};
 	(@ games_back [$($stat_type:ident),+] $(#[$m:meta])* $vis:vis struct $name:ident { $($field_tt:tt)* } $($impl_tt:tt)*) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::__stats__needle_haystack_games_back!{[$($stat_type),+] => {
 				$crate::__stats__request_data! { @ opponent_player [$($stat_type),+]
 					$(#[$m])*
@@ -265,7 +265,7 @@ macro_rules! __stats__request_data {
 		}
 	};
 	(@ opponent_player [$($stat_type:ident),+] $(#[$m:meta])* $vis:vis struct $name:ident { $($field_tt:tt)* } $($impl_tt:tt)*) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::__stats__needle_haystack_opponent_player!{[$($stat_type),+] => {
 				// $crate::__stats__request_data! { @ ? [$($stat_type),+]
 					$(#[$m])*
@@ -288,9 +288,9 @@ macro_rules! __stats__request_data {
 		}
 	};
     ($vis:vis $name:ident [$($stat_type:ident),+]) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::__stats__request_data! { @ metrics [$($stat_type),+]
-				#[derive(::bon::Builder)]
+				#[derive($crate::macro_use::bon::Builder)]
 				#[builder(derive(Into))]
 				#[allow(unused, reason = "could be unused by the end user")]
 				$vis struct [<$name RequestData>] {
@@ -407,7 +407,7 @@ macro_rules! __stats0 {
     ($vis:vis struct $name:ident {
 		[$($stat_type:ident),+ $(,)?] + $stat_groups:tt
 	}) => {
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			#[derive(Debug, PartialEq, Clone)]
         	$vis struct $name {
 				$($vis [<$stat_type:snake>]: [<$name $stat_type Split>],)*
@@ -422,15 +422,15 @@ macro_rules! __stats0 {
 
 			$($crate::__stats__stat_type_definition!($name => $vis struct [<$name $stat_type Split>] { $stat_type => $stat_groups });)+
 
-			impl<'de> ::serde::Deserialize<'de> for $name {
-				fn deserialize<D: ::serde::de::Deserializer<'de>>(deserializer: D) -> ::core::result::Result<Self, D::Error>
+			impl<'de> $crate::macro_use::serde::Deserialize<'de> for $name {
+				fn deserialize<D: $crate::macro_use::serde::de::Deserializer<'de>>(deserializer: D) -> ::core::result::Result<Self, D::Error>
 				where
 					Self: Sized
 				{
-					let mut parsed_stats: $crate::stats::parse::__ParsedStats = <$crate::stats::parse::__ParsedStats as ::serde::Deserialize>::deserialize(deserializer)?;
+					let mut parsed_stats: $crate::stats::parse::__ParsedStats = <$crate::stats::parse::__ParsedStats as $crate::macro_use::serde::Deserialize>::deserialize(deserializer)?;
 
 					Ok(Self {
-						$([<$stat_type:snake>]: <[<$name $stat_type Split>] as [<__ $name Split Parser>]>::parse(&mut parsed_stats).map_err(<D::Error as ::serde::de::Error>::custom)?),+
+						$([<$stat_type:snake>]: <[<$name $stat_type Split>] as [<__ $name Split Parser>]>::parse(&mut parsed_stats).map_err(<D::Error as $crate::macro_use::serde::de::Error>::custom)?),+
 					})
 				}
 			}
@@ -472,7 +472,7 @@ macro_rules! single_stat {
 		$crate::single_stat! { $stat_type + $stat_group for $person_id; with |builder| builder }
 	};
 	($stat_type:ident + $stat_group:ident for $person_id:expr; with |$builder:ident| $builder_expr:expr) => {{
-		::pastey::paste! {
+		$crate::macro_use::pastey::paste! {
 			$crate::person_hydrations! {
 				struct [<$stat_type $stat_group SingleStatHydrations >] {
 				    stats: { [$stat_type] + [$stat_group] },

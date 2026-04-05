@@ -136,7 +136,7 @@ register_fields![ $
 
 macro_rules! group_and_type {
     ($name:ident { $($(#[$meta:meta])* $serde:literal => $piece:ident),* $(,)? }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             #[doc(hidden)]
             #[derive(Debug, ::serde::Deserialize, Clone)]
             #[allow(non_snake_case, reason = "some fields like FIP")]
