@@ -409,6 +409,7 @@ pub struct ScheduleRequest<H: ScheduleHydrations> {
 	opponent_id: Option<TeamId>,
 	#[builder(into)]
 	season: Option<SeasonId>,
+	game_type: Option<GameType>,
 	#[builder(skip)]
 	_marker: PhantomData<H>,
 }
@@ -466,6 +467,7 @@ impl<H: ScheduleHydrations> Display for ScheduleRequest<H> {
 				"opponentId"?; self.opponent_id,
 				"season"?: self.season,
 				"venueIds"?: self.venue_ids.as_ref().map(|ids| ids.iter().map(ToString::to_string).join(",")),
+				"gameType"?: self.game_type,
 			}
 		)
 	}

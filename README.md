@@ -27,9 +27,9 @@ Endpoints are most commonly used using their module's builder functions.
 ```rust
 use mlb_api::sport::SportId;
 use mlb_api::request::RequestUrlBuilderExt;
-use mlb_api::schedule::{self, ScheduleResponse, ScheduleDate};
+use mlb_api::schedule::{self, ScheduleResponse, ScheduleRequest, ScheduleDate};
 
-let response: ScheduleResponse = schedule::request()
+let response: ScheduleResponse = ScheduleRequest::builder()
     .sport_id(SportId::MLB)
     .build_and_get()
     .await?;

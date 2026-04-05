@@ -373,17 +373,40 @@ impl<T> HomeAway<T> {
 	}
 
 	#[must_use]
-	pub fn combine<U, V, F: FnMut(T, U) -> V>(self, other: HomeAway<U>, mut f: F) -> HomeAway<V> {
+	pub fn zip<U>(self, other: HomeAway<U>) -> HomeAway<(T, U)> {
+		HomeAway {
+			home: (self.home, other.home),
+			away: (self.away, other.away),
+		}
+	}
+	
+	#[must_use]
+	pub fn zip_with<U, V, F: FnMut(T, U) -> V>(self, other: HomeAway<U>, mut f: F) -> HomeAway<V> {
 		HomeAway {
 			home: f(self.home, other.home),
 			away: f(self.away, other.away),
 		}
 	}
 
+	#[must_use]
+	pub fn combine<U, F: FnOnce(T, T) -> U>(self, f: F) -> U {
+		f(self.home, self.away)
+	}
+
 	/// Adds home and away values (typically used in stats)
 	#[must_use]
 	pub fn added(self) -> <T as Add>::Output where T: Add {
 		self.home + self.away
+	}
+
+	#[must_use]
+	pub fn both(self, mut f: impl FnMut(T) -> bool) -> bool {
+		f(self.home) && f(self.away)
+	}
+
+	#[must_use]
+	pub fn either(self, mut f: impl FnMut(T) -> bool) -> bool {
+		f(self.home) || f(self.away)
 	}
 }
 

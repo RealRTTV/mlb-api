@@ -138,6 +138,7 @@ impl From<__PlayerWithGameDataStruct> for PlayerWithGameData {
 }
 
 /// A team with some potentially useful information regarding their performance in the current game.
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
@@ -150,7 +151,8 @@ pub struct TeamWithGameData {
     pub pitchers: Vec<PersonId>,
     pub bench: Vec<PersonId>,
     pub bullpen: Vec<PersonId>,
-    pub batting_order: [PersonId; 9],
+    #[serde_as(deserialize_as = "DefaultOnError")]
+    pub batting_order: Option<[PersonId; 9]>,
     #[serde(rename = "info")]
     pub sectioned_labelled_values: Vec<SectionedLabelledValues>,
     #[serde(rename = "note")]
