@@ -52,46 +52,25 @@ pub use live_feed::*;
 
 id!(#[doc = "A [`u32`] representing a baseball game. [Sport](crate::sport)-independent"] GameId { gamePk: u32 });
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[doc(hidden)]
-#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
-struct __GameDateTimeStruct {
-	#[serde(rename = "dateTime", deserialize_with = "crate::deserialize_datetime")]
-	datetime: DateTime<Utc>,
-	original_date: NaiveDate,
-	official_date: NaiveDate,
-	#[serde(rename = "dayNight")]
-	sky: DayNight,
-	time: NaiveTime,
-	ampm: DayHalf,
-}
-
 /// Date & Time of the game. 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-#[serde(from = "__GameDateTimeStruct")]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct GameDateTime {
 	/// The date and time of the game. Note that the time is typically rounded to the hour and the :07, :05 on the hour is for the first pitch, which is a different timestamp.
+	#[serde(rename = "dateTime", deserialize_with = "crate::deserialize_datetime")]
 	pub datetime: DateTime<Utc>,
 	/// The original planned date of the game
 	pub original_date: NaiveDate,
 	/// The currently set "date" of the game.
 	pub official_date: NaiveDate,
 	/// Day or night
+	#[serde(rename = "dayNight")]
 	pub sky: DayNight,
-}
-
-impl From<__GameDateTimeStruct> for GameDateTime {
-	fn from(value: __GameDateTimeStruct) -> Self {
-		let date = value.datetime.date_naive();
-		let time = value.ampm.into_24_hour_time(value.time);
-		Self {
-			datetime: NaiveDateTime::new(date, time).and_utc(),
-			original_date: value.original_date,
-			official_date: value.official_date,
-			sky: value.sky,
-		}
-	}
+	/// The local 12-hour time of the game
+	pub time: NaiveTime,
+	/// AM or PM; use [`DayHalf::into_24_hour_time`] to convert to 24-hour local time.
+	pub ampm: DayHalf,
 }
 
 /// General weather conditions, temperature, wind, etc.

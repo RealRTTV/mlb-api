@@ -268,7 +268,7 @@ pub use requests::*;
 pub use types::*;
 
 #[cfg(test)]
-pub(crate) const TEST_YEAR: u32 = 2025;
+pub(crate) const TEST_YEAR: u32 = 2026;
 
 pub(crate) type RwLock<T> = tokio::sync::RwLock<T>;
 

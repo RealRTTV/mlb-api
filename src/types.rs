@@ -632,6 +632,12 @@ pub struct MLBError {
 	pub(crate) message: String,
 }
 
+impl MLBError {
+	pub fn new(message: impl Into<String>) -> Self {
+		Self { message: message.into() }
+	}
+}
+
 impl std::error::Error for MLBError {}
 
 /// `rgba({red}, {green}, {blue})` into a type

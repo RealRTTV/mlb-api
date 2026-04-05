@@ -486,7 +486,7 @@ macro_rules! single_stat {
 				})).id($person_id).build();
 				let response = $crate::request::RequestURL::get(&request).await;
 				response.and_then::<[$crate::person::Person<[<$stat_type $stat_group SingleStatHydrations>]>; 1], _>(|response|
-					response.people.try_into().map_err(|_| $crate::request::Error::MLB($crate::MLBError { message: "Expected one person in a single stat response".to_owned() }))
+					response.people.try_into().map_err(|_| $crate::request::Error::MLB($crate::MLBError::new("Expected one person in a single stat response".to_owned())))
 				)
 				.map(|[person]| person.extras.stats.[<$stat_type:snake>].[<$stat_group:snake>].clone())
 			}

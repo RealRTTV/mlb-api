@@ -98,8 +98,6 @@ pub struct LiveFeedDataMeta {
 	#[serde(rename = "type")]
 	pub game_type: GameType,
 	pub double_header: DoubleHeaderKind,
-	/// Will state `P` for [`GameType::Playoffs`] games rather than what playoff series it is, amongst other things
-	pub gameday_type: GameType,
 	#[serde(deserialize_with = "crate::from_yes_no")]
 	pub tiebreaker: bool,
 	/// No clue what this means
@@ -114,6 +112,9 @@ pub struct LiveFeedDataMeta {
 	#[doc(hidden)]
 	#[serde(rename = "calendarEventID", default)]
 	pub __calender_event_id: IgnoredAny,
+	#[doc(hidden)]
+	#[serde(rename = "gamedayType", default)]
+	pub __gameday_type: IgnoredAny,
 }
 
 /// Live data about the game -- i.e. stuff that changes as the game goes on.
