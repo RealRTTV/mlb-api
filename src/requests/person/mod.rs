@@ -527,7 +527,7 @@ macro_rules! person_hydrations {
 				$(#[serde(default)] pub transactions: ::std::vec::Vec<$crate::transactions::Transaction> $transactions_comma)?
 				$(#[serde(flatten)] pub stats: $stats ,)?
 				$(#[serde(default, rename = "social")] pub socials: ::std::collections::HashMap<String, Vec<String>> $social_comma)?
-				$(#[serde(default, rename = "xrefIds")] pub external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
+				$(#[serde(default, rename = "xrefIds")] pub external_references: ::std::vec::Vec<$crate::ExternalReference> $external_references_comma)?
 			}
 
 			impl $crate::person::PersonHydrations for $name {}

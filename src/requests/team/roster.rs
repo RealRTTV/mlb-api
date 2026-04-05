@@ -211,7 +211,7 @@ impl RosterHydrations for () {
 #[macro_export]
 macro_rules! roster_hydrations {
     (@ inline_structs [person: { $($contents:tt)* } $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             $crate::person_hydrations! {
                 $vis struct [<$name InlinePersonHydrations>] {
                     $($contents)*
@@ -230,7 +230,7 @@ macro_rules! roster_hydrations {
         ::core::compile_error!("Found unknown inline struct");
     };
     (@ inline_structs [$marker:ident $(: $value:ty)? $(, $($rest:tt)*)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             $crate::roster_hydrations! { @ inline_structs [$($($rest)*)?]
                 $vis struct $name {
                     $($field_tt)*
@@ -240,7 +240,7 @@ macro_rules! roster_hydrations {
         }
     };
     (@ inline_structs [$(,)?] $vis:vis struct $name:ident { $($field_tt:tt)* }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             $crate::roster_hydrations! { @ actual
                 $vis struct $name {
                     $($field_tt)*
@@ -262,7 +262,7 @@ macro_rules! roster_hydrations {
     (@ actual $vis:vis struct $name:ident {
         $(person: $person:ty ,)?
     }) => {
-        ::pastey::paste! {
+        $crate::macro_use::pastey::paste! {
             #[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
             #[serde(rename_all = "camelCase")]
             $vis struct $name {}

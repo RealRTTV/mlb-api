@@ -340,7 +340,7 @@ macro_rules! __stats__request_data {
 
 			impl ::core::fmt::Display for [<$name RequestData>] {
 				fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-					use ::itertools::Itertools;
+					use $crate::macro_use::itertools::Itertools;
 
 					::core::fmt::Write::write_fmt(f, ::core::format_args!("gameType={:?},", self.game_type))?;
 					if let ::core::option::Option::Some(season)	= self.season {

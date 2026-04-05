@@ -570,7 +570,7 @@ macro_rules! team_hydrations {
 		$vis struct $name {
 			$(#[serde(rename = "previousGameSchedule")] previous_schedule: $crate::schedule::ScheduleResponse<$previous_schedule>,)?
 			$(#[serde(rename = "nextGameSchedule")] next_schedule: $crate::schedule::ScheduleResponse<$next_schedule>,)?
-			$(#[serde(rename = "xrefIds")] external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
+			$(#[serde(rename = "xrefIds")] external_references: ::std::vec::Vec<$crate::ExternalReference> $external_references_comma)?
 			$(#[serde(default, rename = "social")] socials: ::std::collections::HashMap<::std::string::String, ::std::vec::Vec<::std::string::String> $social_comma>)?
 		}
 

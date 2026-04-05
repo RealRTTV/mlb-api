@@ -124,11 +124,11 @@ macro_rules! venue_hydrations {
 		#[derive(::core::fmt::Debug, $crate::macro_use::serde::Deserialize, ::core::cmp::PartialEq, ::core::clone::Clone)]
 		#[serde(rename_all = "camelCase")]
 		$vis struct $name {
-			$(#[serde(default)] pub location: $crate::types::Location $location_comma)?
-			$(#[serde(rename = "timeZone")] pub timezone: $crate::types::TimeZoneData $timezone_comma)?
-			$(#[serde(rename = "fieldInfo")] pub field_info: $crate::types::FieldInfo $field_info_comma)?
-			$(#[serde(default, rename = "xrefIds")] pub external_references: ::std::vec::Vec<$crate::types::ExternalReference> $external_references_comma)?
-			$(#[serde(rename = "trackingVersion")] pub tracking_system: ::core::option::Option<$crate::types::TrackingSystem> $tracking_system_comma)?
+			$(#[serde(default)] pub location: $crate::Location $location_comma)?
+			$(#[serde(rename = "timeZone")] pub timezone: $crate::TimeZoneData $timezone_comma)?
+			$(#[serde(rename = "fieldInfo")] pub field_info: $crate::FieldInfo $field_info_comma)?
+			$(#[serde(default, rename = "xrefIds")] pub external_references: ::std::vec::Vec<$crate::ExternalReference> $external_references_comma)?
+			$(#[serde(rename = "trackingVersion")] pub tracking_system: ::core::option::Option<$crate::TrackingSystem> $tracking_system_comma)?
 		}
 
 		impl $crate::venue::VenueHydrations for $name {}

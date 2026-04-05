@@ -8,7 +8,6 @@ use crate::request::RequestURL;
 use bon::Builder;
 use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
-use crate::hydrations::Hydrations;
 use crate::person::PersonHydrations;
 
 #[derive(Builder)]

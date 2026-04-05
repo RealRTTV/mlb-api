@@ -22,6 +22,8 @@
 
 This project and its author are not affiliated with MLB or any MLB team. This crate wraps the existing MLB Stats API, which is subject to the notice posted at <http://gdx.mlb.com/components/copyright.txt>.
 
+DISCLAIMER: Due the the limitations of macros and crate paths, if one is using macros from this crate and has this crate as a dependency, they must also add `serde` and `bon` as dependencies; it's recommended to use the versions that your current version of `mlb-api` is using.
+
 ### Usage
 Endpoints are most commonly used using their module's builder functions.
 ```rust
