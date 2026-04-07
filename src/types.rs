@@ -200,13 +200,22 @@ pub enum Gender {
 /// Either for batting or pitching
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
 #[serde(try_from = "__HandednessStruct")]
+#[display("{}", self.into_char())]
 pub enum Handedness {
-	#[display("L")]
 	Left,
-	#[display("R")]
 	Right,
-	#[display("S")]
 	Switch,
+}
+
+impl Handedness {
+	#[must_use]
+	pub const fn into_char(self) -> char {
+		match self {
+			Self::Left => 'L',
+			Self::Right => 'R',
+			Self::Switch => 'S',
+		}
+	}
 }
 
 #[derive(Deserialize)]
