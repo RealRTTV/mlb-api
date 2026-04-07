@@ -4,6 +4,7 @@ use bon::Builder;
 use derive_more::{Deref, DerefMut};
 use serde::Deserialize;
 use serde::de::IgnoredAny;
+use serde_with::{serde_as, DefaultOnError};
 
 use crate::request::RequestURL;
 use crate::{Copyright, HomeAway};
@@ -20,23 +21,28 @@ use crate::team::NamedTeam;
 /// TOR | 0 | 0 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 || 4 | 14| 0 |
 /// ````
 /// You're used to seeing.
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct Linescore {
     #[serde(default)]
     pub copyright: Copyright,
+    #[serde(default = "Inning::starting")]
     pub current_inning: Inning,
+    #[serde(default = "InningHalf::starting")]
     pub inning_half: InningHalf,
     pub scheduled_innings: usize,
     pub innings: Vec<LinescoreInningRecord>,
     #[serde(rename = "teams")]
     pub rhe_totals: HomeAway<RHE>,
-    pub offense: LinescoreOffense,
-    pub defense: LinescoreDefense,
+    #[serde_as(deserialize_as = "DefaultOnError")]
+    pub offense: Option<LinescoreOffense>,
+    #[serde_as(deserialize_as = "DefaultOnError")]
+    pub defense: Option<LinescoreDefense>,
+    pub note: Option<String>,
     #[serde(flatten)]
     pub count: AtBatCount,
-    pub note: Option<String>,
 
     #[doc(hidden)]
     #[serde(rename = "currentInningOrdinal", default)]

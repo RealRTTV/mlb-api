@@ -261,6 +261,13 @@ pub(crate) fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -
 }
 
 /// # Errors
+/// Never.
+#[allow(clippy::unnecessary_wraps, reason = "serde return type")]
+pub(crate) fn try_deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error> {
+	Ok(deserialize_datetime(deserializer).ok())
+}
+
+/// # Errors
 /// 1. If a string cannot be deserialized
 /// 2. If the data does not appear in the format of `/(?:<t parser here>,)*<t parser here>?/g`
 pub(crate) fn deserialize_comma_separated_vec<'de, D: Deserializer<'de>, T: FromStr>(deserializer: D) -> Result<Vec<T>, D::Error>
@@ -782,6 +789,15 @@ impl<'a> TryFrom<&'a str> for DayHalf {
 #[serde(rename_all = "camelCase")]
 pub struct ResourceUsage {
 	pub used: u32,
+	pub remaining: u32,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ResultHoldingResourceUsage {
+	#[serde(rename = "usedSuccessful")]
+	pub used_successfully: u32,
+	pub used_failed: u32,
 	pub remaining: u32,
 }
 

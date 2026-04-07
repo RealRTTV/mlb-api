@@ -23,7 +23,7 @@ pub struct Plays {
     plays: Vec<Play>,
 
     /// Unlinked from the `plays` list
-    pub current_play: Play,
+    pub current_play: Option<Play>,
 
     #[serde(rename = "scoringPlays")]
     pub(super) scoring_play_indices: Vec<usize>,

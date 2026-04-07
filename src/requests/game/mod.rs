@@ -20,7 +20,7 @@ use crate::meta::{DayNight, NamedPosition};
 use crate::request::RequestURLBuilderExt;
 use crate::team::TeamId;
 use crate::team::roster::RosterStatus;
-use crate::{DayHalf, HomeAway, ResourceUsage, TeamSide};
+use crate::{DayHalf, HomeAway, ResourceUsage, ResultHoldingResourceUsage, TeamSide};
 use crate::meta::WindDirectionId;
 use crate::request;
 
@@ -74,37 +74,35 @@ pub struct GameDateTime {
 }
 
 /// General weather conditions, temperature, wind, etc.
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone, Default)]
 #[serde(try_from = "__WeatherConditionsStruct")]
 pub struct WeatherConditions {
-	pub condition: String,
-	pub temp: uom::si::f64::ThermodynamicTemperature,
-	pub wind_speed: uom::si::f64::Velocity,
-	pub wind_direction: WindDirectionId,
+	pub condition: Option<String>,
+	pub temp: Option<uom::si::f64::ThermodynamicTemperature>,
+	pub wind: Option<(uom::si::f64::Velocity, WindDirectionId)>,
 }
 
-#[serde_as]
 #[derive(Deserialize)]
 #[doc(hidden)]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 struct __WeatherConditionsStruct {
-	condition: String,
-	#[serde_as(as = "DisplayFromStr")]
-	temp: i32,
-	wind: String,
+	condition: Option<String>,
+	temp: Option<String>,
+	wind: Option<String>,
 }
 
 impl TryFrom<__WeatherConditionsStruct> for WeatherConditions {
 	type Error = &'static str;
 
 	fn try_from(value: __WeatherConditionsStruct) -> Result<Self, Self::Error> {
-		let (speed, direction) = value.wind.split_once(" mph, ").ok_or("invalid wind format")?;
-		let speed = speed.parse::<i32>().map_err(|_| "invalid wind speed")?;
 		Ok(Self {
 			condition: value.condition,
-			temp: uom::si::f64::ThermodynamicTemperature::new::<uom::si::thermodynamic_temperature::degree_fahrenheit>(value.temp as f64),
-			wind_speed: uom::si::f64::Velocity::new::<uom::si::velocity::mile_per_hour>(speed as f64),
-			wind_direction: WindDirectionId::new(direction),
+			temp: value.temp.and_then(|temp| temp.parse::<i32>().ok()).map(|temp| uom::si::f64::ThermodynamicTemperature::new::<uom::si::thermodynamic_temperature::degree_fahrenheit>(temp as f64)),
+			wind: if let Some(wind) = value.wind {
+				let (speed, direction) = wind.split_once(" mph, ").ok_or("invalid wind format")?;
+				let speed = speed.parse::<i32>().map_err(|_| "invalid wind speed")?;
+				Some((uom::si::f64::Velocity::new::<uom::si::velocity::mile_per_hour>(speed as f64), WindDirectionId::new(direction)))
+			} else { None },
 		})
 	}
 }
@@ -115,8 +113,8 @@ impl TryFrom<__WeatherConditionsStruct> for WeatherConditions {
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct GameInfo {
 	pub attendance: Option<u32>,
-	#[serde(deserialize_with = "crate::deserialize_datetime")]
-	pub first_pitch: DateTime<Utc>,
+	#[serde(deserialize_with = "crate::try_deserialize_datetime", default)]
+	pub first_pitch: Option<DateTime<Utc>>,
 	/// Measured in minutes,
 	#[serde(rename = "gameDurationMinutes")]
 	pub game_duration: Option<u32>,
@@ -135,20 +133,29 @@ pub struct TeamReviewData {
 	pub teams: HomeAway<ResourceUsage>,
 }
 
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
+pub struct TeamChallengeData {
+	pub has_challenges: bool,
+	#[serde(flatten)]
+	pub teams: HomeAway<ResultHoldingResourceUsage>,
+}
+
 /// Tags about a game, such as a perfect game in progress, no-hitter, etc.
-#[allow(clippy::struct_excessive_bools, reason = "")]
+#[allow(clippy::struct_excessive_bools, reason = "no")]
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct GameTags {
-	no_hitter: bool,
-	perfect_game: bool,
+	pub no_hitter: bool,
+	pub perfect_game: bool,
 
-	away_team_no_hitter: bool,
-	away_team_perfect_game: bool,
+	pub away_team_no_hitter: bool,
+	pub away_team_perfect_game: bool,
 
-	home_team_no_hitter: bool,
-	home_team_perfect_game: bool,
+	pub home_team_no_hitter: bool,
+	pub home_team_perfect_game: bool,
 }
 
 /// Double-header information.
@@ -177,6 +184,14 @@ impl DoubleHeaderKind {
 #[derive(Debug, Deserialize, Copy, Clone, PartialEq, Eq, Deref, DerefMut, From)]
 pub struct Inning(usize);
 
+impl Inning {
+	/// Starting inning of a game
+	#[must_use]
+	pub const fn starting() -> Self {
+		Self(1)
+	}
+}
+
 impl Display for Inning {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		crate::write_nth(self.0, f)
@@ -190,6 +205,14 @@ pub enum InningHalf {
 	Top,
 	#[serde(rename = "Bottom", alias = "bottom")]
 	Bottom,
+}
+
+impl InningHalf {
+	/// Starting inning half of a game
+	#[must_use]
+	pub const fn starting() -> Self {
+		Self::Top
+	}
 }
 
 impl InningHalf {
@@ -240,11 +263,14 @@ impl InningHalf {
 }
 
 /// The balls and strikes in a given at bat. Along with the number of outs (this technically can change during the AB due to pickoffs etc)
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, Display, Default)]
 #[display("{balls}-{strikes} ({outs} out)")]
 pub struct AtBatCount {
+	#[serde(default)]
 	pub balls: u8,
+	#[serde(default)]
 	pub strikes: u8,
+	#[serde(default)]
 	pub outs: u8,
 }
 
@@ -266,8 +292,11 @@ pub struct RHE {
 #[serde(rename_all = "camelCase")]
 struct __RHEStruct {
 	pub runs: Option<usize>,
+	#[serde(default)]
     pub hits: usize,
+    #[serde(default)]
     pub errors: usize,
+    #[serde(default)]
     pub left_on_base: usize,
 
     // only sometimes present, regardless of whether a game is won

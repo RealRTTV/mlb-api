@@ -14,6 +14,7 @@ use serde_with::{serde_as, DefaultOnError};
 use crate::{Copyright, HomeAway, game::{BattingOrderIndex, GameId, LabelledValue, Official, PlayerGameStatusFlags, SectionedLabelledValues}, meta::NamedPosition, person::{Ballplayer, JerseyNumber, NamedPerson, PersonId}, request::RequestURL, stats::{StatTypeStats, stat_types::__BoxscoreStatTypeStats}, team::{NamedTeam, Team, TeamId, roster::RosterStatus}};
 
 /// See [`self`]
+#[serde_as]
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
@@ -22,6 +23,7 @@ pub struct Boxscore {
     pub copyright: Copyright,
     #[serde(rename = "info")]
     pub misc: Vec<LabelledValue>,
+    #[serde_as(deserialize_as = "DefaultOnError")]
     pub top_performers: Option<[TopPerformer; 3]>,
     pub pitching_notes: Vec<String>,
     pub teams: HomeAway<TeamWithGameData>,

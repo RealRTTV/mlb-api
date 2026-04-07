@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut};
 use fxhash::FxHashMap;
 use serde::Deserialize;
 use serde::de::IgnoredAny;
-use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameStatLeaders, GameTags, PlayAbout, Plays, ResourceUsage, TeamReviewData, SimplifiedTimestamp, WeatherConditions};
+use crate::game::{Boxscore, Decisions, DoubleHeaderKind, GameDateTime, GameId, GameInfo, GameStatLeaders, GameTags, PlayAbout, Plays, ResourceUsage, TeamReviewData, TeamChallengeData, SimplifiedTimestamp, WeatherConditions};
 use crate::game::linescore::Linescore;
 use crate::meta::{GameStatus, GameType};
 use crate::meta::LogicalEventId;
@@ -74,18 +74,16 @@ pub struct LiveFeedData {
 	pub review: TeamReviewData,
 	#[serde(rename = "flags")]
 	pub live_tags: GameTags,
-	pub probable_pitchers: HomeAway<NamedPerson>,
-	pub official_scorer: NamedPerson,
-	pub primary_datacaster: NamedPerson,
+	pub probable_pitchers: Option<HomeAway<NamedPerson>>,
+	pub official_scorer: Option<NamedPerson>,
+	pub primary_datacaster: Option<NamedPerson>,
 	pub mound_visits: HomeAway<ResourceUsage>,
+	#[serde(default)]
+	pub abs_challenges: TeamChallengeData,
 
     #[doc(hidden)]
     #[serde(rename = "alerts", default)]
 	pub __alerts: IgnoredAny,
-
-	#[doc(hidden)] // todo
-	#[serde(rename = "absChallenges", default)]
-	pub __abs_challenges: IgnoredAny,
 }
 
 /// More specific information about the "game", child of [`LiveFeedData`]
@@ -167,6 +165,19 @@ use crate::request::RequestURLBuilderExt;
 		dbg!(LiveFeedRequest::builder().id(813_024).build().to_string());
 		let response = LiveFeedRequest::builder().id(813_024).build_and_get().await.unwrap();
 		dbg!(response);
+	}
+
+	#[tokio::test]
+	async fn todays_games_live_feed() {
+		let games = ScheduleRequest::<()>::builder().sport_id(SportId::MLB).build_and_get().await.unwrap().dates.into_iter().flat_map(|date| date.games);
+		let mut has_errors = false;
+		for game in games {
+			if let Err(e) = LiveFeedRequest::builder().id(game.game_id).build_and_get().await {
+				dbg!(e);
+				has_errors = true;
+			}
+		}
+		assert!(!has_errors, "Has errors.");
 	}
 
 	#[tokio::test]

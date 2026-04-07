@@ -1,6 +1,6 @@
 [package]
 name = "mlb-api"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Riley"]
 edition = "2024"
 description = "Endpoints for MLB's public Statcast API."
