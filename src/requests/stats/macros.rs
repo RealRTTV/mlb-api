@@ -454,9 +454,6 @@ macro_rules! __stats0 {
     };
 }
 
-
-// todo: see why we need a clone
-
 /// Shorthand function for getting a single [`StatType`] and [`StatGroup`] for a specific player.
 ///
 /// ## Examples
@@ -487,8 +484,10 @@ macro_rules! single_stat {
 				let response = $crate::request::RequestURL::get(&request).await;
 				response.and_then::<[$crate::person::Person<[<$stat_type $stat_group SingleStatHydrations>]>; 1], _>(|response|
 					response.people.try_into().map_err(|_| $crate::request::Error::MLB($crate::MLBError::new("Expected one person in a single stat response".to_owned())))
-				)
-				.map(|[person]| person.extras.stats.[<$stat_type:snake>].[<$stat_group:snake>].clone())
+				).map(|[person]| match person {
+					$crate::person::Person::Ballplayer($crate::person::Ballplayer { inner, .. }) => *inner,
+					$crate::person::Person::Regular(inner) => inner,
+				}.extras.stats.[<$stat_type:snake>].[<$stat_group:snake>])
 			}
 		}
 	}};

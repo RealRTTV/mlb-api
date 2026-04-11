@@ -14,7 +14,7 @@ pub struct WithTeam<T: RawStat> {
 	pub stats: T,
 }
 
-impl<T: RawStat> Default for WithTeam<T> {
+impl<T: RawStat + Default> Default for WithTeam<T> {
 	fn default() -> Self {
 		Self {
 			stats: T::default(),
@@ -24,4 +24,4 @@ impl<T: RawStat> Default for WithTeam<T> {
 }
 
 
-impl<T: RawStat> SingletonSplitStat for WithTeam<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for WithTeam<T> {}

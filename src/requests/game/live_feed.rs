@@ -45,7 +45,8 @@ pub struct LiveFeedMetadata {
 	/// Recommended duration to send new requests (in seconds). Often 10.
 	#[serde(rename = "wait")]
 	pub recommended_poll_rate: u32,
-	pub game_events: Vec<String>, // todo: what is this type
+	/// Type is undocumented.
+	pub game_events: Vec<String>,
 	pub logical_events: Vec<LogicalEventId>,
 
     #[serde(rename = "timeStamp")]
@@ -74,9 +75,10 @@ pub struct LiveFeedData {
 	pub review: TeamReviewData,
 	#[serde(rename = "flags")]
 	pub live_tags: GameTags,
-	pub probable_pitchers: Option<HomeAway<NamedPerson>>,
+	pub probable_pitchers: HomeAway<Option<NamedPerson>>,
 	pub official_scorer: Option<NamedPerson>,
 	pub primary_datacaster: Option<NamedPerson>,
+	pub secondary_datacaster: Option<NamedPerson>,
 	pub mound_visits: HomeAway<ResourceUsage>,
 	#[serde(default)]
 	pub abs_challenges: TeamChallengeData,

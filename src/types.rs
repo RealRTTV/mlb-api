@@ -260,6 +260,9 @@ pub(crate) const MLB_API_DATE_FORMAT: &str = "%m/%d/%Y";
 /// 2. If the data does not appear in the format `%Y-%m-%dT%H:%M:%SZ(%#z)?`. Why the MLB removes the +00:00 or -00:00 sometimes? I have no clue.
 pub(crate) fn deserialize_datetime<'de, D: Deserializer<'de>>(deserializer: D) -> Result<DateTime<Utc>, D::Error> {
 	let string = String::deserialize(deserializer)?;
+	if let Ok(parsed) = NaiveDateTime::from_str(&string) {
+		return Ok(parsed.and_utc())
+	}
 	let fmt = match (string.ends_with('Z'), string.contains('.')) {
 		(false, false) => "%FT%TZ%#z",
 		(false, true) => "%FT%TZ%.3f%#z",

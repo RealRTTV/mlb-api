@@ -325,12 +325,11 @@ mod tests {
     #[tokio::test]
     #[cfg_attr(not(feature = "_heavy_tests"), ignore)]
     async fn test_this_year_all_mlb_teams_all_roster_types() {
-        let season = TEST_YEAR;
-        let teams = TeamsRequest::mlb_teams().season(season).build_and_get().await.unwrap().teams;
+        let teams = TeamsRequest::mlb_teams().season(TEST_YEAR).build_and_get().await.unwrap().teams;
         let roster_types = MetaRequest::<RosterType>::new().get().await.unwrap().entries;
         for team in teams {
             for roster_type in &roster_types {
-                let _ = RosterRequest::<()>::for_team(team.id).season(season).roster_type(*roster_type).build_and_get().await.unwrap();
+                let _ = RosterRequest::<()>::for_team(team.id).season(TEST_YEAR).roster_type(*roster_type).build_and_get().await.unwrap();
             }
         }
     }

@@ -29,7 +29,7 @@ impl<T: RawStat> PositionPiece for WithPositionAndSeason<T> {
 	}
 }
 
-impl<T: RawStat> Default for WithPositionAndSeason<T> {
+impl<T: RawStat + Default> Default for WithPositionAndSeason<T> {
 	fn default() -> Self {
 		Self {
 			position: NamedPosition::unknown_position(),
@@ -39,5 +39,5 @@ impl<T: RawStat> Default for WithPositionAndSeason<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for WithPositionAndSeason<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for WithPositionAndSeason<T> {}
 	

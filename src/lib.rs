@@ -183,7 +183,9 @@
 
 #![warn(clippy::pedantic, clippy::nursery, clippy::complexity, clippy::cargo, clippy::perf, clippy::style)]
 #![warn(clippy::allow_attributes_without_reason)]
-#![allow(clippy::multiple_crate_versions, clippy::cast_lossless, clippy::ignore_without_reason, reason = "deemed unnecessary")]
+#![allow(clippy::cast_lossless, clippy::ignore_without_reason, reason = "deemed unnecessary")]
+#![allow(clippy::multiple_crate_versions, reason = "can't do much lol")]
+#[allow(clippy::trait_duplication_in_bounds, reason = "serde")]
 
 macro_rules! id {
     ($(#[$meta:meta])* $name:ident { $id_field:ident: String }) => {
@@ -268,7 +270,7 @@ pub use requests::*;
 pub use types::*;
 
 #[cfg(test)]
-pub(crate) const TEST_YEAR: u32 = 2026;
+pub(crate) const TEST_YEAR: u32 = 2025;
 
 pub(crate) type RwLock<T> = tokio::sync::RwLock<T>;
 

@@ -32,6 +32,7 @@ pub struct Boxscore {
 
 impl Boxscore {
     /// Returns a [`PlayerWithGameData`] if present in the baseball game.
+    #[must_use]
     pub fn find_player_with_game_data(&self, id: PersonId) -> Option<&PlayerWithGameData> {
         self.teams.home.players.get(&id).or_else(|| self.teams.away.players.get(&id))
     }

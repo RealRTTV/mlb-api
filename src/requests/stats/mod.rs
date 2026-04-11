@@ -26,7 +26,6 @@
 //! this API being outdated shouldn't limit in that factor.
 
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
 use std::convert::Infallible;
 use std::fmt::Debug;
 
@@ -61,7 +60,7 @@ pub trait Stat: Debug + Clone + PartialEq + Default {
 }
 
 /// Represents the types defined in [`raw`], not the wrapped final types. In the serialized format, this represents the `stat` field.
-pub trait RawStat: Debug + DeserializeOwned + Clone + PartialEq + Default {}
+pub trait RawStat: Debug + DeserializeOwned + Clone + PartialEq {}
 
 impl RawStat for () {}
 impl SingletonSplitStat for () {}
@@ -94,16 +93,6 @@ pub trait StatTypeStats {
 	type Catching: Stat;
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Default)]
-pub struct PlayStat {
-	// pub play: Play,
-}
-
-// todo: replace with real struct once game stuff is implemented
-pub type PitchStat = ();
-
-impl RawStat for PlayStat {}
-
 impl<T: Stat> Stat for Option<T> {
 	type Split = T::Split;
 	type TryFromSplitError = Infallible;
@@ -118,8 +107,8 @@ impl<T: Stat> Stat for Option<T> {
 
 #[doc(hidden)]
 pub mod stat_types {
-	use super::{StatTypeStats, PlayStat, PitchStat};
-	use crate::stats::raw::{catching, fielding, hitting, pitching, FieldedMatchup};
+	use super::StatTypeStats;
+	use crate::stats::raw::{FieldedMatchup, PitchStat, PlayStat, catching, fielding, hitting, pitching};
 	use crate::stats::wrappers::{AccumulatedVsPlayerMatchup, ByMonth, ByPosition, BySeason, ByWeekday, Career, Map, Map2D, SingleMatchup, WithGame, WithHomeAndAway, WithMonth, WithNone, WithPlayer, WithPositionAndSeason, WithSeason, WithTeam, WithWeekday, WithWinLoss};
 
 	macro_rules! stat_type_stats {

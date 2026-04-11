@@ -36,7 +36,7 @@ impl<T: RawStat> MonthPiece for WithMonth<T> {
 	}
 }
 
-impl<T: RawStat> Default for WithMonth<T> {
+impl<T: RawStat + Default> Default for WithMonth<T> {
 	fn default() -> Self {
 		Self {
 			season: SeasonId::current_season(),
@@ -47,4 +47,4 @@ impl<T: RawStat> Default for WithMonth<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for WithMonth<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for WithMonth<T> {}

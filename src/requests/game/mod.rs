@@ -53,7 +53,7 @@ pub use live_feed::*;
 id!(#[doc = "A [`u32`] representing a baseball game. [Sport](crate::sport)-independent"] GameId { gamePk: u32 });
 
 /// Date & Time of the game. 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
 pub struct GameDateTime {
@@ -64,6 +64,10 @@ pub struct GameDateTime {
 	pub original_date: NaiveDate,
 	/// The currently set "date" of the game.
 	pub official_date: NaiveDate,
+	/// Data regarding the game's paused resumption
+	#[serde(flatten, default)]
+	pub resumed: Option<GameResumedDateTime>,
+	
 	/// Day or night
 	#[serde(rename = "dayNight")]
 	pub sky: DayNight,
@@ -71,6 +75,22 @@ pub struct GameDateTime {
 	pub time: NaiveTime,
 	/// AM or PM; use [`DayHalf::into_24_hour_time`] to convert to 24-hour local time.
 	pub ampm: DayHalf,
+}
+
+/// Optional resumed data regarding a paused game
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "_debug", serde(deny_unknown_fields))]
+pub struct GameResumedDateTime {
+	#[serde(rename = "resumeDateTime", deserialize_with = "crate::deserialize_datetime")]
+	pub resumed_datetime: DateTime<Utc>,
+	#[serde(rename = "resumedFromDateTime", deserialize_with = "crate::deserialize_datetime")]
+	pub resumed_from_datetime: DateTime<Utc>,
+
+	#[serde(rename = "resumeDate", default)]
+	pub __resume_date: IgnoredAny,
+	#[serde(rename = "resumeFromDate", default)]
+	pub __resume_from_date: IgnoredAny,
 }
 
 /// General weather conditions, temperature, wind, etc.
@@ -213,6 +233,13 @@ impl InningHalf {
 	pub const fn starting() -> Self {
 		Self::Top
 	}
+
+	pub(crate) fn deserialize_from_is_top_inning<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+		Ok(match bool::deserialize(deserializer)? {
+			true => Self::Top,
+			false => Self::Bottom,
+		})
+	}
 }
 
 impl InningHalf {
@@ -272,6 +299,22 @@ pub struct AtBatCount {
 	pub strikes: u8,
 	#[serde(default)]
 	pub outs: u8,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+pub struct SituationCount {
+	pub balls: u8,
+	pub strikes: u8,
+	pub outs: u8,
+	pub inning: Inning,
+	#[serde(rename = "isTopInning", deserialize_with = "InningHalf::deserialize_from_is_top_inning")]
+	pub inning_half: InningHalf,
+	#[serde(rename = "runnerOn1b")]
+	pub runner_on_first: bool,
+	#[serde(rename = "runnerOn2b")]
+	pub runner_on_second: bool,
+	#[serde(rename = "runnerOn3b")]
+	pub runner_on_third: bool,
 }
 
 /// The classic "R | H | E" and LOB in a scoreboard.
@@ -817,7 +860,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_play_stream() {
-		PlayStream::new(822_834).run(async |event, _meta, _data, _linescore, _boxscore| {
+		Box::pin(PlayStream::new(822_834).run(async |event, _meta, _data, _linescore, _boxscore| {
 			match event {
 				PlayStreamEvent::Start => println!("GameStart"),
 				PlayStreamEvent::StartPlay(play) => println!("PlayStart; {} vs. {}", play.matchup.batter.full_name, play.matchup.pitcher.full_name),
@@ -839,6 +882,6 @@ mod tests {
 				PlayStreamEvent::GameEnd(_, _) => println!("GameEnd"),
 			}
 			Ok(ControlFlow::Continue(()))
-		}).await.unwrap();
+		})).await.unwrap();
 	}
 }

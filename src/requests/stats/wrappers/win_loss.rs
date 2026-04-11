@@ -29,7 +29,7 @@ pub enum WinLossFromSplitWrappedVariantError {
 	DuplicateLoss,
 }
 
-impl<T: RawStat> Stat for WithWinLoss<T> {
+impl<T: RawStat + Default> Stat for WithWinLoss<T> {
 	type Split = __WinOrLossStruct<T>;
 	type TryFromSplitError = WinLossFromSplitWrappedVariantError;
 

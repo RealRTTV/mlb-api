@@ -26,7 +26,7 @@ impl<T: RawStat> SeasonPiece for WithPlayer<T> {
 	}
 }
 
-impl<T: RawStat> Default for WithPlayer<T> {
+impl<T: RawStat + Default> Default for WithPlayer<T> {
 	fn default() -> Self {
 		Self {
 			player: NamedPerson::unknown_person(),
@@ -37,4 +37,4 @@ impl<T: RawStat> Default for WithPlayer<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for WithPlayer<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for WithPlayer<T> {}

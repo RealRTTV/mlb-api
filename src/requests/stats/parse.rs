@@ -105,9 +105,12 @@ pub struct __ParsedStatEntry {
 #[doc(hidden)]
 #[derive(Debug, Error)]
 pub enum MakeStatSplitsError<S: Stat> {
-	#[error("Failed to deserialize json into split type ({name}): {0}", name = core::any::type_name::<S>())]
-	FailedPartialDeserialize(serde_json::Error),
-	// FailedPartialDeserialize(serde_path_to_error::Error<serde_json::Error>),
+	#[cfg(not(feature = "_debug"))]
+	#[error("Failed to deserialize json split #{1} into split type ({name}): {0}", name = core::any::type_name::<S>())]
+	FailedPartialDeserialize(serde_json::Error, usize),
+	#[cfg(feature = "_debug")]
+	#[error("Failed to deserialize json split #{1} into split type ({name}): {0}", name = core::any::type_name::<S>())]
+	FailedPartialDeserialize(serde_path_to_error::Error<serde_json::Error>, usize),
 	#[error("Failed to deserialize splits into greater split type ({name}): {0}", name = core::any::type_name::<S>())]
 	FailedFullDeserialize(S::TryFromSplitError),
 }
@@ -118,12 +121,15 @@ pub fn make_stat_split<S: Stat>(stats: &mut __ParsedStats, target_stat_type_str:
 		let entry = stats.entries.remove(idx);
 		let partially_deserialized = entry.splits
 			.into_iter()
-			.map(|split| {
-				<<S as Stat>::Split as Deserialize>::deserialize(split)
-				// serde_path_to_error::deserialize::<_, <S as Stat>::Split>(split)
+			.enumerate()
+			.map(|(idx, split)| {
+				#[cfg(not(feature = "_debug"))]
+				return <<S as Stat>::Split as Deserialize>::deserialize(split).map_err(|e| (idx, e));
+				#[cfg(feature = "_debug")]
+				return serde_path_to_error::deserialize::<_, <S as Stat>::Split>(split).map_err(|e| (idx, e));
 			})
 			.collect::<Result<Vec<S::Split>, _>>()
-			.map_err(MakeStatSplitsError::FailedPartialDeserialize)?;
+			.map_err(|(idx, e)| MakeStatSplitsError::FailedPartialDeserialize(e, idx))?;
 		let partially_deserialized_is_empty = partially_deserialized.is_empty();
 		match <S as Stat>::from_splits(partially_deserialized.into_iter()) {
 			Ok(s) => Ok(s),

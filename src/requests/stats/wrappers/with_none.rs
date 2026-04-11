@@ -24,7 +24,7 @@ impl<T: RawStat> From<__WithNoneRaw<T>> for WithNone<T> {
     }
 }
 
-impl<T: RawStat> Default for WithNone<T> {
+impl<T: RawStat + Default> Default for WithNone<T> {
     fn default() -> Self {
         Self {
             stats: T::default(),
@@ -32,6 +32,6 @@ impl<T: RawStat> Default for WithNone<T> {
     }
 }
 
-impl<T: RawStat> SingletonSplitStat for WithNone<T> {
+impl<T: RawStat + Default> SingletonSplitStat for WithNone<T> {
 
 }

@@ -50,7 +50,7 @@ impl<T: RawStat> LeaguePiece for Career<T> {
 	}
 }
 
-impl<T: RawStat> Default for Career<T> {
+impl<T: RawStat + Default> Default for Career<T> {
 	fn default() -> Self {
 		Self {
 			team: NamedTeam::unknown_team(),
@@ -63,6 +63,6 @@ impl<T: RawStat> Default for Career<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for Career<T> {
+impl<T: RawStat + Default> SingletonSplitStat for Career<T> {
 
 }

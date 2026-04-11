@@ -570,7 +570,7 @@ macro_rules! standings_hydrations {
 	(@ league) => { $crate::league::NamedLeague };
 	(@ league ,) => { $crate::league::League };
 	(@ unknown_league) => { $crate::league::NamedLeague::unknown_league() };
-	(@ unknown_league ,) => { unimplemented!() }; // todo: hrmm... forward error?
+	(@ unknown_league ,) => { unimplemented!() };
 
     (@ division) => { $crate::division::NamedDivision };
 	(@ division ,) => { $crate::division::Division };

@@ -49,7 +49,7 @@ impl<T: RawStat> BatterPiece for AccumulatedVsPlayerMatchup<T> {
 	}
 }
 
-impl<T: RawStat> Default for AccumulatedVsPlayerMatchup<T> {
+impl<T: RawStat + Default> Default for AccumulatedVsPlayerMatchup<T> {
 	fn default() -> Self {
 		Self {
 			pitcher: NamedPerson::unknown_person(),
@@ -60,4 +60,4 @@ impl<T: RawStat> Default for AccumulatedVsPlayerMatchup<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for AccumulatedVsPlayerMatchup<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for AccumulatedVsPlayerMatchup<T> {}

@@ -32,7 +32,7 @@ impl<T: RawStat> WeekdayPiece for WithWeekday<T> {
 	}
 }
 
-impl<T: RawStat> Default for WithWeekday<T> {
+impl<T: RawStat + Default> Default for WithWeekday<T> {
 	fn default() -> Self {
 		Self {
 			weekday: Weekday::Mon,
@@ -42,7 +42,7 @@ impl<T: RawStat> Default for WithWeekday<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for WithWeekday<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for WithWeekday<T> {}
 
 fn deserialize_day_of_week<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Weekday, D::Error> {
 	Weekday::try_from(u8::deserialize(deserializer)? - 1).map_err(D::Error::custom)

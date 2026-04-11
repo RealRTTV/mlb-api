@@ -55,7 +55,7 @@ impl<T: RawStat> SeasonPiece for AccumulatedVsTeamSeasonalPitcherSplit<T> {
 	}
 }
 
-impl<T: RawStat> Default for AccumulatedVsTeamSeasonalPitcherSplit<T> {
+impl<T: RawStat + Default> Default for AccumulatedVsTeamSeasonalPitcherSplit<T> {
 	fn default() -> Self {
 		Self {
 			season: SeasonId::current_season(),
@@ -65,4 +65,4 @@ impl<T: RawStat> Default for AccumulatedVsTeamSeasonalPitcherSplit<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for AccumulatedVsTeamSeasonalPitcherSplit<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for AccumulatedVsTeamSeasonalPitcherSplit<T> {}

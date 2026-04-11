@@ -207,12 +207,14 @@ mod spray_chart;
 mod hit_spray;
 mod hot_cold_zones;
 mod pitch_usage;
+mod plays;
 
 pub use fielded_matchup::*;
 pub use spray_chart::*;
 pub use hit_spray::*;
 pub use hot_cold_zones::*;
 pub use pitch_usage::*;
+pub use plays::*;
 
 /// For old data, some stats are just omitted, like pitch count and stuff. So every field is now possibly omittable. Gotta `?` everything now. (this api is legendary)
 #[derive(Debug, Error, PartialEq, Eq, Copy, Clone)]

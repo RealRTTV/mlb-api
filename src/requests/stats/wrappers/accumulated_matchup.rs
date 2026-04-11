@@ -38,7 +38,7 @@ impl<T: RawStat> TeamPiece for AccumulatedMatchup<T> {
 	}
 }
 
-impl<T: RawStat> Default for AccumulatedMatchup<T> {
+impl<T: RawStat + Default> Default for AccumulatedMatchup<T> {
 	fn default() -> Self {
 		Self {
 			opposing_team: NamedTeam::unknown_team(),
@@ -50,4 +50,4 @@ impl<T: RawStat> Default for AccumulatedMatchup<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for AccumulatedMatchup<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for AccumulatedMatchup<T> {}

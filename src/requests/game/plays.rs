@@ -32,6 +32,24 @@ pub struct Plays {
     pub(super) play_indices_by_inning: Vec<InningPlaysIndices>,
 }
 
+impl IntoIterator for Plays {
+    type Item = Play;
+    type IntoIter = <Vec<Play> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.plays.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Plays {
+    type Item = &'a Play;
+    type IntoIter = std::slice::Iter<'a, Play>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.plays.iter()
+    }
+}
+
 impl Plays {
     /// Gives a mutable refernece to the underlying plays.
     ///
@@ -241,7 +259,7 @@ pub struct PlayAbout {
 
     /// Whether the play has counted towards an out so far.
     ///
-    /// todo: check if includes play events like pickoffs.
+    /// Note this does not account for pickoffs, caught stealing, etc, it only counts for the current [`PlayEvent`].
     #[serde(default)]
     pub has_out: bool,
 

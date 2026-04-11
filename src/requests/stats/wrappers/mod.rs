@@ -37,17 +37,19 @@ pub use win_loss::*;
 pub use with_none::*;
 
 use std::convert::Infallible;
+use std::fmt::Debug;
 use chrono::{Month, Weekday};
+use serde::de::DeserializeOwned;
 use crate::game::GameId;
 use crate::meta::GameType;
 use crate::league::NamedLeague;
 use crate::person::NamedPerson;
 use crate::meta::NamedPosition;
 use crate::season::SeasonId;
-use crate::stats::{SingletonSplitStat, Stat};
+use crate::stats::Stat;
 use crate::team::NamedTeam;
 
-impl<T: SingletonSplitStat> Stat for Vec<T> {
+impl<T: Debug + DeserializeOwned + PartialEq + Clone> Stat for Vec<T> {
 	type Split = T;
 	type TryFromSplitError = Infallible;
 

@@ -47,7 +47,7 @@ impl<T: RawStat> TeamPiece for WithPlayerAndTeam<T> {
     }
 }
 
-impl<T: RawStat> Default for WithPlayerAndTeam<T> {
+impl<T: RawStat + Default> Default for WithPlayerAndTeam<T> {
     fn default() -> Self {
         Self {
             player: NamedPerson::unknown_person(),
@@ -59,4 +59,4 @@ impl<T: RawStat> Default for WithPlayerAndTeam<T> {
     }
 }
 
-impl<T: RawStat> SingletonSplitStat for WithPlayerAndTeam<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for WithPlayerAndTeam<T> {}

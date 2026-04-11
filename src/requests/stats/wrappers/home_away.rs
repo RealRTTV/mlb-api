@@ -27,7 +27,7 @@ pub enum HomeAndAwayFromSplitWrappedVariantError {
 	DuplicateAway,
 }
 
-impl<T: RawStat> Stat for WithHomeAndAway<T> {
+impl<T: RawStat + Default> Stat for WithHomeAndAway<T> {
 	type Split = __HomeOrAwayStruct<T>;
 	type TryFromSplitError = HomeAndAwayFromSplitWrappedVariantError;
 

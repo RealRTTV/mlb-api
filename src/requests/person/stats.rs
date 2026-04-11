@@ -1,17 +1,13 @@
 //! Gets the stats of a player for a single game.
 
-use std::borrow::Cow;
 use crate::game::GameId;
 use crate::person::PersonId;
 use crate::Copyright;
-use crate::season::SeasonId;
 use bon::Builder;
 use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use serde::de::{Deserializer, Error};
-use crate::__stats__request_data;
-use crate::hydrations::Hydrations;
-use crate::stats::PlayStat;
+use crate::stats::raw::PlayStat;
 use crate::request::RequestURL;
 use crate::meta::StatGroup;
 use crate::stats::parse::{__ParsedStats, make_stat_split};
@@ -32,11 +28,6 @@ pub struct PersonSingleGameStatsRequest {
 	person_id: PersonId,
 	#[builder(into)]
 	game_id: GameId,
-	#[builder(into)]
-	season: SeasonId,
-	#[builder(into)]
-	#[builder(default)]
-	hydrations: SingleGameStatsRequestData,
 }
 
 impl<S: person_single_game_stats_request_builder::State + person_single_game_stats_request_builder::IsComplete> crate::request::RequestURLBuilderExt for PersonSingleGameStatsRequestBuilder<S> {
@@ -45,7 +36,7 @@ impl<S: person_single_game_stats_request_builder::State + person_single_game_sta
 
 impl Display for PersonSingleGameStatsRequest {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "http://statsapi.mlb.com/api/v1/people/{}/stats/game/{}?season={}&hydrate={}", self.person_id, self.game_id, self.season, self.hydrations)
+		write!(f, "http://statsapi.mlb.com/api/v1/people/{}/stats/game{}", self.person_id, self.game_id)
 	}
 }
 
@@ -57,14 +48,12 @@ impl RequestURL for PersonSingleGameStatsRequest {
 mod tests {
 	use crate::person::stats::PersonSingleGameStatsRequest;
 	use crate::request::RequestURLBuilderExt;
-	use crate::TEST_YEAR;
 
 	#[tokio::test]
 	async fn single_sample() {
 		let _ = PersonSingleGameStatsRequest::builder()
 			.person_id(660_271)
 			.game_id(776_562)
-			.season(TEST_YEAR)
 			.build_and_get()
 			.await
 			.unwrap();
@@ -141,15 +130,5 @@ impl<'de> Deserialize<'de> for SingleGameStats {
 				),
 			},
 		})
-	}
-}
-
-__stats__request_data!(pub SingleGameStats [Season]);
-
-impl Hydrations for SingleGameStats {
-	type RequestData = SingleGameStatsRequestData;
-
-	fn hydration_text(_: &Self::RequestData) -> Cow<'static, str> {
-		panic!("Hydrations::hydration_text() called on SingleGameStats. Must use `PersonSingleGameStatsRequest` instead.")
 	}
 }

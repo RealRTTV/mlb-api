@@ -616,13 +616,6 @@ group_and_type!(WinLoss {
     "sacBunts" => sac_bunts,
     "sacFlies" => sac_flies,
 });
-// todo: add type for rankings
-// group_and_type!(Rankings {
-//     "wildPitches" => wild_pitches,
-// });
-// group_and_type!(RankingsByYear {
-//     "wildPitches" => wild_pitches,
-// });
 group_and_type!(StatSplits {
     "gamesPlayed" => games_played,
     "groundOuts" => groundouts,

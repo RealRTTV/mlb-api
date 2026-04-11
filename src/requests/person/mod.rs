@@ -34,8 +34,8 @@ use crate::request::RequestURL;
 use bon::Builder;
 use chrono::{Local, NaiveDate};
 use derive_more::{Deref, DerefMut, Display, From};
-use serde::de::Error;
 use serde::{Deserialize, Deserializer};
+use serde::de::Error;
 use serde_with::{serde_as, DefaultOnError};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -84,7 +84,7 @@ pub struct Ballplayer<H: PersonHydrations> {
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inner: Box<RegularPerson<H>>,
+	pub inner: Box<RegularPerson<H>>,
 }
 
 /// A regular person; detailed-name stuff.
@@ -112,15 +112,17 @@ pub struct RegularPerson<H: PersonHydrations> {
 	#[serde(default)]
 	pub boxscore_name: String,
 
+	#[serde(default)]
 	pub is_player: bool,
 	#[serde(default)]
 	pub is_verified: bool,
+	#[serde(default)]
 	pub active: bool,
 
 	#[deref]
 	#[deref_mut]
 	#[serde(flatten)]
-	inner: NamedPerson,
+	pub inner: NamedPerson,
 
 	#[serde(flatten)]
 	pub extras: H,
@@ -194,12 +196,80 @@ impl NamedPerson {
 id!(#[doc = "A [`u32`] that represents a person."] PersonId { id: u32 });
 
 /// A complete person response for a hydrated request. Ballplayers have more fields.
-#[derive(Debug, Deserialize, Clone, From)]
-#[serde(untagged)]
-#[serde(bound = "H: PersonHydrations")]
+#[derive(Debug, Clone, From)]
 pub enum Person<H: PersonHydrations = ()> {
 	Ballplayer(Ballplayer<H>),
 	Regular(RegularPerson<H>),
+}
+
+impl<'de, H: PersonHydrations> Deserialize<'de> for Person<H> {
+	#[allow(clippy::too_many_lines, reason = "still easy to understand cause low logic lines")]
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>
+	{
+		#[serde_as]
+		#[derive(Deserialize)]
+		#[serde(bound = "H2: PersonHydrations")]
+		struct Repr<H2: PersonHydrations> {
+			#[serde(flatten)]
+			regular: RegularPerson<H2>,
+			#[serde_as(deserialize_as = "DefaultOnError")]
+			#[serde(flatten, default)]
+			ballplayer: Option<BallplayerContent>,
+		}
+
+		#[derive(Deserialize)]
+		struct BallplayerContent {
+			#[serde(deserialize_with = "crate::try_from_str")]
+			#[serde(default)]
+			primary_number: Option<u8>,
+			#[serde(flatten)]
+			birth_data: BirthData,
+			#[serde(flatten)]
+			body_measurements: BodyMeasurements,
+			gender: Gender,
+			draft_year: Option<u16>,
+			#[serde(rename = "mlbDebutDate")]
+			mlb_debut: Option<NaiveDate>,
+			bat_side: Handedness,
+			pitch_hand: Handedness,
+			#[serde(flatten)]
+			strike_zone: StrikeZoneMeasurements,
+			#[serde(rename = "nickName")]
+			nickname: Option<String>,
+		}
+
+		let Repr { regular, ballplayer } = Repr::<H>::deserialize(deserializer)?;
+
+		Ok(match ballplayer {
+			Some(BallplayerContent {
+				primary_number,
+				birth_data,
+				body_measurements,
+				gender,
+				draft_year,
+				mlb_debut,
+				bat_side,
+				pitch_hand,
+				strike_zone,
+				nickname,
+			}) => Self::Ballplayer(Ballplayer {
+				primary_number,
+				birth_data,
+				body_measurements,
+				gender,
+				draft_year,
+				mlb_debut,
+				bat_side,
+				pitch_hand,
+				strike_zone,
+				nickname,
+				inner: Box::new(regular),
+			}),
+			None => Self::Regular(regular),
+		})
+	}
 }
 
 impl<H: PersonHydrations> Person<H> {

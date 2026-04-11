@@ -35,7 +35,7 @@ impl<T: RawStat> SeasonPiece for SingleMatchup<T> {
 	}
 }
 
-impl<T: RawStat> Default for SingleMatchup<T> {
+impl<T: RawStat + Default> Default for SingleMatchup<T> {
 	fn default() -> Self {
 		Self {
 			pitcher: NamedPerson::unknown_person(),
@@ -52,4 +52,4 @@ impl<T: RawStat> Default for SingleMatchup<T> {
 	}
 }
 
-impl<T: RawStat> SingletonSplitStat for SingleMatchup<T> {}
+impl<T: RawStat + Default> SingletonSplitStat for SingleMatchup<T> {}

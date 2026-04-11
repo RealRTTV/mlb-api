@@ -541,7 +541,7 @@ macro_rules! team_hydrations {
 	(@ venue) => { $crate::venue::NamedVenue };
 	(@ venue $hydrations:ty) => { $crate::venue::Venue<$hydrations> };
 	(@ unknown_venue) => { $crate::venue::NamedVenue::unknown_venue() };
-	(@ unknown_venue $hydrations:ty) => { unimplemented!() }; // todo: hrmm... forward error?
+	(@ unknown_venue $hydrations:ty) => { unimplemented!() };
 
 	(@ spring_venue) => { $crate::venue::VenueId };
 	(@ spring_venue $hydrations:ty) => { $crate::venue::Venue<$hydrations> };
@@ -549,7 +549,7 @@ macro_rules! team_hydrations {
 	(@ league) => { $crate::league::NamedLeague };
 	(@ league ,) => { $crate::league::League };
 	(@ unknown_league) => { $crate::league::NamedLeague::unknown_league() };
-	(@ unknown_league ,) => { unimplemented!() }; // todo: hrmm... forward error?
+	(@ unknown_league ,) => { unimplemented!() };
 
 	(@ division) => { $crate::division::NamedDivision };
 	(@ division ,) => { $crate::division::Division };

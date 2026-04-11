@@ -42,7 +42,7 @@ pub struct JobsResponse {
 ///
 /// Wrapper of [`NamedPerson`] used in the [`JobsRequest`] endpoints that contains extra fields about their job.
 #[serde_as]
-#[derive(Debug, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EmployedPerson {
     #[serde(default = "NamedPerson::unknown_person")]
