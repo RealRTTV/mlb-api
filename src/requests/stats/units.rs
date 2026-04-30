@@ -401,9 +401,9 @@ impl<const N: usize> FloatCountingStat<N> {
 impl<const N: usize> Display for FloatCountingStat<N> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		if self.0.is_nan() {
-			write!(f, "{:.N$}", "")
+			write!(f, "{:->N$}", "")
 		} else {
-			write!(f, "{:->N$}", self.0)
+			write!(f, "{:.N$}", self.0)
 		}
 	}
 }
